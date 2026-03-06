@@ -1,0 +1,92 @@
+# =========================================================
+# Python
+# =========================================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+
+# =========================================================
+# Virtual environments
+# =========================================================
+.venv/
+_validation_venv/
+venv/
+env/
+
+# =========================================================
+# Python test / coverage caches
+# =========================================================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.cache/
+
+# =========================================================
+# Build / packaging output
+# =========================================================
+build/
+dist/
+_build/
+wheelhouse/
+*.egg-info/
+
+# =========================================================
+# Binary / packaged artifacts
+# =========================================================
+*.exe
+*.dll
+*.pdb
+*.pyz
+*.pkg
+*.zip
+
+# =========================================================
+# Proof / artifact directories
+# =========================================================
+_proof/
+_artifacts/
+artifacts/
+
+# =========================================================
+# Runtime / system state
+# =========================================================
+.ngk/
+.ngkssys/
+.ngksbuildcore/
+.ngksgraph_cache/
+
+# Explicit nested cache locations
+NGKsGraph/examples/**/.ngksgraph_cache/
+
+# =========================================================
+# Build system residue
+# =========================================================
+.ninja_deps
+.ninja_log
+
+# =========================================================
+# Editor / OS junk
+# =========================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================================================
+# Backup git metadata (from monorepo conversion)
+# =========================================================
+.git_BACKUP/
+.git_LIVE_BACKUP2/
+
+# =========================================================
+# Stray environment activation scripts
+# =========================================================
+*Activate.ps1
+
+doctor_summary.txt
+toolchain_report.json
+env_capsule.resolved.json
+env_capsule.resolved.hash.txt

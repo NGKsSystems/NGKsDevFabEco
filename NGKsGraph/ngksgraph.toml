@@ -1,0 +1,19 @@
+[project]
+name = "NGKsPlayerNative"
+
+[profiles.debug]
+cxx_std = "c++20"
+defines = ["DEBUG"]
+cflags  = ["/EHsc", "/MD", "/Z7", "/Od", "/FS"]
+ldflags = []
+out_dir = "build/debug"
+
+[profiles.release]
+cxx_std = "c++20"
+defines = ["NDEBUG"]
+cflags  = ["/EHsc", "/MD", "/O2", "/FS"]
+ldflags = []
+out_dir = "build/release"
+
+# ---- Targets (placeholders) ----
+# You will add [targets.<name>] blocks after discovery

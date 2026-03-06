@@ -1,0 +1,89 @@
+out_dir = "build"
+warnings = "default"
+
+cxx_std = 20
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = ["/Zc:__cplusplus"]
+ldflags = []
+libs = []
+lib_dirs = []
+
+[build]
+default_target = "app"
+
+[profiles.debug]
+cflags = ["/Od", "/Z7", "/FS"]
+defines = ["DEBUG"]
+ldflags = []
+
+[profiles.release]
+cflags = ["/O2"]
+defines = ["NDEBUG"]
+ldflags = []
+
+[[targets]]
+name = "libcore"
+type = "staticlib"
+src_glob = ["src/core/**/*.cpp"]
+include_dirs = ["include", "src/core"]
+defines = []
+cflags = ["/Zc:__cplusplus"]
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = []
+
+[[targets]]
+name = "libui"
+type = "staticlib"
+src_glob = ["src/ui/**/*.cpp"]
+include_dirs = ["include", "src/core", "src/ui"]
+defines = []
+cflags = ["/Zc:__cplusplus"]
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = ["libcore"]
+
+[[targets]]
+name = "app"
+type = "exe"
+src_glob = ["src/app/**/*.cpp"]
+include_dirs = ["include", "src/core", "src/ui"]
+defines = []
+cflags = ["/Zc:__cplusplus"]
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = ["libcore", "libui"]
+
+[qt]
+enabled = true
+qt_root = "C:/Qt/6.10.2/msvc2022_64"
+prefix = ""
+version = 6
+modules = ["Core", "Gui", "Widgets"]
+moc_path = ""
+uic_path = ""
+rcc_path = ""
+include_dirs = []
+lib_dirs = []
+libs = ["Qt6Widgets", "Qt6Gui", "Qt6Core"]
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

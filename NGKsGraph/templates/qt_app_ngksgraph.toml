@@ -1,0 +1,51 @@
+# Template: Qt app (single target)
+# Fill qt.*_path values before configure/build.
+name = "qt_app"
+out_dir = "build"
+target_type = "exe"
+cxx_std = 20
+
+src_glob = ["src/**/*.cpp"]
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
+warnings = "default"
+
+[profiles.debug]
+cflags = ["/Od", "/Zi"]
+defines = ["DEBUG"]
+ldflags = []
+
+[profiles.release]
+cflags = ["/O2"]
+defines = ["NDEBUG"]
+ldflags = []
+
+[qt]
+enabled = true
+prefix = ""
+version = 6
+modules = ["Core", "Gui", "Widgets"]
+moc_path = "C:/Qt/6.6.0/msvc2019_64/bin/moc.exe"
+uic_path = "C:/Qt/6.6.0/msvc2019_64/bin/uic.exe"
+rcc_path = "C:/Qt/6.6.0/msvc2019_64/bin/rcc.exe"
+include_dirs = []
+lib_dirs = []
+libs = []
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

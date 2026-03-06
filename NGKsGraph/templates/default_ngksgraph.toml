@@ -1,0 +1,51 @@
+# Template: basic single-target project
+# For profile-aware builds use --profile debug|release on configure/build/run.
+name = "app"
+out_dir = "build"
+target_type = "exe"
+cxx_std = 20
+
+src_glob = ["src/**/*.cpp"]
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
+warnings = "default"
+
+[profiles.debug]
+cflags = ["/Od", "/Zi"]
+defines = ["DEBUG"]
+ldflags = []
+
+[profiles.release]
+cflags = ["/O2"]
+defines = ["NDEBUG"]
+ldflags = []
+
+[qt]
+enabled = false
+prefix = ""
+version = 6
+modules = []
+moc_path = ""
+uic_path = ""
+rcc_path = ""
+include_dirs = []
+lib_dirs = []
+libs = []
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

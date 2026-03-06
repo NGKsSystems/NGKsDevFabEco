@@ -1,0 +1,41 @@
+{
+  "base_dir": "..",
+  "nodes": [
+    {
+      "id": "01_make_hello",
+      "desc": "Create hello artifact",
+      "cwd": ".",
+      "cmd": [
+        "python",
+        "-c",
+        "from pathlib import Path; p=Path('artifacts/hello/hello.txt'); p.parent.mkdir(parents=True, exist_ok=True); p.write_text('hello from node1\\n', encoding='utf-8'); Path('artifacts/hello/stage1.done').write_text('ok\\n', encoding='utf-8')"
+      ],
+      "deps": [],
+      "inputs": [],
+      "outputs": [
+        "artifacts/hello/hello.txt",
+        "artifacts/hello/stage1.done"
+      ]
+    },
+    {
+      "id": "02_append_hello",
+      "desc": "Append second line",
+      "cwd": ".",
+      "cmd": [
+        "python",
+        "-c",
+        "from pathlib import Path; p=Path('artifacts/hello/hello.txt'); p.write_text(p.read_text(encoding='utf-8') + 'hello from node2\\n', encoding='utf-8'); Path('artifacts/hello/final.done').write_text('ok\\n', encoding='utf-8')"
+      ],
+      "deps": [
+        "01_make_hello"
+      ],
+      "inputs": [
+        "artifacts/hello/stage1.done"
+      ],
+      "outputs": [
+        "artifacts/hello/hello.txt",
+        "artifacts/hello/final.done"
+      ]
+    }
+  ]
+}

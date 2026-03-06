@@ -1,0 +1,75 @@
+out_dir = "build"
+warnings = "default"
+
+cxx_std = 20
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
+
+[build]
+default_target = "widgets_app"
+
+[profiles.debug]
+cflags = ["/Od", "/Zi"]
+defines = ["DEBUG"]
+ldflags = []
+
+[profiles.release]
+cflags = ["/O2"]
+defines = ["NDEBUG"]
+ldflags = []
+
+[[targets]]
+name = "widgets_core"
+type = "staticlib"
+src_glob = ["src/core/**/*.cpp"]
+include_dirs = ["src/core", "include"]
+defines = []
+cflags = []
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = []
+
+[[targets]]
+name = "widgets_app"
+type = "exe"
+src_glob = ["src/app/**/*.cpp"]
+include_dirs = ["src/core", "include"]
+defines = []
+cflags = []
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = ["widgets_core"]
+
+[qt]
+enabled = true
+prefix = ""
+version = 6
+modules = ["Core", "Gui", "Widgets"]
+moc_path = "C:/Qt/6.6.0/msvc2019_64/bin/moc.exe"
+uic_path = "C:/Qt/6.6.0/msvc2019_64/bin/uic.exe"
+rcc_path = "C:/Qt/6.6.0/msvc2019_64/bin/rcc.exe"
+include_dirs = []
+lib_dirs = []
+libs = []
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

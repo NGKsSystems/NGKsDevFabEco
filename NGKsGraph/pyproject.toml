@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ngksgraph"
+version = "0.1.0"
+description = "Deterministic graph planner and BuildCore handoff for MSVC C++ projects"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ngksgraph = "ngksgraph.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ngksgraph*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

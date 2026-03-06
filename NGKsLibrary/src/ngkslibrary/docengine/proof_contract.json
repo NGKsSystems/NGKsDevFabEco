@@ -1,0 +1,33 @@
+{
+  "schema": "ngks.proof.contract.v1",
+  "run_pf_pattern": "<project_root>/_proof/devfabric_run_<run_id>",
+  "required_entries": [
+    "00_run_header.txt",
+    "99_summary.txt",
+    "10_envcapsule",
+    "20_graph",
+    "30_buildcore",
+    "40_library"
+  ],
+  "allowed_locations": [
+    "run_pf_local",
+    "run_pf_mirror"
+  ],
+  "forbidden_root_legacy_patterns": [
+    "_proof/build_*",
+    "_proof/doctor_*",
+    "_proof/lock_*"
+  ],
+  "exit_codes": {
+    "0": "success_or_noop",
+    "1": "build_failed",
+    "2": "precondition_or_tool_missing"
+  },
+  "proof_context_keys": [
+    "run_id",
+    "run_pf",
+    "stage_pf",
+    "backup_root",
+    "mirror_stage_pf"
+  ]
+}

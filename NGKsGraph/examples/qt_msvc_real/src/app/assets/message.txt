@@ -1,0 +1,1 @@
+qt resource payload ok

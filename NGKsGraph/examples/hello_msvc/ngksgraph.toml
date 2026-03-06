@@ -1,0 +1,33 @@
+name = "hello_msvc"
+out_dir = "build"
+target_type = "exe"
+cxx_std = 20
+
+src_glob = ["src/**/*.cpp"]
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
+warnings = "default"
+
+[qt]
+enabled = false
+prefix = ""
+version = 6
+modules = []
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

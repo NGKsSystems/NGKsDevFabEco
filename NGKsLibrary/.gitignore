@@ -1,0 +1,65 @@
+# ----------------------------
+# Python cache / bytecode
+# ----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+
+# ----------------------------
+# Virtual environments
+# ----------------------------
+.venv/
+venv/
+env/
+
+# ----------------------------
+# Pytest / test cache
+# ----------------------------
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ----------------------------
+# Build outputs
+# ----------------------------
+build/
+dist/
+*.egg-info/
+
+# ----------------------------
+# Proof / audit artifacts
+# ----------------------------
+_proof/
+_artifacts/
+
+# ----------------------------
+# Runtime system folders
+# ----------------------------
+.ngk/
+.ngkssys/
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+*.txt
+
+# ----------------------------
+# OS junk
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# IDE/editor
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# Accidental absolute-path files
+# ----------------------------
+erssuppoDesktopNGKsSystemsNGKsDevFabric.venvScriptsActivate.ps1

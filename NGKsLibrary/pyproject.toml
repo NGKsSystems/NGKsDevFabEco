@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ngkslibrary"
+version = "0.1.0"
+description = "NGKsSystems shared library components"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [{name="NGKsSystems"}]
+
+[project.scripts]
+ngkslibrary = "ngkslibrary.__main__:main"
+
+[tool.setuptools.packages.find]
+where = [".", "src"]
+include = ["ngksdocengine*", "ngkslibrary*"]
+exclude = ["_proof*", "__pycache__*", ".venv*"]

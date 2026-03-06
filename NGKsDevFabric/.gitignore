@@ -1,0 +1,20 @@
+__pycache__/
+pycache/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+changes.log
+activity_log.txt.ngkssys/**/changes.log
+_artifacts/runtime/activity_log.txt
+_artifacts/runtime/snapshots/
+
+# NGKs proof + artifacts (generated)
+_proof/
+_artifacts/
+dist/
+.ngkssys/
+
+# common archives generated during proof runs
+*.zip

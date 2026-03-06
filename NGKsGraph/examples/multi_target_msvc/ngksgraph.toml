@@ -1,0 +1,59 @@
+out_dir = "build"
+warnings = "default"
+
+cxx_std = 20
+include_dirs = ["include"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
+
+[build]
+default_target = "app"
+
+[[targets]]
+name = "core"
+type = "staticlib"
+src_glob = ["src/core/**/*.cpp"]
+include_dirs = ["src/core"]
+defines = []
+cflags = []
+libs = []
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = []
+
+[[targets]]
+name = "app"
+type = "exe"
+src_glob = ["src/app/**/*.cpp"]
+include_dirs = ["src/core"]
+defines = []
+cflags = []
+libs = ["user32"]
+lib_dirs = []
+ldflags = []
+cxx_std = 20
+links = ["core"]
+
+[qt]
+enabled = false
+prefix = ""
+version = 6
+modules = []
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""
