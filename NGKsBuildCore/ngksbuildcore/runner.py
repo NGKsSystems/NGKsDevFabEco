@@ -93,6 +93,17 @@ def _stream_pipe(pipe, logger: EventLogger, node_id: str, stream_type: str) -> N
     pipe.close()
 
 
+def _ensure_output_parent_dirs(outputs: list[Path]) -> list[Path]:
+    parents = {output.parent for output in outputs}
+    created: list[Path] = []
+    for parent in sorted(parents, key=lambda p: str(p)):
+        if parent.exists():
+            continue
+        parent.mkdir(parents=True, exist_ok=True)
+        created.append(parent)
+    return created
+
+
 def execute_node(plan: BuildPlan, node: PlanNode, logger: EventLogger) -> tuple[int, str, str]:
     inputs, outputs, node_cwd = _resolve_paths(plan, node)
     env = os.environ.copy()
@@ -110,6 +121,10 @@ def execute_node(plan: BuildPlan, node: PlanNode, logger: EventLogger) -> tuple[
         env_overrides=node.env,
     )
     logger.command(node_id=node.id, stage="start", start=start_ts, cwd=str(node_cwd), cmd=resolved_cmd)
+
+    created_dirs = _ensure_output_parent_dirs(outputs)
+    if created_dirs:
+        logger.emit("NODE_OUTPUT_DIRS_READY", node_id=node.id, dirs=[str(path) for path in created_dirs])
 
     popen_kwargs = {
         "cwd": str(node_cwd),

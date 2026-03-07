@@ -41,7 +41,7 @@ from ngksgraph.repair import (
     validate_ai_actions,
 )
 from ngksgraph.sanitize import sanitize_compile_commands, sanitize_graph_dict
-from ngksgraph.scan import scan_sources_by_target
+from ngksgraph.scan import discover_repo_source_candidates, scan_sources_by_target
 from ngksgraph.util import normalize_path, sha256_text
 
 
@@ -880,6 +880,18 @@ def resolve_plan_context(
     selected_target = _selected_target(config, target)
 
     source_map = scan_sources_by_target(repo_root, config)
+    selected_sources = list(source_map.get(selected_target, []))
+    if not selected_sources:
+        repo_candidates = discover_repo_source_candidates(repo_root, limit=20)
+        if repo_candidates:
+            target_cfg = config.get_target(selected_target)
+            globs = ", ".join(target_cfg.src_glob)
+            sample = ", ".join(repo_candidates[:10])
+            raise ValueError(
+                "NO_SOURCES_MATCHED: "
+                f"target='{selected_target}' src_glob=[{globs}] matched 0 files, "
+                f"but repository contains source files (sample: {sample})."
+            )
 
     owner_map: dict[str, list[str]] = {}
     for target_name, sources in source_map.items():

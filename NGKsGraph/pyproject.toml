@@ -16,5 +16,8 @@ ngksgraph = "ngksgraph.cli:main"
 [tool.setuptools.packages.find]
 include = ["ngksgraph*"]
 
+[tool.setuptools.package-data]
+ngksgraph = ["templates/*.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

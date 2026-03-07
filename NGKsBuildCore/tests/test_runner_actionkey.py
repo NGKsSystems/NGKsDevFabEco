@@ -86,3 +86,90 @@ def test_action_key_skip_and_rerun_on_cmd_change(tmp_path: Path, monkeypatch) ->
     summary3 = json.loads((run3 / "summary.json").read_text(encoding="utf-8"))
     assert summary3["run_nodes"] == 1
     assert summary3["skipped_nodes"] == 0
+
+
+def test_run_build_accepts_nodes_schema_plan(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    plan_path = tmp_path / "nodes_plan.json"
+    proof_root = tmp_path / "proof"
+
+    payload = {
+        "version": 1,
+        "base_dir": ".",
+        "nodes": [
+            {
+                "id": "prep",
+                "deps": [],
+                "inputs": [],
+                "outputs": ["in.txt"],
+                "cmd": f'"{sys.executable}" -c "from pathlib import Path; Path(\'in.txt\').write_text(\'ok\\n\', encoding=\'utf-8\')"',
+            },
+            {
+                "id": "build",
+                "deps": ["prep"],
+                "inputs": ["in.txt"],
+                "outputs": ["out.txt"],
+                "cmd": f'"{sys.executable}" -c "from pathlib import Path; Path(\'out.txt\').write_text(Path(\'in.txt\').read_text(encoding=\'utf-8\'), encoding=\'utf-8\')"',
+            },
+        ],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert run_build(plan_path=str(plan_path), jobs=1, proof=str(proof_root)) == 0
+    assert (tmp_path / "out.txt").exists()
+
+
+def test_runner_creates_output_parent_dirs_before_execution(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    plan_path = tmp_path / "plan_parent_dirs.json"
+    proof_root = tmp_path / "proof"
+
+    payload = {
+        "schema_version": "1.0",
+        "actions": [
+            {
+                "id": "a",
+                "deps": [],
+                "inputs": [],
+                "outputs": ["build/debug/obj/engine/ui/check.obj"],
+                "argv": [
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; p=Path('build/debug/obj/engine/ui/check.obj'); "
+                    "assert p.parent.exists(); p.write_text('ok', encoding='utf-8')",
+                ],
+            }
+        ],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert run_build(plan_path=str(plan_path), jobs=1, proof=str(proof_root)) == 0
+    assert (tmp_path / "build" / "debug" / "obj" / "engine" / "ui" / "check.obj").exists()
+
+
+def test_compile_style_obj_output_runs_without_precreated_dir(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    plan_path = tmp_path / "plan_compile_style.json"
+    proof_root = tmp_path / "proof"
+
+    payload = {
+        "version": 1,
+        "base_dir": ".",
+        "nodes": [
+            {
+                "id": "compile",
+                "deps": [],
+                "inputs": [],
+                "outputs": ["build/debug/obj/engine/ui/button.obj"],
+                "cmd": (
+                    f'"{sys.executable}" -c "from pathlib import Path; '
+                    "p=Path('build/debug/obj/engine/ui/button.obj'); "
+                    "p.write_bytes(b'OBJ')\""
+                ),
+            }
+        ],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert run_build(plan_path=str(plan_path), jobs=1, proof=str(proof_root)) == 0
+    assert (tmp_path / "build" / "debug" / "obj" / "engine" / "ui" / "button.obj").read_bytes() == b"OBJ"

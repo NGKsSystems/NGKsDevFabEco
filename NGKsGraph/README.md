@@ -53,6 +53,9 @@ toolchain-aware planning/analysis subprocesses. Your current shell environment i
 - `ngksgraph configure` - scan sources and emit deterministic plan/state
 - `ngksgraph build` - emit deterministic BuildCore handoff plan
 - `ngksgraph build --target <name>` - build a specific target
+- `ngksgraph plan --profile <name>` - emit graph-native planning artifact (`build_graph/<profile>/ngksgraph_plan.json`)
+- `ngksgraph buildplan --profile <name>` - emit NGKsBuildCore-consumable plan (`build_graph/<profile>/ngksbuildcore_plan.json` by default)
+- `ngksgraph buildplan --profile <name> --out <path>` - emit NGKsBuildCore plan to a custom path
 - `ngksgraph run` - emit handoff plan and run diagnostics
 - `ngksgraph clean` - remove output directory
 - `ngksgraph doctor` - verify MSVC toolchain availability

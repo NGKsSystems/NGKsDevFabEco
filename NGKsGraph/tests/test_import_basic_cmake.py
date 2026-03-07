@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import ngksgraph.cli as graph_cli
 from ngksgraph.cli import main
 from ngksgraph.config import load_config
 
@@ -17,6 +18,39 @@ def test_init_template_multi_target(tmp_path: Path, monkeypatch):
     assert "[[targets]]" in text
     assert "[profiles.debug]" in text
     assert "[profiles.release]" in text
+
+
+def test_init_uses_packaged_template_when_repo_template_missing(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(graph_cli, "_repo_root_from_cwd", lambda: tmp_path)
+
+    rc = main(["init", "--template", "qt-app"])
+    assert rc == 0
+
+    cfg_path = tmp_path / "ngksgraph.toml"
+    text = cfg_path.read_text(encoding="utf-8")
+    assert "modules = [\"Core\", \"Gui\", \"Widgets\"]" in text
+
+
+def test_init_default_emits_repo_aware_multitarget_for_engine_and_multiple_apps(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "engine" / "core" / "src").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "engine" / "core" / "src" / "core.cpp").write_text("int core(){return 0;}\n", encoding="utf-8")
+    (tmp_path / "apps" / "alpha").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "apps" / "beta").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "apps" / "alpha" / "main.cpp").write_text("int main(){return 0;}\n", encoding="utf-8")
+    (tmp_path / "apps" / "beta" / "main.cpp").write_text("int main(){return 0;}\n", encoding="utf-8")
+
+    rc = main(["init"])
+    assert rc == 0
+
+    cfg_text = (tmp_path / "ngksgraph.toml").read_text(encoding="utf-8")
+    assert "[[targets]]" in cfg_text
+    assert 'name = "engine"' in cfg_text
+    assert 'name = "alpha"' in cfg_text
+    assert 'name = "beta"' in cfg_text
+    assert '[build]' in cfg_text
+    assert 'default_target = "alpha"' in cfg_text
 
 
 def test_import_cmake_basic_mapping(tmp_path: Path, monkeypatch):

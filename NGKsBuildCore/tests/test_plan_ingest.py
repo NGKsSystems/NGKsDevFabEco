@@ -42,3 +42,54 @@ def test_loads_graph_actions_schema(tmp_path: Path) -> None:
     assert node_by_id["build"].cwd == "."
 
 
+def test_loads_nodes_schema(tmp_path: Path) -> None:
+    plan_path = tmp_path / "nodes_plan.json"
+    payload = {
+        "version": 1,
+        "base_dir": ".",
+        "nodes": [
+            {
+                "id": "prep",
+                "deps": [],
+                "inputs": [],
+                "outputs": ["in.txt"],
+                "cmd": "python -c \"from pathlib import Path; Path('in.txt').write_text('ok', encoding='utf-8')\"",
+            },
+            {
+                "id": "build",
+                "deps": ["prep"],
+                "inputs": ["in.txt"],
+                "outputs": ["out.txt"],
+                "cmd": "python -c \"from pathlib import Path; Path('out.txt').write_text(Path('in.txt').read_text(encoding='utf-8'), encoding='utf-8')\"",
+            },
+        ],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    plan = load_plan(plan_path)
+
+    assert len(plan.nodes) == 2
+    assert {n.id for n in plan.nodes} == {"prep", "build"}
+
+
+def test_graph_native_plan_error_has_buildplan_hint(tmp_path: Path) -> None:
+    plan_path = tmp_path / "graph_native_plan.json"
+    payload = {
+        "schema_version": 1,
+        "targets": [
+            {
+                "name": "app",
+                "steps": [],
+            }
+        ],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    try:
+        load_plan(plan_path)
+    except ValueError as exc:
+        assert "ngksgraph buildplan" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for graph-native plan payload")
+
+

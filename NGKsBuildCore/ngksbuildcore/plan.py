@@ -77,6 +77,10 @@ def load_plan(plan_path: str | Path) -> BuildPlan:
         raw_nodes = payload["nodes"]
         node_factory = _legacy_node
     else:
+        if isinstance(payload, dict) and isinstance(payload.get("targets"), list):
+            raise ValueError(
+                "plan json appears graph-native (targets/steps). Use `ngksgraph buildplan` for NGKsBuildCore-compatible output."
+            )
         raise ValueError("plan json must include either an 'actions' array or a 'nodes' array")
 
     base_dir_raw = payload.get("base_dir")

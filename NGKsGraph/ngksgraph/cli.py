@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import importlib.resources as importlib_resources
 import json
 import hashlib
 import re
@@ -228,6 +229,146 @@ def _write_ecosystem_error(proof_dir: Path, message: str) -> None:
     (proof_dir / "30_errors.txt").write_text(str(message).strip() + "\n", encoding="utf-8")
 
 
+def _read_init_template_text(template_name: str, repo_root: Path) -> str | None:
+    repo_template = repo_root / "templates" / template_name
+    if repo_template.exists():
+        return repo_template.read_text(encoding="utf-8")
+
+    try:
+        package_template = importlib_resources.files("ngksgraph").joinpath("templates", template_name)
+        return package_template.read_text(encoding="utf-8")
+    except (FileNotFoundError, ModuleNotFoundError):
+        return None
+
+
+def _discover_repo_app_mains(repo_root: Path) -> list[str]:
+    app_names: set[str] = set()
+    for main_path in sorted((repo_root / "apps").glob("*/main.cpp")):
+        if main_path.is_file() and len(main_path.parts) >= 2:
+            app_names.add(main_path.parent.name)
+    return sorted(app_names)
+
+
+def _has_engine_sources(repo_root: Path) -> bool:
+    engine_root = repo_root / "engine"
+    if not engine_root.exists():
+        return False
+    for pattern in ("**/*.cpp", "**/*.c"):
+        if any(path.is_file() for path in engine_root.glob(pattern)):
+            return True
+    return False
+
+
+def _render_repo_aware_default_template(repo_root: Path) -> str | None:
+    app_names = _discover_repo_app_mains(repo_root)
+    if len(app_names) < 2 or not _has_engine_sources(repo_root):
+        return None
+
+    default_target = "widget_sandbox" if "widget_sandbox" in app_names else app_names[0]
+    include_dirs = [
+        "include",
+        "engine/core/include",
+        "engine/gfx/include",
+        "engine/gfx/win32/include",
+        "engine/platform/win32/include",
+        "engine/ui",
+        "engine/ui/include",
+    ]
+    libs = ["user32", "gdi32", "d3d11", "dxgi"]
+
+    lines: list[str] = [
+        "# Template: repo-aware multi-target (engine static library + app executables)",
+        'out_dir = "build"',
+        'warnings = "default"',
+        "",
+        "cxx_std = 20",
+        f"include_dirs = {json.dumps(include_dirs)}",
+        'defines = ["UNICODE", "_UNICODE"]',
+        "cflags = []",
+        "ldflags = []",
+        "libs = []",
+        "lib_dirs = []",
+        "",
+        "[build]",
+        f'default_target = "{default_target}"',
+        "",
+        "[profiles.debug]",
+        'cflags = ["/Od", "/Zi"]',
+        'defines = ["DEBUG"]',
+        "ldflags = []",
+        "",
+        "[profiles.release]",
+        'cflags = ["/O2"]',
+        'defines = ["NDEBUG"]',
+        "ldflags = []",
+        "",
+        "[[targets]]",
+        'name = "engine"',
+        'type = "staticlib"',
+        'src_glob = ["engine/**/*.cpp", "engine/**/*.c"]',
+        f"include_dirs = {json.dumps(include_dirs)}",
+        'defines = ["UNICODE", "_UNICODE"]',
+        "cflags = []",
+        "libs = []",
+        "lib_dirs = []",
+        "ldflags = []",
+        "cxx_std = 20",
+        "links = []",
+        "",
+    ]
+
+    for app_name in app_names:
+        lines.extend(
+            [
+                "[[targets]]",
+                f'name = "{app_name}"',
+                'type = "exe"',
+                f'src_glob = ["apps/{app_name}/**/*.cpp", "apps/{app_name}/**/*.c"]',
+                f"include_dirs = {json.dumps(include_dirs)}",
+                'defines = ["UNICODE", "_UNICODE"]',
+                "cflags = []",
+                f"libs = {json.dumps(libs)}",
+                "lib_dirs = []",
+                "ldflags = []",
+                "cxx_std = 20",
+                'links = ["engine"]',
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
+            "[qt]",
+            "enabled = false",
+            'prefix = ""',
+            "version = 6",
+            "modules = []",
+            'moc_path = ""',
+            'uic_path = ""',
+            'rcc_path = ""',
+            "include_dirs = []",
+            "lib_dirs = []",
+            "libs = []",
+            "",
+            "[ai]",
+            "enabled = false",
+            'plugin = ""',
+            'mode = "advise"',
+            "max_actions = 3",
+            "log_tail_lines = 200",
+            "redact_paths = true",
+            "redact_env = true",
+            "",
+            "[ai.provider]",
+            'model = ""',
+            'endpoint = ""',
+            'api_key_env = ""',
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     repo_root = _repo_root_from_cwd()
     dest = _config_path(repo_root)
@@ -246,14 +387,15 @@ def cmd_init(args: argparse.Namespace) -> int:
         print(f"Unknown template '{args.template}'. Available: default, basic, qt-app, multi-target")
         return 1
 
-    template = repo_root / "templates" / template_name
-    if not template.exists():
-        package_template = Path(__file__).resolve().parent.parent / "templates" / template_name
-        template = package_template
-    if not template.exists():
+    template_text = _read_init_template_text(template_name, repo_root)
+    if selected in {"default", "basic"}:
+        repo_aware = _render_repo_aware_default_template(repo_root)
+        if repo_aware:
+            template_text = repo_aware
+    if template_text is None:
         print("Template not found.")
         return 1
-    dest.write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
+    dest.write_text(template_text, encoding="utf-8")
     print(f"Created {dest}")
     return 0
 
@@ -493,9 +635,13 @@ def cmd_buildplan(args: argparse.Namespace) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
-    out_path = Path(args.out)
-    if not out_path.is_absolute():
-        out_path = (repo_root / out_path).resolve()
+    profile_name = str(configured.get("profile", args.profile or "debug"))
+    if args.out:
+        out_path = Path(args.out)
+        if not out_path.is_absolute():
+            out_path = (repo_root / out_path).resolve()
+    else:
+        out_path = (repo_root / "build_graph" / profile_name / "ngksbuildcore_plan.json").resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     written, warnings = emit_buildcore_plan(repo_root, configured, out_path)
@@ -1170,7 +1316,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_buildplan.add_argument("--project", default=None)
     p_buildplan.add_argument("--target", default=None)
     p_buildplan.add_argument("--profile", default=None)
-    p_buildplan.add_argument("--out", required=True)
+    p_buildplan.add_argument("--out", required=False, help="Output path for BuildCore plan (default: build_graph/<profile>/ngksbuildcore_plan.json)")
     p_buildplan.set_defaults(func=cmd_buildplan)
 
     p_planaudit = sub.add_parser("planaudit", help="Audit BuildCore plan I/O completeness and dependency validity")

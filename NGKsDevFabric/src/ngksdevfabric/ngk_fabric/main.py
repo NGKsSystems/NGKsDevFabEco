@@ -226,7 +226,7 @@ def _resolve_backup_root_interactive(project_root: Path, initial_value: str | No
     return _prompt_backup_root(project_root)
 
 
-def _resolve_backup_root(args: argparse.Namespace, project_root: Path, allow_prompt: bool = False) -> Path:
+def _resolve_backup_root(args: argparse.Namespace, project_root: Path, allow_prompt: bool = False) -> Path | None:
     backup_root_value = (getattr(args, "backup_root", None) or os.environ.get("NGKS_BACKUP_ROOT", "")).strip()
     no_prompt = bool(getattr(args, "no_prompt", False))
     interactive_allowed = allow_prompt and not no_prompt and _is_interactive_tty()
@@ -263,11 +263,11 @@ def _resolve_backup_root(args: argparse.Namespace, project_root: Path, allow_pro
     if interactive_allowed:
         chosen = _prompt_backup_root(project_root)
         if chosen is None:
-            raise ValueError("backup_root_cancelled")
+            return None
         os.environ["NGKS_BACKUP_ROOT"] = str(chosen)
         return chosen
 
-    raise ValueError("backup_root_missing: pass --backup-root or set NGKS_BACKUP_ROOT")
+    return None
 
 
 def _resolve_pf(args: argparse.Namespace, project_root: Path, prefix: str) -> Path:
@@ -597,7 +597,7 @@ def _write_run_summary(
 
 def _print_doc_notice(project_root: Path) -> None:
     _print_result(f"Documentation will be located at {project_root / '_proof'}")
-    _print_result("Assign where you want backup documentation saved.")
+    _print_result("Set --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.")
 
 
 def _backup_mirror_path(project_root: Path, backup_root: Path, pf: Path) -> Path:
@@ -622,9 +622,10 @@ def cmd_probe(args: argparse.Namespace) -> int:
     backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "probe")
     report = probe_project(project, pf, run_dynamic_checks=True)
-    _mirror_docs_to_backup(project, backup_root, pf)
+    if backup_root is not None:
+        _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"probe_report={pf / 'probe_report.json'}")
     _print_result(f"primary_path={report.get('primary_path')}")
@@ -638,9 +639,10 @@ def cmd_profile_init(args: argparse.Namespace) -> int:
     backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "profile_init")
     receipt = init_profile(project, pf, write_project=bool(args.write_project))
-    _mirror_docs_to_backup(project, backup_root, pf)
+    if backup_root is not None:
+        _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"profile_write_receipt={pf / 'profile_write_receipt.json'}")
     _print_result(f"profile_path={receipt.get('profile_path')}")
@@ -715,10 +717,10 @@ def cmd_build(args: argparse.Namespace) -> int:
             code = int(gate_code)
 
     _print_result(f"build_run_dir={pf / 'run_build'}")
-    if code == 0:
+    if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"exit_code={code}")
     return int(code)
@@ -727,13 +729,13 @@ def cmd_build(args: argparse.Namespace) -> int:
 def cmd_doctor(args: argparse.Namespace) -> int:
     project = _resolve_project_root(args.project_path)
     _print_doc_notice(project)
-    backup_root = _resolve_backup_root(args, project, allow_prompt=True)
+    backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "doctor")
     code = doctor_toolchain(project, pf)
-    if code == 0:
+    if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"toolchain_report={pf / 'toolchain_report.json'}")
     _print_result(f"exit_code={code}")
@@ -1478,13 +1480,13 @@ def cmd_term_run(args: argparse.Namespace) -> int:
     else:
         code, run_dir = run_shell_direct(args.command, pf=pf, cwd=cwd, plan=plan)
 
-    if code == 0:
+    if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
 
     _print_result(f"smart_terminal_enabled={enabled}")
     _print_result(f"smart_terminal_source={source}")
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"term_run_dir={run_dir}")
     _print_result(f"exit_code={code}")
@@ -1497,10 +1499,10 @@ def cmd_render_doc(args: argparse.Namespace) -> int:
     backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "render_doc")
     code, details = run_docengine_render(pf=pf, devfabric_root=DEVFABRIC_ROOT)
-    if code == 0:
+    if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"docengine_exit_code={code}")
     _print_result(f"docengine_root={details.get('ngkslibrary_root', '')}")
@@ -1517,10 +1519,10 @@ def cmd_doc_gate(args: argparse.Namespace) -> int:
     backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "doc_gate")
     code, report = doc_gate(pf=pf)
-    if code == 0:
+    if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _print_result(f"project_root={project}")
-    _print_result(f"backup_root={backup_root}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"doc_gate_status={report.get('status', 'UNKNOWN')}")
     _print_result(f"doc_gate_exit_code={code}")
@@ -1607,9 +1609,9 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument(
         "--backup-root",
         required=False,
-        help="Backup root for mirrored proof output. If omitted, interactive shells will prompt; non-interactive mode fails fast.",
+        help="Backup root for mirrored proof output. If omitted, backup mirroring is disabled.",
     )
-    doctor_parser.add_argument("--no-prompt", action="store_true", help="Fail fast if backup root is not provided via --backup-root or NGKS_BACKUP_ROOT.")
+    doctor_parser.add_argument("--no-prompt", action="store_true", help="Do not prompt for backup-root fixes when an invalid backup root is provided.")
     doctor_parser.set_defaults(func=cmd_doctor)
 
     run_parser = sub.add_parser("run")
