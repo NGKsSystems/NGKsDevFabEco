@@ -311,3 +311,40 @@ def test_detect_generated_sln_does_not_override_node(tmp_path: Path):
     assert detected is True
     assert build_system == "node"
     assert reason == "package.json"
+
+
+def test_static_site_build_runs_for_target_build(monkeypatch, tmp_path: Path):
+    site_root = tmp_path / "NGKsSystems-Website"
+    site_root.mkdir(parents=True, exist_ok=True)
+    (site_root / "index.html").write_text("<html><body>Hello</body></html>\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+
+    def _fake_subprocess(command, cwd=None, check=False, capture_output=True, text=True):
+        del cwd, check, capture_output, text
+        if command[:2] == ["ngkslibrary", "assemble"]:
+            return _Proc(returncode=0, stdout="library ok\n")
+        raise AssertionError(f"unexpected subprocess invocation: {command}")
+
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_subprocess)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem", "--target", "build"])
+
+    assert code == 0
+    run_dir = _latest_run_dir(tmp_path)
+    summary_text = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
+    assert "build_detected=true" in summary_text
+    assert "build_system=static_site" in summary_text
+    assert "build_reason=build_completed_static_site" in summary_text
+    assert "build_success=true" in summary_text
+
+    copied_index = tmp_path / "build_static_site" / "index.html"
+    assert copied_index.exists()

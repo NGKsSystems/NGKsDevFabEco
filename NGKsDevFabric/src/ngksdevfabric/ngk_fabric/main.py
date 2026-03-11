@@ -544,6 +544,38 @@ def _detect_build_inputs(project_root: Path) -> tuple[bool, str, str]:
     return False, "none", "no_build_inputs"
 
 
+def _detect_static_site_root(project_root: Path) -> Path | None:
+    direct_index = project_root / "index.html"
+    if direct_index.is_file():
+        return project_root
+
+    blocked = {".git", "_proof", "node_modules", ".venv", ".venv_ngksdevfabeco_pypi", "build", "dist", "out"}
+    for child in sorted(project_root.iterdir(), key=lambda p: p.name.lower()):
+        if not child.is_dir() or child.name in blocked:
+            continue
+        if (child / "index.html").is_file():
+            return child
+    return None
+
+
+def _run_static_site_build(project_root: Path, source_root: Path) -> tuple[bool, str]:
+    out_root = project_root / "build_static_site"
+    try:
+        if out_root.exists():
+            shutil.rmtree(out_root)
+        shutil.copytree(source_root, out_root)
+        receipt = {
+            "build_system": "static_site",
+            "source_root": str(source_root),
+            "output_root": str(out_root),
+            "generated_at": _iso_now(),
+        }
+        _write_text(out_root / "_ngks_build_receipt.json", json.dumps(receipt, indent=2))
+    except OSError as exc:
+        return False, str(exc)
+    return True, "ok"
+
+
 def _ensure_ngks_operating_rules(project_root: Path) -> None:
     ngks_dir = project_root / ".ngks"
     ngks_dir.mkdir(parents=True, exist_ok=True)
@@ -968,6 +1000,91 @@ def cmd_run(args: argparse.Namespace) -> int:
         return int(exit_code)
 
     if not build_detected:
+        static_site_root = _detect_static_site_root(project_root)
+        if requested_target == "build" and static_site_root is not None:
+            build_detected = True
+            build_system = "static_site"
+            try:
+                build_detect_reason = str(static_site_root.relative_to(project_root).as_posix() + "/index.html")
+            except ValueError:
+                build_detect_reason = "index.html"
+
+            env_hash_reason = "no_build_inputs"
+            plan_hash_reason = "no_build_inputs"
+            _mark_stage("envcapsule", "skipped", "no_build_inputs")
+            _mark_stage("graph", "skipped", "no_build_inputs")
+            _mark_stage("buildcore", "ran", "attempted_static_site")
+
+            static_ok, static_reason = _run_static_site_build(project_root, static_site_root)
+            if not static_ok:
+                _mark_stage("buildcore", "ran", "build_failed")
+                _mark_stage("library", "skipped", "upstream_failed")
+                _append_failure(
+                    run_dir,
+                    StageResult(stage="30_buildcore", exit_code=1, stdout="", stderr=static_reason),
+                    failure_class="build_failed",
+                )
+                return _finish(
+                    exit_code=1,
+                    build_success=False,
+                    build_action="attempted",
+                    build_reason="build_failed",
+                    failure_class="build_failed",
+                    failed_stage="30_buildcore",
+                )
+
+            _mark_stage("buildcore", "ran", "ok")
+            _mark_stage("library", "ran", "attempted")
+            stage = _run_stage_with_resolver(
+                stage="40_library",
+                stage_dir=library_dir,
+                project_root=project_root,
+                component_name="ngkslibrary",
+                module_name="ngkslibrary",
+                tail_args=[
+                    "assemble",
+                    "--run-proof",
+                    str(run_dir),
+                    "--pf",
+                    str(library_dir),
+                    "--run-id",
+                    run_id,
+                    "--build-system",
+                    build_system,
+                    "--build-action",
+                    "attempted",
+                    "--build-reason",
+                    "build_completed_static_site",
+                    "--exit-code",
+                    "0",
+                ],
+            )
+            if stage.exit_code != 0:
+                _mark_stage("library", "ran", "build_failed")
+                _append_failure(
+                    run_dir,
+                    stage,
+                    failure_class="build_failed",
+                    stdout_path=library_dir / "01_stdout.txt",
+                    stderr_path=library_dir / "02_stderr.txt",
+                )
+                return _finish(
+                    exit_code=1,
+                    build_success=False,
+                    build_action="attempted",
+                    build_reason="build_failed",
+                    failure_class="build_failed",
+                    failed_stage="40_library",
+                )
+
+            _mark_stage("library", "ran", "ok")
+            return _finish(
+                exit_code=0,
+                build_success=True,
+                build_action="attempted",
+                build_reason="build_completed_static_site",
+            )
+
         _ensure_ngks_operating_rules(project_root)
         env_hash_reason = "no_build_inputs"
         plan_hash_reason = "no_build_inputs"
