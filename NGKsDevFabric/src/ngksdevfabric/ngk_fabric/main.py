@@ -415,6 +415,61 @@ def _append_failure_message(run_dir: Path, stage: str, message: str, exit_code: 
     )
 
 
+def _read_failure_hint(run_dir: Path) -> str:
+    errors_path = run_dir / "30_errors.txt"
+    if not errors_path.exists():
+        return ""
+    try:
+        lines = errors_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+
+    ignored_prefixes = (
+        "class=",
+        "stage=",
+        "exit_code=",
+        "missing_outputs=",
+        "stdout_path=",
+        "stderr_path=",
+        "snippet_start",
+        "snippet_end",
+        "next_steps=",
+    )
+    candidates = [line.strip() for line in lines if line.strip() and not line.strip().startswith(ignored_prefixes)]
+    if not candidates:
+        return ""
+
+    preferred_markers = ("[err]", "error", "missing_tool", "config_not_found", "target_not_found")
+    for candidate in candidates:
+        lowered = candidate.lower()
+        if any(marker in lowered for marker in preferred_markers):
+            return candidate[:220]
+    return candidates[0][:220]
+
+
+def _stage_label(stage: str) -> str:
+    mapping = {
+        "10_envcapsule": "EnvCapsule",
+        "20_graph": "Graph",
+        "30_buildcore": "BuildCore",
+        "40_library": "Library",
+    }
+    return mapping.get(stage, stage or "unknown")
+
+
+def _failure_action_hint(failure_hint: str, build_reason: str) -> str:
+    lowered = f"{failure_hint} {build_reason}".lower()
+    if "cargo" in lowered:
+        return "ensure Rust Cargo is installed and on PATH (e.g. %USERPROFILE%\\.cargo\\bin), then rerun"
+    if "missing_required_target" in lowered:
+        return "add the requested npm script target to package.json scripts and rerun"
+    if "missing_tool:" in lowered:
+        return "install the missing tool and rerun"
+    if "missing_required_outputs" in lowered:
+        return "check prior stage outputs and rerun"
+    return "see 30_errors.txt for details"
+
+
 def _extract_hash(path: Path) -> str:
     if not path.exists():
         return ""
@@ -895,6 +950,18 @@ def cmd_run(args: argparse.Namespace) -> int:
             failure_class=failure_class,
             failed_stage=failed_stage,
         )
+        if int(exit_code) != 0:
+            errors_path = run_dir / "30_errors.txt"
+            failure_hint = _read_failure_hint(run_dir)
+            action_hint = _failure_action_hint(failure_hint, build_reason)
+            summary = (
+                f"failure_summary: Build failed in {_stage_label(failed_stage)} "
+                f"(class={failure_class or 'unknown'}, reason={build_reason}). "
+                f"Action: {action_hint}. Details: {errors_path}"
+            )
+            if failure_hint:
+                summary += f". Hint: {failure_hint}"
+            _print_result(summary)
         _print_result(f"run_id={run_id}")
         _print_result(f"proof_dir={run_dir}")
         _print_result(f"exit_code={int(exit_code)}")

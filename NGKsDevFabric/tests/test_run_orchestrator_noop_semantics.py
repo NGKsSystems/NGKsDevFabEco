@@ -109,6 +109,23 @@ def test_node_detected_missing_target_is_precondition_failed(monkeypatch, tmp_pa
     assert "exit_code=2" in summary_text
 
 
+def test_failure_prints_direct_summary_message(monkeypatch, tmp_path: Path, capsys):
+    (tmp_path / "package.json").write_text('{"name":"app","scripts":{"build":"node app.js"}}\n', encoding="utf-8")
+
+    def _unexpected_subprocess(*args, **kwargs):
+        raise AssertionError(f"subprocess.run should not be called when target precheck fails: {args}, {kwargs}")
+
+    monkeypatch.setattr(fabric_main.subprocess, "run", _unexpected_subprocess)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--profile", "debug", "--target", "smoke", "--mode", "ecosystem"])
+
+    assert code == 2
+    captured = capsys.readouterr()
+    assert "failure_summary: Build failed in BuildCore" in captured.out
+    assert "class=precondition_failed" in captured.out
+    assert "target 'smoke' is missing from package.json scripts" in captured.out
+
+
 def test_node_nested_manifest_target_precheck_uses_detected_manifest(monkeypatch, tmp_path: Path):
     desktop_dir = tmp_path / "desktop"
     desktop_dir.mkdir(parents=True, exist_ok=True)
