@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ngksgraph.build import configure_project
+from ngksgraph.build import _apply_cached_target_overrides, configure_project
 from ngksgraph.cli import main
+from ngksgraph.config import load_config
+from ngksgraph.graph import build_graph_from_project
+from ngksgraph.graph_contract import compute_structural_graph_hash
+from ngksgraph.plan_cache import build_plan_key, json_sha
 from ngksgraph.torture_project import gen_project
 
 
@@ -116,3 +120,41 @@ def test_doctor_cache_corruption_exit2(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(project.repo_root)
     rc = main(["doctor", "--cache", "--profile", "debug"])
     assert rc == 2
+
+
+def test_cache_hit_reintegrates_qt_generated_sources(tmp_path: Path):
+    project = gen_project(tmp_path, seed=9309, qobject_headers=3, ui_files=1, qrc_files=1, with_profiles=True)
+
+    first = configure_project(project.repo_root, project.config_path, profile="debug")
+    assert first["cache_hit"] is False
+
+    cache_profile = project.repo_root / ".ngksgraph_cache" / "profile_debug"
+    plan_path = cache_profile / "plan.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+
+    stale_map: dict[str, list[str]] = {}
+    for target_name, sources in dict(plan.get("source_map", {})).items():
+        kept = [
+            src
+            for src in list(sources)
+            if "build/debug/qt/moc_" not in src.replace("\\", "/") and "build/debug/qt/qrc_" not in src.replace("\\", "/")
+        ]
+        stale_map[target_name] = kept
+    plan["source_map"] = stale_map
+    plan_path.write_text(json.dumps(plan, indent=2, sort_keys=True), encoding="utf-8")
+
+    config = load_config(project.config_path)
+    selected_profile = config.apply_profile("debug")
+    assert selected_profile == "debug"
+    selected_target = config.default_target_name()
+    _apply_cached_target_overrides(config, plan)
+    graph = build_graph_from_project(config, source_map=stale_map, msvc_auto=False)
+    plan_key = build_plan_key(project.config_path, selected_profile, selected_target, compute_structural_graph_hash(graph), config)
+    (cache_profile / "plan_key.json").write_text(json.dumps(plan_key, indent=2, sort_keys=True), encoding="utf-8")
+    (cache_profile / "plan_key.sha256").write_text(json_sha(plan_key), encoding="utf-8")
+
+    second = configure_project(project.repo_root, project.config_path, profile="debug")
+    assert second["cache_hit"] is True
+
+    selected_sources = second["source_map"][selected_target]
+    assert any("build/debug/qt/moc_" in src.replace("\\", "/") for src in selected_sources)

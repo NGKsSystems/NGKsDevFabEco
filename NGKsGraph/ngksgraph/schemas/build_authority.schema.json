@@ -1,0 +1,43 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["repo_root", "authority_mode", "source_precedence", "items"],
+	"properties": {
+		"repo_root": {"type": "string", "minLength": 1},
+		"authority_mode": {
+			"type": "string",
+			"enum": ["native_ngks", "import_foreign", "compatibility_only", "foreign_authoritative"]
+		},
+		"source_precedence": {
+			"type": "array",
+			"items": {"type": "string"},
+			"minItems": 1
+		},
+		"items": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"tool_or_file",
+					"role",
+					"authoritative",
+					"import_strategy",
+					"reason",
+					"detected",
+					"execution_allowed"
+				],
+				"properties": {
+					"tool_or_file": {"type": "string", "minLength": 1},
+					"role": {"type": "string", "minLength": 1},
+					"authoritative": {"type": "boolean"},
+					"import_strategy": {"type": "string", "minLength": 1},
+					"reason": {"type": "string", "minLength": 1},
+					"detected": {"type": "boolean"},
+					"execution_allowed": {"type": "boolean"}
+				}
+			}
+		}
+	}
+}

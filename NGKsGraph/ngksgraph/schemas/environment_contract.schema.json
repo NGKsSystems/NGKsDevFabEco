@@ -1,0 +1,40 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["repo_root", "subprojects"],
+	"properties": {
+		"repo_root": {"type": "string", "minLength": 1},
+		"subprojects": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"subproject_id",
+					"compiler_family",
+					"compiler_min_version",
+					"language_standard",
+					"required_tools",
+					"required_env",
+					"required_flags",
+					"missing",
+					"missing_env",
+					"status"
+				],
+				"properties": {
+					"subproject_id": {"type": "string", "minLength": 1},
+					"compiler_family": {"type": "string"},
+					"compiler_min_version": {"type": "string"},
+					"language_standard": {"type": "string"},
+					"required_tools": {"type": "array", "items": {"type": "string"}},
+					"required_env": {"type": "array", "items": {"type": "string"}},
+					"required_flags": {"type": "array", "items": {"type": "string"}},
+					"missing": {"type": "array", "items": {"type": "string"}},
+					"missing_env": {"type": "array", "items": {"type": "string"}},
+					"status": {"type": "string", "enum": ["pass", "warn", "fail"]}
+				}
+			}
+		}
+	}
+}

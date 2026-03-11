@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {"id": "dotnet_manifest_without_sources", "severity": "high", "decision_impact": "fail_closed"},
+    {"id": "package_manager_mismatch_001", "severity": "high", "decision_impact": "fail_closed"},
+    {"id": "cpp_standard_conflict_001", "severity": "high", "decision_impact": "fail_closed"},
+    {"id": "framework_declared_without_source_001", "severity": "medium", "decision_impact": "warn"},
+    {"id": "project_type_mismatch_001", "severity": "high", "decision_impact": "fail_closed"},
+    {"id": "native_foreign_disagree_001", "severity": "high", "decision_impact": "fail_closed"}
+  ]
+}

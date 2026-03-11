@@ -1,0 +1,8 @@
+{
+  "rules": [
+    {"id": "cmake_parse_only", "tool_or_file": "CMakeLists.txt", "role": "foreign_build_description", "authoritative": false, "execution_allowed": false, "import_strategy": "parse_only"},
+    {"id": "ninja_ignore", "tool_or_file": "build.ninja", "role": "foreign_executor_artifact", "authoritative": false, "execution_allowed": false, "import_strategy": "ignore"},
+    {"id": "compile_commands_hint_only", "tool_or_file": "compile_commands.json", "role": "foreign_generated_hint", "authoritative": false, "execution_allowed": false, "import_strategy": "hint_only"},
+    {"id": "cmake_cache_blocked", "tool_or_file": "CMakeCache.txt", "role": "cache", "authoritative": false, "execution_allowed": false, "import_strategy": "ignore"}
+  ]
+}

@@ -31,6 +31,10 @@ def _fake_run_factory(project: Path, calls: list[list[str]]):
         del cwd, check, capture_output, text
         calls.append(list(command))
 
+        if command[:2] == ["ngksenvcapsule", "resolve"]:
+            (project / "env_capsule.resolved.json").write_text('{"resolved":true}\n', encoding="utf-8")
+            return _Proc(returncode=0, stdout="resolve ok\n")
+
         if command[:2] == ["ngksenvcapsule", "lock"]:
             (project / "env_capsule.lock.json").write_text('{"lock":true}\n', encoding="utf-8")
             (project / "env_capsule.hash.txt").write_text("envhash123\n", encoding="utf-8")
@@ -99,6 +103,7 @@ def test_component_invocation_order(monkeypatch, tmp_path: Path):
 
     assert code == 0
     expected_prefixes = [
+        ["ngksenvcapsule", "resolve"],
         ["ngksenvcapsule", "lock"],
         ["ngksenvcapsule", "verify"],
         ["ngksgraph", "plan"],
@@ -111,6 +116,7 @@ def test_component_invocation_order(monkeypatch, tmp_path: Path):
     assert "--pf" in calls[2]
     assert "--pf" in calls[3]
     assert "--pf" in calls[4]
+    assert "--pf" in calls[5]
 
 
 def test_summary_generation(monkeypatch, tmp_path: Path):
@@ -138,3 +144,59 @@ def test_summary_generation(monkeypatch, tmp_path: Path):
     assert "env_capsule_hash=envhash123" in text
     assert "build_plan_hash=planhash456" in text
     assert "build_success=true" in text
+    graph_cmd = calls[3]
+    assert "--profile" in graph_cmd
+    assert "dev" in graph_cmd
+    assert "--target" in graph_cmd
+    assert "all" in graph_cmd
+
+    buildcore_cmd = calls[4]
+    assert "--profile" not in buildcore_cmd
+    assert "--target" not in buildcore_cmd
+
+
+def test_graph_stage_does_not_reuse_stale_plan_outputs(monkeypatch, tmp_path: Path):
+    _write_package_json(tmp_path)
+    # Seed stale artifacts that should be removed before graph stage runs.
+    (tmp_path / "build_plan.json").write_text('{"stale":true}\n', encoding="utf-8")
+    (tmp_path / "build_plan.hash.txt").write_text("stalehash\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+
+    def _fake_run(command, cwd=None, check=False, capture_output=True, text=True):
+        del cwd, check, capture_output, text
+        if command[:2] == ["ngksenvcapsule", "resolve"]:
+            (tmp_path / "env_capsule.resolved.json").write_text('{"resolved":true}\n', encoding="utf-8")
+            return _Proc(returncode=0, stdout="resolve ok\n")
+        if command[:2] == ["ngksenvcapsule", "lock"]:
+            (tmp_path / "env_capsule.lock.json").write_text('{"lock":true}\n', encoding="utf-8")
+            (tmp_path / "env_capsule.hash.txt").write_text("envhash123\n", encoding="utf-8")
+            return _Proc(returncode=0, stdout="lock ok\n")
+        if command[:2] == ["ngksenvcapsule", "verify"]:
+            return _Proc(returncode=0, stdout="verify ok\n")
+        if command[:2] == ["ngksgraph", "plan"]:
+            return _Proc(returncode=2, stderr="graph failed\n")
+        if command[:2] == ["ngkslibrary", "assemble"]:
+            return _Proc(returncode=0, stdout="library ok\n")
+        return _Proc(returncode=1, stderr="unexpected command")
+
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_run)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem"])
+
+    assert code == 2
+    run_dir = _latest_run_dir(tmp_path)
+    summary = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
+    assert "build_plan_hash_reason=missing_outputs" in summary
+    assert "build_reason=missing_required_outputs" in summary
+    # Stale artifacts should not survive as valid outputs.
+    assert not (tmp_path / "build_plan.json").exists()
+    assert not (tmp_path / "build_plan.hash.txt").exists()

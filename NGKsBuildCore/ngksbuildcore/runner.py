@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import threading
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
@@ -111,6 +112,12 @@ def execute_node(plan: BuildPlan, node: PlanNode, logger: EventLogger) -> tuple[
 
     start_ts = utc_now_iso()
     resolved_cmd = node.cmd
+    if os.name == "nt" and isinstance(node.cmd, list) and node.cmd:
+        # On Windows, CreateProcess may fail for list-form commands that rely on
+        # PATHEXT resolution (e.g., flutter -> flutter.bat). Resolve explicitly.
+        candidate = shutil.which(str(node.cmd[0]), path=env.get("PATH"))
+        if candidate:
+            resolved_cmd = [candidate, *node.cmd[1:]]
     logger.emit(
         "NODE_START",
         node_id=node.id,
@@ -136,10 +143,18 @@ def execute_node(plan: BuildPlan, node: PlanNode, logger: EventLogger) -> tuple[
         "errors": "replace",
     }
 
-    if isinstance(node.cmd, str):
-        proc = subprocess.Popen(node.cmd, shell=True, **popen_kwargs)
-    else:
-        proc = subprocess.Popen(node.cmd, shell=False, **popen_kwargs)
+    try:
+        if isinstance(resolved_cmd, str):
+            proc = subprocess.Popen(resolved_cmd, shell=True, **popen_kwargs)
+        else:
+            proc = subprocess.Popen(resolved_cmd, shell=False, **popen_kwargs)
+    except OSError as exc:
+        end_ts = utc_now_iso()
+        logger.emit("NODE_EXEC_ERROR", node_id=node.id, error=str(exc), errno=getattr(exc, "errno", None))
+        logger.print(f"[{node.id}][err] {exc}")
+        logger.emit("NODE_END", node_id=node.id, exit_code=1, start=start_ts, end=end_ts)
+        logger.command(node_id=node.id, stage="end", end=end_ts, exit_code=1)
+        return 1, start_ts, end_ts
 
     t_out = threading.Thread(target=_stream_pipe, args=(proc.stdout, logger, node.id, "stdout"), daemon=True)
     t_err = threading.Thread(target=_stream_pipe, args=(proc.stderr, logger, node.id, "stderr"), daemon=True)
@@ -264,7 +279,14 @@ def run_build(
         fail_fast = False
 
         with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+            logger.emit("BUILD_START", total_nodes=total_nodes, jobs=jobs)
             while len(completed) < total_nodes:
+                # Report progress at key milestones
+                progress_pct = int((len(completed) / total_nodes) * 100)
+                if len(completed) % max(1, total_nodes // 20) == 0 or len(completed) == total_nodes:  # Every 5% or at completion
+                    logger.emit("BUILD_PROGRESS", completed=len(completed), total=total_nodes, progress_pct=progress_pct)
+                    logger.print(f"Build progress: {progress_pct}% ({len(completed)}/{total_nodes} tasks)")
+
                 while ready and len(in_flight) < max(1, jobs) and not fail_fast:
                     node_id = ready.pop(0)
                     node = graph.nodes_by_id[node_id]
@@ -311,6 +333,8 @@ def run_build(
                     in_flight[future] = node_id
 
                 if not in_flight:
+                    if fail_fast:
+                        break
                     if ready:
                         continue
                     break
@@ -324,9 +348,14 @@ def run_build(
                     if result.exit_code != 0:
                         failures.append(node_id)
                         fail_fast = True
-                    for child in release_children(node_id, graph.indegree, graph.children):
-                        ready.append(child)
+                    else:
+                        for child in release_children(node_id, graph.indegree, graph.children):
+                            ready.append(child)
                     ready.sort()
+
+                    # Report progress after each node completion
+                    progress_pct = int((len(completed) / total_nodes) * 100)
+                    logger.emit("NODE_COMPLETE", node_id=node_id, completed=len(completed), total=total_nodes, progress_pct=progress_pct)
 
             if in_flight:
                 done, _ = wait(in_flight.keys())
@@ -337,7 +366,12 @@ def run_build(
                     if result.exit_code != 0:
                         failures.append(result.node_id)
 
+                    # Report progress for final completions
+                    progress_pct = int((len(completed) / total_nodes) * 100)
+                    logger.emit("NODE_COMPLETE", node_id=result.node_id, completed=len(completed), total=total_nodes, progress_pct=progress_pct)
+
         status = "FAILED" if failures else "SUCCESS"
+        final_progress_pct = 100 if not failures else int((len(completed) / total_nodes) * 100)
         summary = {
             "status": status,
             "plan": str(plan.plan_path),
@@ -346,10 +380,12 @@ def run_build(
             "run_nodes": sum(1 for r in results if r.status == "RUN"),
             "skipped_nodes": sum(1 for r in results if r.status == "SKIP"),
             "failed_nodes": sum(1 for r in results if r.status == "FAIL"),
+            "progress_pct": final_progress_pct,
             "failures": failures,
             "results": [asdict(r) for r in sorted(results, key=lambda x: x.node_id)],
         }
-        logger.emit("BUILD_END", status=status, failures=failures, summary=summary)
+        logger.emit("BUILD_END", status=status, progress_pct=final_progress_pct, failures=failures, summary=summary)
+        logger.print(f"Build {status.lower()}: {final_progress_pct}% ({len(completed)}/{total_nodes} tasks)")
         _write_summary(proof_dir, summary)
         store.close()
         return 1 if failures else 0

@@ -29,6 +29,7 @@ def build_compile_command(target: Target, src: str) -> str:
         "/EHsc",
         f"/std:c++{target.cxx_std}",
         "/MD",
+        "/FS",
         "/showIncludes",
         "/c",
         _quote(normalize_path(src)),

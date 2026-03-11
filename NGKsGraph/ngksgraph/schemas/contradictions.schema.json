@@ -1,0 +1,62 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["repo_root", "contradictions"],
+	"properties": {
+		"repo_root": {"type": "string", "minLength": 1},
+		"contradictions": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["contradiction_id", "subproject_id", "severity", "left", "right", "decision", "reason"],
+				"properties": {
+					"contradiction_id": {"type": "string", "minLength": 1},
+					"subproject_id": {"type": "string", "minLength": 1},
+					"severity": {"type": "string", "enum": ["high", "medium", "low"]},
+					"left": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["source", "value"],
+						"properties": {
+							"source": {"type": "string", "minLength": 1},
+							"value": {
+								"anyOf": [
+									{"type": "string"},
+									{"type": "number"},
+									{"type": "integer"},
+									{"type": "boolean"},
+									{"type": "null"},
+									{"type": "array"},
+									{"type": "object"}
+								]
+							}
+						}
+					},
+					"right": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["source", "value"],
+						"properties": {
+							"source": {"type": "string", "minLength": 1},
+							"value": {
+								"anyOf": [
+									{"type": "string"},
+									{"type": "number"},
+									{"type": "integer"},
+									{"type": "boolean"},
+									{"type": "null"},
+									{"type": "array"},
+									{"type": "object"}
+								]
+							}
+						}
+					},
+					"decision": {"type": "string", "enum": ["fail_closed", "warn", "ignore"]},
+					"reason": {"type": "string", "minLength": 1}
+				}
+			}
+		}
+	}
+}

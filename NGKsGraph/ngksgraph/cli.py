@@ -44,6 +44,8 @@ from ngksgraph.toolchain import doctor_report, doctor_toolchain_report
 from ngksgraph.plan_cache import CACHE_SCHEMA_VERSION
 from ngksgraph.msvc import bootstrap_msvc, resolve_msvc_toolchain_paths
 from ngksgraph.proof import TeeTextIO, gather_git_metadata, new_proof_run, write_summary, zip_run, resolve_repo_root
+from ngksgraph.repo_classifier import classify_repo, synthesize_init_toml
+from ngksgraph.scan_pipeline import run_scan
 
 
 CONTRACTS_STAMP = "6G,6H,7,9"
@@ -88,10 +90,10 @@ def _resolve_project_root(raw_project: str | None) -> Path:
     return p.resolve()
 
 
-def _resolve_repo_and_config(raw_project: str | None) -> tuple[Path | None, Path | None]:
+def _resolve_repo_and_config(raw_project: str | None, *, require_config: bool = True) -> tuple[Path | None, Path | None]:
     repo_root = _resolve_project_root(raw_project)
     config_path = _config_path(repo_root)
-    if not config_path.exists():
+    if require_config and not config_path.exists():
         print(f"CONFIG_NOT_FOUND: expected ngksgraph.toml under {repo_root}")
         return None, None
     return repo_root, config_path
@@ -241,134 +243,6 @@ def _read_init_template_text(template_name: str, repo_root: Path) -> str | None:
         return None
 
 
-def _discover_repo_app_mains(repo_root: Path) -> list[str]:
-    app_names: set[str] = set()
-    for main_path in sorted((repo_root / "apps").glob("*/main.cpp")):
-        if main_path.is_file() and len(main_path.parts) >= 2:
-            app_names.add(main_path.parent.name)
-    return sorted(app_names)
-
-
-def _has_engine_sources(repo_root: Path) -> bool:
-    engine_root = repo_root / "engine"
-    if not engine_root.exists():
-        return False
-    for pattern in ("**/*.cpp", "**/*.c"):
-        if any(path.is_file() for path in engine_root.glob(pattern)):
-            return True
-    return False
-
-
-def _render_repo_aware_default_template(repo_root: Path) -> str | None:
-    app_names = _discover_repo_app_mains(repo_root)
-    if len(app_names) < 2 or not _has_engine_sources(repo_root):
-        return None
-
-    default_target = "widget_sandbox" if "widget_sandbox" in app_names else app_names[0]
-    include_dirs = [
-        "include",
-        "engine/core/include",
-        "engine/gfx/include",
-        "engine/gfx/win32/include",
-        "engine/platform/win32/include",
-        "engine/ui",
-        "engine/ui/include",
-    ]
-    libs = ["user32", "gdi32", "d3d11", "dxgi"]
-
-    lines: list[str] = [
-        "# Template: repo-aware multi-target (engine static library + app executables)",
-        'out_dir = "build"',
-        'warnings = "default"',
-        "",
-        "cxx_std = 20",
-        f"include_dirs = {json.dumps(include_dirs)}",
-        'defines = ["UNICODE", "_UNICODE"]',
-        "cflags = []",
-        "ldflags = []",
-        "libs = []",
-        "lib_dirs = []",
-        "",
-        "[build]",
-        f'default_target = "{default_target}"',
-        "",
-        "[profiles.debug]",
-        'cflags = ["/Od", "/Zi"]',
-        'defines = ["DEBUG"]',
-        "ldflags = []",
-        "",
-        "[profiles.release]",
-        'cflags = ["/O2"]',
-        'defines = ["NDEBUG"]',
-        "ldflags = []",
-        "",
-        "[[targets]]",
-        'name = "engine"',
-        'type = "staticlib"',
-        'src_glob = ["engine/**/*.cpp", "engine/**/*.c"]',
-        f"include_dirs = {json.dumps(include_dirs)}",
-        'defines = ["UNICODE", "_UNICODE"]',
-        "cflags = []",
-        "libs = []",
-        "lib_dirs = []",
-        "ldflags = []",
-        "cxx_std = 20",
-        "links = []",
-        "",
-    ]
-
-    for app_name in app_names:
-        lines.extend(
-            [
-                "[[targets]]",
-                f'name = "{app_name}"',
-                'type = "exe"',
-                f'src_glob = ["apps/{app_name}/**/*.cpp", "apps/{app_name}/**/*.c"]',
-                f"include_dirs = {json.dumps(include_dirs)}",
-                'defines = ["UNICODE", "_UNICODE"]',
-                "cflags = []",
-                f"libs = {json.dumps(libs)}",
-                "lib_dirs = []",
-                "ldflags = []",
-                "cxx_std = 20",
-                'links = ["engine"]',
-                "",
-            ]
-        )
-
-    lines.extend(
-        [
-            "[qt]",
-            "enabled = false",
-            'prefix = ""',
-            "version = 6",
-            "modules = []",
-            'moc_path = ""',
-            'uic_path = ""',
-            'rcc_path = ""',
-            "include_dirs = []",
-            "lib_dirs = []",
-            "libs = []",
-            "",
-            "[ai]",
-            "enabled = false",
-            'plugin = ""',
-            'mode = "advise"',
-            "max_actions = 3",
-            "log_tail_lines = 200",
-            "redact_paths = true",
-            "redact_env = true",
-            "",
-            "[ai.provider]",
-            'model = ""',
-            'endpoint = ""',
-            'api_key_env = ""',
-            "",
-        ]
-    )
-    return "\n".join(lines)
-
-
 def cmd_init(args: argparse.Namespace) -> int:
     repo_root = _repo_root_from_cwd()
     dest = _config_path(repo_root)
@@ -389,9 +263,16 @@ def cmd_init(args: argparse.Namespace) -> int:
 
     template_text = _read_init_template_text(template_name, repo_root)
     if selected in {"default", "basic"}:
-        repo_aware = _render_repo_aware_default_template(repo_root)
-        if repo_aware:
-            template_text = repo_aware
+        try:
+            classification = classify_repo(repo_root)
+            template_text = synthesize_init_toml(classification)
+            print(
+                f"Auto-detected repo family: {classification.family} "
+                f"(qt_signals={classification.qt_signal_count}, entrypoints={classification.entrypoint_count})"
+            )
+        except Exception as exc:
+            print(f"INIT_CLASSIFIER_ERROR: {exc}")
+            return 1
     if template_text is None:
         print("Template not found.")
         return 1
@@ -557,20 +438,21 @@ def cmd_clean(args: argparse.Namespace) -> int:
 
 
 def cmd_plan(args: argparse.Namespace) -> int:
-    repo_root, config_path = _resolve_repo_and_config(getattr(args, "project", None))
-    if repo_root is None or config_path is None:
-        return 1
-
     mode = get_mode(args)
     if is_ecosystem(mode):
+        repo_root, config_path = _resolve_repo_and_config(getattr(args, "project", None), require_config=False)
+        if repo_root is None:
+            return 1
         try:
             env_capsule_hash, _binding_kind, _binding_path = _resolve_env_capsule_binding(args, repo_root)
-            configured = resolve_plan_context(
-                repo_root,
-                config_path,
-                target=args.target,
-                profile=args.profile,
-            )
+            configured = None
+            if config_path is not None and config_path.exists():
+                configured = resolve_plan_context(
+                    repo_root,
+                    config_path,
+                    target=args.target,
+                    profile=args.profile,
+                )
         except KeyError as exc:
             missing = str(exc).strip("'\"")
             print(f"TARGET_NOT_FOUND: {missing}", file=sys.stderr)
@@ -579,17 +461,25 @@ def cmd_plan(args: argparse.Namespace) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 2
 
+        profile_name = str(configured.get("profile", args.profile or "debug")) if configured else str(args.profile or "debug")
+        selected_target = str(configured["selected_target"]) if configured else str(args.target or "build")
+        selected_graph = configured["graph"] if configured else None
+
         plan = create_ecosystem_build_plan(
             repo_root,
-            profile=str(configured.get("profile", args.profile or "debug")),
-            selected_target=str(configured["selected_target"]),
-            graph=configured["graph"],
+            profile=profile_name,
+            selected_target=selected_target,
+            graph=selected_graph,
             env_capsule_hash=env_capsule_hash,
         )
         out_path, hash_path, _ = write_ecosystem_build_plan(repo_root, plan)
         print(f"Plan file: {out_path}")
         print(f"Plan hash: {hash_path}")
         return 0
+
+    repo_root, config_path = _resolve_repo_and_config(getattr(args, "project", None))
+    if repo_root is None or config_path is None:
+        return 1
 
     try:
         configured = resolve_plan_context(
@@ -1257,6 +1147,42 @@ def cmd_import(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_scan(args: argparse.Namespace) -> int:
+    repo_root = _resolve_project_root(getattr(args, "project", None))
+    out_arg = getattr(args, "out", None)
+    if out_arg:
+        out_dir = Path(str(out_arg))
+        if not out_dir.is_absolute():
+            out_dir = (repo_root / out_dir).resolve()
+    else:
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        out_dir = (repo_root / "_artifacts" / "graph_scan" / stamp).resolve()
+
+    result = run_scan(
+        repo_root=repo_root,
+        out_dir=out_dir,
+        authority_mode=str(getattr(args, "authority_mode", "native_ngks") or "native_ngks"),
+        bootstrap_venv=bool(getattr(args, "bootstrap_venv", False)),
+        bootstrap_msvc_env=bool(getattr(args, "bootstrap_msvc_env", False)),
+    )
+
+    payload = {
+        "status": result.status,
+        "out_dir": str(result.out_dir),
+        "blockers": list(result.blockers),
+    }
+    if bool(getattr(args, "json", False)):
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"Graph scan status: {result.status}")
+        print(f"Graph scan output: {result.out_dir}")
+        if result.blockers:
+            for blocker in result.blockers:
+                print(f"BLOCKER: {blocker}")
+
+    return 2 if result.status == "FAIL_CLOSED" else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ngksgraph")
     parser.add_argument("--version", action=_VersionAction, help="Print version stamp and exit")
@@ -1272,6 +1198,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_import.add_argument("--out", default=None)
     p_import.add_argument("--force", action="store_true", default=False)
     p_import.set_defaults(func=cmd_import)
+
+    p_scan = sub.add_parser("scan", help="Run NGKsGraph repository intelligence scan and emit phase artifacts")
+    p_scan.add_argument("--project", default=None)
+    p_scan.add_argument("--out", default=None)
+    p_scan.add_argument("--authority-mode", default="native_ngks", choices=["native_ngks", "import_foreign", "compatibility_only", "foreign_authoritative"])
+    p_scan.add_argument("--bootstrap-venv", action="store_true", default=False)
+    p_scan.add_argument("--bootstrap-msvc", dest="bootstrap_msvc_env", action="store_true", default=False)
+    p_scan.add_argument("--json", action="store_true", default=False)
+    p_scan.set_defaults(func=cmd_scan)
 
     p_cfg = sub.add_parser("configure", help="Scan and emit deterministic plan artifacts")
     p_cfg.add_argument("--msvc-auto", action="store_true", default=False)

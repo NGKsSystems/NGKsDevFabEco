@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
+import shutil
 from typing import Any
 
 from ngksgraph.config import Config
@@ -160,6 +162,40 @@ def build_graph_from_project(
     targets: dict[str, Target] = {}
     edges: list[Edge] = []
 
+    qt_enabled = bool(config.qt.enabled)
+    windeployqt_path = ""
+    candidate_paths: list[Path] = []
+    if qt_enabled:
+        qt_root_text = str(config.qt.qt_root).strip()
+        if qt_root_text:
+            candidate_paths.append(Path(qt_root_text) / "bin" / "windeployqt.exe")
+        for tool_path in [config.qt.moc_path, config.qt.uic_path, config.qt.rcc_path]:
+            tool_text = str(tool_path).strip()
+            if not tool_text:
+                continue
+            candidate_paths.append(Path(tool_text).resolve().parent / "windeployqt.exe")
+
+    for target_cfg in config.targets:
+        for lib_dir in target_cfg.lib_dirs:
+            lib_dir_text = str(lib_dir).strip()
+            if not lib_dir_text:
+                continue
+            lib_path = Path(lib_dir_text)
+            candidate_paths.append((lib_path / "windeployqt.exe"))
+            candidate_paths.append((lib_path.parent / "bin" / "windeployqt.exe"))
+
+    windeployqt_on_path = shutil.which("windeployqt") or shutil.which("windeployqt.exe")
+    if windeployqt_on_path:
+        candidate_paths.append(Path(windeployqt_on_path))
+
+    for candidate in candidate_paths:
+        try:
+            if candidate.exists():
+                windeployqt_path = normalize_path(candidate.resolve())
+                break
+        except Exception:
+            continue
+
     for target_cfg in config.targets:
         if multi_target:
             obj_dir = normalize_path(f"{out_dir}/obj/{target_cfg.name}")
@@ -187,6 +223,8 @@ def build_graph_from_project(
                 "linker": "link",
                 "arch": "amd64",
                 "msvc_auto": bool(msvc_auto),
+                "qt_enabled": qt_enabled,
+                "qt_windeployqt": windeployqt_path,
             },
         )
         targets[target.name] = target

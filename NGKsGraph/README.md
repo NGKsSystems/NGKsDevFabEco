@@ -46,6 +46,9 @@ With `--msvc-auto`, NGKsGraph discovers Visual Studio via `vswhere`, captures an
 MSVC build environment using `VsDevCmd.bat`, and uses that environment only for
 toolchain-aware planning/analysis subprocesses. Your current shell environment is not modified.
 
+Repository CI includes a Windows smoke gate (`.github/workflows/ngksgraph-windows-smoke.yml`)
+that validates `--msvc-auto` and targeted regression tests for bootstrap/buildplan behavior.
+
 ## Commands
 
 - `ngksgraph init --template <default|basic|qt-app|multi-target>` - create `ngksgraph.toml` from template

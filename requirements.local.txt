@@ -1,0 +1,5 @@
+-e ./NGKsBuildCore
+-e ./NGKsEnvCapsule
+-e ./NGKsLibrary
+-e ./NGKsGraph
+-e ./NGKsDevFabric

@@ -19,3 +19,4 @@ def test_compile_commands_deterministic():
     assert out1 == out2
     assert out1[0]["file"].endswith("src\\a.cpp") or out1[0]["file"].endswith("src/a.cpp")
     assert "/showIncludes" in out1[0]["command"]
+    assert "/FS" in out1[0]["command"]

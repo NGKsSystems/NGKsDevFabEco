@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 
 from ngksgraph.cli import main
+from ngksgraph.config import Config, QtConfig, TargetConfig
+from ngksgraph.graph import build_graph_from_project
+from ngksgraph.plan import create_buildcore_plan
 from ngksgraph.torture_project import gen_project
 from ngksbuildcore.plan import load_plan
 import pytest
@@ -42,6 +45,28 @@ def test_buildplan_explicit_output_path_still_supported(tmp_path, monkeypatch):
     assert explicit.exists()
     plan = load_plan(explicit)
     assert len(plan.nodes) > 0
+
+
+def test_buildplan_includes_qt_generated_compile_nodes(tmp_path, monkeypatch):
+    project = gen_project(tmp_path, seed=9303, with_profiles=True, qobject_headers=3, ui_files=1, qrc_files=1)
+    monkeypatch.chdir(project.repo_root)
+
+    assert main(["buildplan", "--profile", "debug"]) == 0
+
+    plan_path = project.repo_root / "build_graph" / "debug" / "ngksbuildcore_plan.json"
+    payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    nodes = payload.get("nodes", [])
+
+    compile_inputs: list[str] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        node_id = str(node.get("id", ""))
+        if not node_id.startswith("cl:"):
+            continue
+        compile_inputs.extend(str(v) for v in (node.get("inputs", []) or []))
+
+    assert any("/qt/moc_" in value.replace("\\", "/") for value in compile_inputs), "expected moc compile input in buildplan"
 
 
 def test_configure_fails_when_repo_has_sources_but_glob_matches_none(tmp_path: Path, monkeypatch):
@@ -132,3 +157,78 @@ def test_repo_aware_default_topology_avoids_multi_main_linking(tmp_path: Path, m
     assert "apps/beta/main.obj" not in link_cmd
     assert "user32.lib" in link_cmd
     assert "d3d11.lib" in link_cmd
+
+
+def test_buildcore_plan_emits_windeployqt_for_qt_executable(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "src" / "main.cpp").write_text("int main(){return 0;}\n", encoding="utf-8")
+
+    qt_bin = tmp_path / "fake_qt" / "bin"
+    qt_bin.mkdir(parents=True, exist_ok=True)
+    (qt_bin / "windeployqt.exe").write_text("", encoding="utf-8")
+
+    cfg = Config(
+        name="app",
+        out_dir="build/debug",
+        targets=[
+            TargetConfig(
+                name="app",
+                type="exe",
+                src_glob=["src/**/*.cpp"],
+                libs=["Qt6Core", "user32"],
+            )
+        ],
+        qt=QtConfig(enabled=True, qt_root=str((tmp_path / "fake_qt").resolve())),
+    )
+
+    graph = build_graph_from_project(cfg, source_map={"app": ["src/main.cpp"]}, msvc_auto=False)
+    payload, warnings = create_buildcore_plan(tmp_path, selected_target="app", graph=graph)
+
+    assert not [warning for warning in warnings if warning.startswith("QT_WINDEPLOYQT_MISSING")]
+
+    nodes = payload["nodes"]
+    deploy_nodes = [node for node in nodes if str(node.get("id", "")).startswith("windeployqt:")]
+    assert len(deploy_nodes) == 1
+
+    link_nodes = [node for node in nodes if str(node.get("id", "")).startswith("link:")]
+    assert len(link_nodes) == 1
+
+    deploy = deploy_nodes[0]
+    assert deploy.get("deps") == [link_nodes[0]["id"]]
+    assert "windeployqt.exe" in str(deploy.get("cmd", ""))
+    assert "build/debug/bin/app.exe" in str(deploy.get("cmd", "")).replace("\\", "/")
+
+
+def test_buildcore_plan_discovers_windeployqt_from_lib_dirs_when_qt_disabled(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "src" / "main.cpp").write_text("int main(){return 0;}\n", encoding="utf-8")
+
+    qt_root = tmp_path / "Qt" / "6.10.2" / "msvc2022_64"
+    qt_lib = qt_root / "lib"
+    qt_bin = qt_root / "bin"
+    qt_lib.mkdir(parents=True, exist_ok=True)
+    qt_bin.mkdir(parents=True, exist_ok=True)
+    (qt_bin / "windeployqt.exe").write_text("", encoding="utf-8")
+
+    cfg = Config(
+        name="app",
+        out_dir="build/debug",
+        targets=[
+            TargetConfig(
+                name="app",
+                type="exe",
+                src_glob=["src/**/*.cpp"],
+                libs=["Qt6Core", "Qt6Widgets"],
+                lib_dirs=[str(qt_lib.resolve())],
+            )
+        ],
+        qt=QtConfig(enabled=False),
+    )
+
+    graph = build_graph_from_project(cfg, source_map={"app": ["src/main.cpp"]}, msvc_auto=False)
+    payload, warnings = create_buildcore_plan(tmp_path, selected_target="app", graph=graph)
+
+    assert not [warning for warning in warnings if warning.startswith("QT_WINDEPLOYQT_MISSING")]
+    deploy_nodes = [node for node in payload["nodes"] if str(node.get("id", "")).startswith("windeployqt:")]
+    assert len(deploy_nodes) == 1
+    assert "windeployqt.exe" in str(deploy_nodes[0].get("cmd", ""))

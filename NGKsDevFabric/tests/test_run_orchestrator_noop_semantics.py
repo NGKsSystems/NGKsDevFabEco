@@ -174,6 +174,10 @@ def test_build_attempt_failure_maps_to_exit_one(monkeypatch, tmp_path: Path):
     def _fake_run(command, cwd=None, check=False, capture_output=True, text=True):
         del cwd, check, capture_output, text
 
+        if command[:2] == ["ngksenvcapsule", "resolve"]:
+            (tmp_path / "env_capsule.resolved.json").write_text('{"resolved":true}\n', encoding="utf-8")
+            return _Proc(returncode=0, stdout="resolve ok\n")
+
         if command[:2] == ["ngksenvcapsule", "lock"]:
             (tmp_path / "env_capsule.lock.json").write_text('{"lock":true}\n', encoding="utf-8")
             (tmp_path / "env_capsule.hash.txt").write_text("envhash\n", encoding="utf-8")
@@ -213,3 +217,54 @@ def test_build_attempt_failure_maps_to_exit_one(monkeypatch, tmp_path: Path):
     assert "failure_class=build_failed" in summary_text
     assert "failed_stage=30_buildcore" in summary_text
     assert "exit_code=1" in summary_text
+
+
+def test_detect_precedence_node_over_python(monkeypatch, tmp_path: Path):
+    (tmp_path / "package.json").write_text('{"name":"app","scripts":{"smoke":"node app.js"}}\n', encoding="utf-8")
+    (tmp_path / "requirements.txt").write_text("pytest\n", encoding="utf-8")
+
+    def _unexpected_subprocess(*args, **kwargs):
+        raise AssertionError(f"subprocess.run should not execute on missing envcapsule resolver: {args}, {kwargs}")
+
+    def _raise_missing(component_name: str, module_name: str):
+        del component_name, module_name
+        raise fabric_main.ComponentResolutionError("ngksenvcapsule", "ngksenvcapsule")
+
+    monkeypatch.setattr(fabric_main, "resolve_component_cmd", _raise_missing)
+    monkeypatch.setattr(fabric_main.subprocess, "run", _unexpected_subprocess)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem"])
+
+    assert code == 2
+    run_dir = _latest_run_dir(tmp_path)
+    _assert_stage_sentinels(run_dir)
+    summary_text = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
+    assert "build_detected=true" in summary_text
+    assert "build_system=node" in summary_text
+    assert "build_detect_reason=package.json" in summary_text
+
+
+def test_detect_flutter_over_generated_sln(tmp_path: Path):
+    (tmp_path / "pubspec.yaml").write_text("name: demo_flutter\n", encoding="utf-8")
+    generated = tmp_path / "build" / "windows" / "x64"
+    generated.mkdir(parents=True, exist_ok=True)
+    (generated / "demo.sln").write_text("Microsoft Visual Studio Solution File\n", encoding="utf-8")
+
+    detected, build_system, reason = fabric_main._detect_build_inputs(tmp_path)
+
+    assert detected is True
+    assert build_system == "flutter"
+    assert reason == "pubspec.yaml"
+
+
+def test_detect_generated_sln_does_not_override_node(tmp_path: Path):
+    (tmp_path / "package.json").write_text('{"name":"app","scripts":{"build":"node app.js"}}\n', encoding="utf-8")
+    generated = tmp_path / "build" / "windows" / "x64"
+    generated.mkdir(parents=True, exist_ok=True)
+    (generated / "demo.sln").write_text("Microsoft Visual Studio Solution File\n", encoding="utf-8")
+
+    detected, build_system, reason = fabric_main._detect_build_inputs(tmp_path)
+
+    assert detected is True
+    assert build_system == "node"
+    assert reason == "package.json"

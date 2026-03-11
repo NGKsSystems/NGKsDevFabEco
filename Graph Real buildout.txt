@@ -1,0 +1,3910 @@
+
+
+
+I am trying to build out my NGKsGraph,  inside of NGKsDevFabEco.  below is a list of what it can detect and some things it cant detect.   Can you give me a list of the top 25 used languages?
+
+Below is a practical “toolchain-relevant” list of the top ~25 programming languages you would want NGKsGraph to detect in a build ecosystem.
+This is based on real-world usage in repositories, build systems, and package managers, not popularity polls.
+
+Top 25 Programming Languages (Build-System Relevant)
+Tier 1 — Core System / Infrastructure Languages
+These appear constantly in build environments.
+
+C
+
+C++
+
+C#
+
+Java
+
+Python
+
+Go
+
+Rust
+
+Tier 2 — Web / Runtime Platforms
+These dominate modern application stacks.
+
+JavaScript
+
+TypeScript
+
+PHP
+
+Kotlin
+
+Swift
+
+Tier 3 — Enterprise / Legacy Heavyweights
+Very common in corporate repos and older systems.
+
+Visual Basic / VB.NET
+
+Objective-C
+
+Groovy
+
+Scala
+
+Tier 4 — Data / Scientific / Scripting
+Frequently appear in mixed codebases.
+
+R
+
+MATLAB
+
+Julia
+
+Tier 5 — System / Performance / Niche but Important
+Used heavily in specialized areas.
+
+Zig
+
+D
+
+Nim
+
+Fortran
+
+Tier 6 — Platform / Embedded / Runtime Scripting
+Often show up inside projects.
+
+Lua
+
+Dart
+
+Languages NGKsGraph Should Also Detect (Build Scripts)
+These are not languages for compilation but critical for builds.
+
+You should absolutely detect them:
+
+Bash / Shell
+
+PowerShell
+
+Batch
+
+Makefile
+
+CMake
+
+Gradle
+
+Ant
+
+MSBuild
+
+Ninja
+
+Dockerfile
+
+These tell NGKsGraph how a project builds, not just what language it uses.
+
+Package Managers Worth Detecting
+For automatic dependency graphing.
+
+Language	Package System
+Python	pip / poetry
+Node	npm / yarn / pnpm
+Rust	cargo
+Go	go mod
+Java	maven / gradle
+C++	vcpkg / conan
+.NET	nuget
+PHP	composer
+Ruby	bundler
+Swift	swift package manager
+File Extensions NGKsGraph Should Watch
+Quick detection table.
+
+Language	Extensions
+C	.c
+C++	.cpp .cc .hpp .h
+Python	.py
+Rust	.rs
+Go	.go
+Java	.java
+Kotlin	.kt
+Swift	.swift
+C#	.cs
+JS	.js
+TS	.ts
+PHP	.php
+R	.r
+MATLAB	.m
+Julia	.jl
+Lua	.lua
+D	.d
+Nim	.nim
+Fortran	.f .f90
+Zig	.zig
+Dart	.dart
+If NGKsGraph Is Going to Be Truly Powerful
+You may want to detect ecosystem signatures instead of just files.
+
+Examples:
+
+File	Meaning
+Cargo.toml	Rust project
+go.mod	Go module
+package.json	Node project
+pyproject.toml	Python modern build
+requirements.txt	Python
+pom.xml	Maven
+build.gradle	Gradle
+CMakeLists.txt	C++ build
+Makefile	Make build
+.sln	Visual Studio
+.vcxproj	C++ MSBuild
+.csproj	.NET
+This is far more reliable than extension scanning.
+
+If You Want
+I can also give you the real powerhouse version NGKsGraph should detect (~60 languages) used in modern repositories.
+
+Or I can give you a Python detection engine (~200 lines) that will instantly classify multi-language repos automatically.
+
+
+both please
+
+
+Thought for 13s
+Yes. Here’s the expanded detection target plus a Python repo-language detector skeleton you can drop into NGKsGraph.
+
+What counts as “top” depends on the yardstick. GitHub’s 2025 Octoverse says TypeScript reached #1 on GitHub by contributor count, while Stack Overflow’s 2025 survey still shows the usual high-usage cluster of Python, JavaScript, TypeScript, SQL, and Java. TIOBE is another view, but it measures search/visibility rather than repo usage, so it is better used as a secondary signal, not your primary build-graph truth. 
+
+1) Powerhouse detection list for NGKsGraph (~60)
+This is the list I’d use for real repo detection, grouped by practical build relevance rather than internet fan-club rankings.
+
+Core compiled / systems
+C
+
+C++
+
+Rust
+
+Go
+
+Zig
+
+D
+
+Nim
+
+Fortran
+
+Ada
+
+Assembly
+
+Managed / enterprise
+C#
+
+Java
+
+Kotlin
+
+Scala
+
+Groovy
+
+Visual Basic .NET
+
+F#
+
+Objective-C
+
+Swift
+
+Dart
+
+Web / app runtime
+JavaScript
+
+TypeScript
+
+PHP
+
+Ruby
+
+Elixir
+
+Erlang
+
+Clojure
+
+Haxe
+
+CoffeeScript
+
+Elm
+
+Scripting / automation
+Python
+
+Lua
+
+Perl
+
+Tcl
+
+Bash
+
+PowerShell
+
+Batch
+
+Fish
+
+Zsh
+
+Awk
+
+Data / scientific / technical computing
+R
+
+MATLAB
+
+Julia
+
+SAS
+
+Stata
+
+Octave
+
+Functional / academic / specialist
+Haskell
+
+OCaml
+
+Reason/Rescript
+
+Common Lisp
+
+Scheme
+
+Prolog
+
+Mobile / platform / game / niche
+GDScript
+
+Solidity
+
+Vala
+
+Apex
+
+ABAP
+
+COBOL
+
+Delphi/Object Pascal
+
+Crystal
+
+That gives you broad enough coverage for most real-world repos without drowning in nonsense.
+
+2) Also detect these as first-class build signals
+For NGKsGraph, these matter almost more than the source files:
+
+Build systems
+CMake
+
+Make
+
+Ninja
+
+MSBuild
+
+Gradle
+
+Maven
+
+Ant
+
+Bazel
+
+Buck
+
+Meson
+
+SCons
+
+Premake
+
+QMake
+
+Xcode project/workspace
+
+Cargo
+
+Go modules
+
+Package / dependency manifests
+package.json
+
+pnpm-lock.yaml
+
+yarn.lock
+
+package-lock.json
+
+pyproject.toml
+
+requirements.txt
+
+poetry.lock
+
+Pipfile
+
+Cargo.toml
+
+go.mod
+
+pom.xml
+
+build.gradle
+
+build.gradle.kts
+
+.csproj
+
+.sln
+
+composer.json
+
+Gemfile
+
+Package.swift
+
+pubspec.yaml
+
+mix.exs
+
+Infra / container / CI
+Dockerfile
+
+docker-compose.yml
+
+.github/workflows/*.yml
+
+.gitlab-ci.yml
+
+azure-pipelines.yml
+
+Jenkinsfile
+
+Tiltfile
+
+Taskfile.yml
+
+GitHub’s Octoverse is especially useful here because it reflects actual open-source repo activity, including the recent rise of TypeScript; Stack Overflow helps confirm the mainstream language cluster; TIOBE is useful only as a loose popularity cross-check. 
+
+3) Detection order NGKsGraph should use
+Do not rely on extension scanning alone. Use this order:
+
+Manifest/build files
+
+Lockfiles
+
+Project files
+
+Directory conventions
+
+Extensions
+
+Content sniffing for ambiguous files
+
+Example:
+
+Cargo.toml beats .rs count
+
+.csproj beats scattered .cs
+
+pom.xml beats random .java
+
+Package.swift beats .swift
+
+CMakeLists.txt + many .cpp = C++ project
+
+build.gradle.kts + src/main/kotlin = Kotlin-first JVM project
+
+4) Python detection engine starter
+This is a practical baseline. It detects:
+
+languages by extension
+
+manifests/build files
+
+weighted scores
+
+primary language
+
+multi-language repos
+
+probable build systems
+
+probable package managers
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field, asdict
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+
+# ------------------------------------------------------------
+# NGKsGraph repo detector baseline
+# ------------------------------------------------------------
+
+EXTENSION_MAP: Dict[str, str] = {
+    ".c": "C",
+    ".h": "C/C++ Header",
+    ".cpp": "C++",
+    ".cc": "C++",
+    ".cxx": "C++",
+    ".hpp": "C++",
+    ".hh": "C++",
+    ".hxx": "C++",
+    ".ixx": "C++",
+    ".cppm": "C++",
+    ".cs": "C#",
+    ".fs": "F#",
+    ".vb": "VB.NET",
+    ".java": "Java",
+    ".kt": "Kotlin",
+    ".kts": "Kotlin",
+    ".groovy": "Groovy",
+    ".scala": "Scala",
+    ".py": "Python",
+    ".pyw": "Python",
+    ".rs": "Rust",
+    ".go": "Go",
+    ".zig": "Zig",
+    ".d": "D",
+    ".nim": "Nim",
+    ".f": "Fortran",
+    ".f90": "Fortran",
+    ".f95": "Fortran",
+    ".m": "Objective-C/MATLAB/Octave",
+    ".mm": "Objective-C++",
+    ".swift": "Swift",
+    ".dart": "Dart",
+    ".js": "JavaScript",
+    ".mjs": "JavaScript",
+    ".cjs": "JavaScript",
+    ".ts": "TypeScript",
+    ".tsx": "TypeScript",
+    ".jsx": "JavaScript",
+    ".php": "PHP",
+    ".rb": "Ruby",
+    ".ex": "Elixir",
+    ".exs": "Elixir",
+    ".erl": "Erlang",
+    ".clj": "Clojure",
+    ".cljs": "Clojure",
+    ".hs": "Haskell",
+    ".ml": "OCaml",
+    ".mli": "OCaml",
+    ".lua": "Lua",
+    ".pl": "Perl",
+    ".pm": "Perl",
+    ".tcl": "Tcl",
+    ".r": "R",
+    ".jl": "Julia",
+    ".sql": "SQL",
+    ".sol": "Solidity",
+    ".gd": "GDScript",
+    ".pas": "Pascal",
+    ".pp": "Pascal",
+    ".asm": "Assembly",
+    ".s": "Assembly",
+    ".sh": "Shell",
+    ".bash": "Shell",
+    ".zsh": "Shell",
+    ".ps1": "PowerShell",
+    ".bat": "Batch",
+    ".cmd": "Batch",
+}
+
+MANIFEST_HINTS: Dict[str, Tuple[str, int]] = {
+    "pyproject.toml": ("Python", 50),
+    "requirements.txt": ("Python", 30),
+    "Pipfile": ("Python", 30),
+    "poetry.lock": ("Python", 30),
+
+    "package.json": ("JavaScript/TypeScript", 50),
+    "package-lock.json": ("JavaScript/TypeScript", 20),
+    "yarn.lock": ("JavaScript/TypeScript", 20),
+    "pnpm-lock.yaml": ("JavaScript/TypeScript", 20),
+
+    "Cargo.toml": ("Rust", 60),
+    "Cargo.lock": ("Rust", 20),
+
+    "go.mod": ("Go", 60),
+    "go.sum": ("Go", 20),
+
+    "pom.xml": ("Java", 50),
+    "build.gradle": ("Java/Kotlin/Groovy", 50),
+    "build.gradle.kts": ("Kotlin", 60),
+    "settings.gradle": ("Java/Kotlin/Groovy", 20),
+    "settings.gradle.kts": ("Kotlin", 25),
+
+    "composer.json": ("PHP", 50),
+    "Gemfile": ("Ruby", 50),
+    "Package.swift": ("Swift", 60),
+    "pubspec.yaml": ("Dart", 60),
+    "mix.exs": ("Elixir", 60),
+
+    "CMakeLists.txt": ("C/C++", 50),
+    "Makefile": ("Make", 40),
+    "makefile": ("Make", 40),
+    "meson.build": ("Meson", 50),
+    "BUILD": ("Bazel", 25),
+    "BUILD.bazel": ("Bazel", 50),
+    "WORKSPACE": ("Bazel", 50),
+    "SConstruct": ("SCons", 50),
+    "*.sln": ("MSBuild", 50),
+    "*.csproj": ("C#", 60),
+    "*.vcxproj": ("C++", 60),
+    "*.fsproj": ("F#", 60),
+    "*.vbproj": ("VB.NET", 60),
+    "*.xcodeproj": ("Xcode", 50),
+    "*.xcworkspace": ("Xcode", 50),
+    "*.pro": ("QMake", 50),
+}
+
+BUILD_SYSTEM_FILES: Dict[str, str] = {
+    "CMakeLists.txt": "CMake",
+    "Makefile": "Make",
+    "makefile": "Make",
+    "build.gradle": "Gradle",
+    "build.gradle.kts": "Gradle",
+    "pom.xml": "Maven",
+    "build.xml": "Ant",
+    "meson.build": "Meson",
+    "BUILD": "Bazel",
+    "BUILD.bazel": "Bazel",
+    "WORKSPACE": "Bazel",
+    "SConstruct": "SCons",
+    "Cargo.toml": "Cargo",
+    "go.mod": "Go Modules",
+    "package.json": "Node Package Runtime",
+    "Package.swift": "SwiftPM",
+    "pubspec.yaml": "Pub",
+}
+
+IGNORE_DIRS = {
+    ".git", ".hg", ".svn", ".idea", ".vs", ".vscode",
+    "node_modules", "dist", "build", "out", "target",
+    ".venv", "venv", "__pycache__", ".mypy_cache",
+    ".pytest_cache", ".next", ".nuxt", ".turbo",
+    "coverage", "bin", "obj"
+}
+
+TEXT_PROBE_LIMIT = 4096
+
+
+@dataclass
+class RepoDetectionResult:
+    root: str
+    language_scores: Dict[str, int] = field(default_factory=dict)
+    extension_hits: Dict[str, int] = field(default_factory=dict)
+    manifests_found: List[str] = field(default_factory=list)
+    build_systems: List[str] = field(default_factory=list)
+    package_ecosystems: List[str] = field(default_factory=list)
+    primary_language: str = "Unknown"
+    secondary_languages: List[str] = field(default_factory=list)
+    mixed_repo: bool = False
+    total_source_files: int = 0
+
+
+def should_skip_dir(path: Path) -> bool:
+    return path.name in IGNORE_DIRS
+
+
+def bump(scores: Dict[str, int], key: str, amount: int) -> None:
+    scores[key] = scores.get(key, 0) + amount
+
+
+def classify_ambiguous_m_file(path: Path) -> str:
+    """
+    .m can be Objective-C, MATLAB, or Octave.
+    Very cheap content sniff.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")[:TEXT_PROBE_LIMIT]
+    except Exception:
+        return "Objective-C/MATLAB/Octave"
+
+    lowered = text.lower()
+
+    if "@interface" in text or "@implementation" in text or "#import" in text:
+        return "Objective-C"
+    if "function " in lowered or "end" in lowered:
+        return "MATLAB/Octave"
+    return "Objective-C/MATLAB/Octave"
+
+
+def detect_manifest(path: Path) -> List[Tuple[str, int]]:
+    hits: List[Tuple[str, int]] = []
+    name = path.name
+
+    for pattern, (label, weight) in MANIFEST_HINTS.items():
+        if "*" in pattern:
+            suffix = pattern.replace("*", "")
+            if name.endswith(suffix):
+                hits.append((label, weight))
+        elif name == pattern:
+            hits.append((label, weight))
+
+    return hits
+
+
+def detect_build_system(path: Path) -> str | None:
+    name = path.name
+    if name in BUILD_SYSTEM_FILES:
+        return BUILD_SYSTEM_FILES[name]
+    if name.endswith(".sln") or name.endswith("proj"):
+        return "MSBuild"
+    if name.endswith(".xcodeproj") or name.endswith(".xcworkspace"):
+        return "Xcode"
+    return None
+
+
+def language_from_extension(path: Path) -> str | None:
+    ext = path.suffix.lower()
+    lang = EXTENSION_MAP.get(ext)
+    if ext == ".m":
+        return classify_ambiguous_m_file(path)
+    return lang
+
+
+def normalize_language(label: str) -> List[str]:
+    """
+    Split composite hints into multiple weighted buckets.
+    """
+    if label == "JavaScript/TypeScript":
+        return ["JavaScript", "TypeScript"]
+    if label == "Java/Kotlin/Groovy":
+        return ["Java", "Kotlin", "Groovy"]
+    if label == "C/C++":
+        return ["C", "C++"]
+    if label == "Objective-C/MATLAB/Octave":
+        return ["Objective-C", "MATLAB", "Octave"]
+    if label == "MATLAB/Octave":
+        return ["MATLAB", "Octave"]
+    return [label]
+
+
+def package_ecosystem_from_manifest(name: str) -> str | None:
+    mapping = {
+        "pyproject.toml": "pip/poetry",
+        "requirements.txt": "pip",
+        "Pipfile": "pipenv",
+        "poetry.lock": "poetry",
+        "package.json": "npm/yarn/pnpm",
+        "package-lock.json": "npm",
+        "yarn.lock": "yarn",
+        "pnpm-lock.yaml": "pnpm",
+        "Cargo.toml": "cargo",
+        "go.mod": "go mod",
+        "pom.xml": "maven",
+        "build.gradle": "gradle",
+        "build.gradle.kts": "gradle",
+        "composer.json": "composer",
+        "Gemfile": "bundler",
+        "Package.swift": "SwiftPM",
+        "pubspec.yaml": "pub",
+        "mix.exs": "mix",
+    }
+    return mapping.get(name)
+
+
+def walk_repo(root: Path) -> RepoDetectionResult:
+    result = RepoDetectionResult(root=str(root.resolve()))
+    scores: Dict[str, int] = {}
+    extension_hits: Dict[str, int] = {}
+    build_systems: Set[str] = set()
+    package_ecosystems: Set[str] = set()
+    manifests_found: Set[str] = set()
+
+    for path in root.rglob("*"):
+        if path.is_dir():
+            continue
+
+        if any(part in IGNORE_DIRS for part in path.parts):
+            continue
+
+        # Manifest / build-file detection
+        manifest_hits = detect_manifest(path)
+        for label, weight in manifest_hits:
+            manifests_found.add(str(path.relative_to(root)))
+            for lang in normalize_language(label):
+                bump(scores, lang, weight)
+
+            eco = package_ecosystem_from_manifest(path.name)
+            if eco:
+                package_ecosystems.add(eco)
+
+        build = detect_build_system(path)
+        if build:
+            build_systems.add(build)
+
+        # Extension detection
+        lang = language_from_extension(path)
+        if lang:
+            result.total_source_files += 1
+            bump(extension_hits, lang, 1)
+
+            # Base source-file weight
+            for normalized in normalize_language(lang):
+                bump(scores, normalized, 3)
+
+            # Heavier weight for common "main" entry files
+            lowered = path.name.lower()
+            if lowered in {
+                "main.py", "main.rs", "main.go", "main.c", "main.cpp",
+                "app.py", "program.cs", "main.java", "main.kt",
+                "index.ts", "index.js"
+            }:
+                for normalized in normalize_language(lang):
+                    bump(scores, normalized, 5)
+
+    result.language_scores = dict(sorted(scores.items(), key=lambda kv: kv[1], reverse=True))
+    result.extension_hits = dict(sorted(extension_hits.items(), key=lambda kv: kv[1], reverse=True))
+    result.manifests_found = sorted(manifests_found)
+    result.build_systems = sorted(build_systems)
+    result.package_ecosystems = sorted(package_ecosystems)
+
+    ranked = list(result.language_scores.keys())
+    if ranked:
+        result.primary_language = ranked[0]
+        result.secondary_languages = ranked[1:5]
+
+        if len(ranked) > 1:
+            top_score = result.language_scores[ranked[0]]
+            second_score = result.language_scores[ranked[1]]
+            result.mixed_repo = second_score >= max(10, int(top_score * 0.40))
+
+    return result
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Detect repo languages/build systems for NGKsGraph")
+    parser.add_argument("root", nargs="?", default=".", help="Repository root")
+    parser.add_argument("--json", action="store_true", help="Print JSON")
+    args = parser.parse_args()
+
+    root = Path(args.root).resolve()
+    result = walk_repo(root)
+
+    if args.json:
+        print(json.dumps(asdict(result), indent=2))
+        return
+
+    print(f"root: {result.root}")
+    print(f"primary_language: {result.primary_language}")
+    print(f"mixed_repo: {result.mixed_repo}")
+    print(f"total_source_files: {result.total_source_files}")
+
+    print("\nlanguage_scores:")
+    for lang, score in result.language_scores.items():
+        print(f"  - {lang}: {score}")
+
+    print("\nbuild_systems:")
+    for item in result.build_systems:
+        print(f"  - {item}")
+
+    print("\npackage_ecosystems:")
+    for item in result.package_ecosystems:
+        print(f"  - {item}")
+
+    print("\nmanifests_found:")
+    for item in result.manifests_found[:50]:
+        print(f"  - {item}")
+
+
+if __name__ == "__main__":
+    main()
+5) What this detector still needs before it becomes “real”
+To make it properly useful inside NGKsDevFabEco, add these next:
+
+manifest parsers for package.json, pyproject.toml, Cargo.toml, go.mod, .csproj
+
+directory heuristics like src/main/java, src/main/kotlin, cmd/, internal/, lib/, Pages/, wwwroot/
+
+CI/build extraction from GitHub Actions, Azure Pipelines, Jenkinsfile
+
+monorepo support so one repo can emit multiple subprojects
+
+confidence scoring
+
+primary build path inference
+
+toolchain recommendation output like compiler=msvc, package_manager=pnpm, build_backend=cmake|msbuild|cargo|gradle
+
+6) Best practical top-25 list for NGKsGraph
+If you want a tighter “detect these first” list, this is the one:
+
+TypeScript
+
+Python
+
+JavaScript
+
+Java
+
+C#
+
+C++
+
+C
+
+Go
+
+Rust
+
+PHP
+
+Kotlin
+
+Swift
+
+Ruby
+
+Dart
+
+Scala
+
+Groovy
+
+Lua
+
+R
+
+Objective-C
+
+MATLAB
+
+Julia
+
+Perl
+
+Haskell
+
+Shell
+
+PowerShell
+
+That ordering is a practical merge of current GitHub activity, mainstream developer usage, and what actually shows up in buildable repos. GitHub’s latest public data puts TypeScript at #1 on GitHub by contributor count, while Stack Overflow still shows Python and JavaScript/TypeScript in the top usage cluster. 
+
+Next move should be to turn that Python detector into an NGKsGraph detect module that emits:
+
+detected_languages.json
+
+detected_build_systems.json
+
+detected_package_managers.json
+
+detection_report.md
+
+That would stop this from being “list of languages” and make it an actual graph-ingestion stage.
+
+
+what about, a list for down stream things,  example:  I just had a failure because it detected the QT but did not setup the c++17 that is also required
+
+
+Thought for 11s
+Yes. That is the right way to think about it.
+
+What you want is not just language detection. You want downstream requirement detection or build implication detection.
+
+In your example, detecting Qt was only the first layer.
+NGKsGraph also needed to infer:
+
+this is a C++ project
+
+Qt 6 requires a C++17-capable compiler
+
+on MSVC, Qt can fail unless __cplusplus is reported correctly with /Zc:__cplusplus
+
+therefore the compile profile should include both /std:c++17 and /Zc:__cplusplus for that target 
+
+MSVC does not update __cplusplus by default; Microsoft documents that /Zc:__cplusplus is off by default, and that you should use it together with /std if you want __cplusplus to reflect the actual C++ standard level. 
+
+So the missing concept in NGKsGraph is:
+
+Detection layers you need
+1. Primary detection
+“What is this repo?”
+
+Examples:
+
+C++
+
+Python
+
+TypeScript
+
+Rust
+
+2. Framework / ecosystem detection
+“What major framework or platform is present?”
+
+Examples:
+
+Qt
+
+JUCE
+
+.NET
+
+React
+
+Django
+
+PySide6
+
+Electron
+
+3. Downstream requirements
+“What must be true for this thing to build correctly?”
+
+Examples:
+
+Qt 6 → C++17 + proper compiler flags on MSVC 
+
+Rust → cargo
+
+.NET → SDK version
+
+Node TS app → node + package manager + tsconfig
+
+PySide6 → Python version + Qt runtime packaging
+
+4. Environment requirements
+“What tools must exist?”
+
+Examples:
+
+compiler
+
+linker
+
+SDK
+
+package manager
+
+runtime
+
+code generator
+
+env vars
+
+PATH entries
+
+5. Build policy / flag requirements
+“What specific switches must be injected?”
+
+Examples:
+
+/std:c++17
+
+/Zc:__cplusplus
+
+/EHsc
+
+/permissive-
+
+-std=c++20
+
+-fPIC
+
+-pthread
+
+Practical downstream requirement list format
+For NGKsGraph, I would model each detected technology like this:
+
+{
+  "detector_id": "qt6",
+  "matched_by": [
+    "CMakeLists.txt contains find_package(Qt6",
+    "*.pro file present",
+    "include path references QtCore"
+  ],
+  "implies_languages": ["C++"],
+  "implies_tools": ["qt", "c++ compiler"],
+  "implies_minimums": {
+    "cpp_standard": "c++17"
+  },
+  "implies_flags": {
+    "msvc": ["/std:c++17", "/Zc:__cplusplus"],
+    "clang": ["-std=c++17"],
+    "gcc": ["-std=c++17"]
+  },
+  "implies_env": [],
+  "confidence": 0.97,
+  "severity_if_missing": "build_blocker"
+}
+That way NGKsGraph stops being a file scanner and becomes a build contract engine.
+
+Example downstream rules you should support first
+These are the ones that bite hardest.
+
+C / C++
+compiler present
+
+linker present
+
+arch/toolset match
+
+standard level required
+
+debug/release runtime choice
+
+include/lib path completeness
+
+Specific examples
+Qt 6 → C++17, and on MSVC /Zc:__cplusplus may be required because MSVC otherwise leaves __cplusplus at 199711L. 
+
+JUCE → C++17, audio backend libs, platform SDKs
+
+MSVC project → Windows SDK + MSVC toolchain + vcvars environment
+
+clang-cl → MSVC-compatible environment plus clang tooling
+
+Python
+python executable
+
+minimum version
+
+venv or interpreter policy
+
+dependency resolver present
+
+wheel/build backend requirements
+
+Examples
+pyproject.toml + hatchling/poetry/setuptools
+
+PySide6 → deployment packaging tools
+
+C-extension packages → compiler toolchain also required
+
+Node / TypeScript
+node version
+
+package manager
+
+lockfile compatibility
+
+TS compiler / bundler
+
+framework runtime expectations
+
+Examples
+Next.js → node + package install + build script
+
+Electron → node + package manager + electron builder chain
+
+TS only repo → tsconfig.json, usually npm|pnpm|yarn
+
+.NET
+.NET SDK version
+
+workload requirements
+
+NuGet restore
+
+RID/runtime targeting
+
+Visual Studio/MSBuild when needed
+
+Java / Kotlin
+JDK version
+
+Maven/Gradle
+
+wrapper preference
+
+Kotlin JVM target
+
+Android SDK if Android project
+
+Rust
+cargo
+
+rustc toolchain
+
+target triple
+
+native linker if cross compiling
+
+Go
+Go version
+
+modules enabled
+
+CGO implications
+
+native compiler if CGO is on
+
+What NGKsGraph should emit
+For each project or subproject, emit at least:
+
+detected_stack.json
+
+downstream_requirements.json
+
+toolchain_contract.json
+
+build_flags_required.json
+
+environment_gaps.json
+
+Example:
+
+{
+  "project": "NGKsUI Runtime",
+  "primary_language": "C++",
+  "frameworks": ["Qt6"],
+  "required_tools": ["msvc", "qt"],
+  "required_flags": {
+    "msvc": ["/std:c++17", "/Zc:__cplusplus"]
+  },
+  "required_env": ["PATH contains Qt bin", "vcvars initialized"],
+  "missing": ["/Zc:__cplusplus"],
+  "status": "fail_closed"
+}
+That would have caught your issue before compile.
+
+The rule type you are missing
+Add a new NGKsGraph rule class:
+
+implication rules
+Not:
+
+“I found Qt.”
+
+But:
+
+“I found Qt, therefore enforce these compile and environment requirements.”
+
+That is the jump from detection to actionable build intelligence.
+
+Suggested starter list of downstream things to detect
+Top categories:
+
+Compiler standard requirements
+C++14
+
+C++17
+
+C++20
+
+C11
+
+C17
+
+Compiler flag requirements
+/Zc:__cplusplus
+
+/permissive-
+
+/EHsc
+
+-std=...
+
+-fPIC
+
+-pthread
+
+Tool requirements
+MSVC
+
+clang
+
+gcc
+
+cmake
+
+ninja
+
+make
+
+cargo
+
+dotnet
+
+node
+
+npm/pnpm/yarn
+
+python
+
+pip/poetry
+
+java
+
+gradle/maven
+
+go
+
+SDK/framework requirements
+Qt
+
+JUCE
+
+Windows SDK
+
+Android SDK
+
+Xcode/iOS SDK
+
+CUDA
+
+OpenSSL
+
+DirectX
+
+Vulkan
+
+Environment requirements
+PATH entries
+
+QTDIR
+
+JAVA_HOME
+
+ANDROID_HOME
+
+VCToolsInstallDir
+
+activated venv
+
+architecture consistency
+
+Packaging/runtime requirements
+dll deployment
+
+platform plugins
+
+redistributables
+
+runtime shared libraries
+
+app manifests
+
+Blunt version
+Your graph needs to move from:
+
+“What files exist?”
+
+to:
+
+“Given what exists, what else must also exist or be configured?”
+
+That is the real downstream layer.
+
+For your case, a good rule would have been:
+
+IF Qt6 detected AND compiler = MSVC
+THEN require /std:c++17
+AND require /Zc:__cplusplus
+ELSE fail before build starts
+That directly matches the Qt/MSVC failure you hit. Qt’s own headers can stop the build if the compiler setup does not satisfy its C++17 requirement, and MSVC’s __cplusplus behavior is a known reason /Zc:__cplusplus must sometimes be added explicitly. 
+
+I can draft a top 50 downstream implication rule list next, in a format ready to turn into NGKsGraph JSON or Python rules.
+
+
+I noticed a couple of things in here.  You are listing cmake and ninja,  while they may be present NGKsDevFabEco is replacing them, how does graph avoid conflicts them them?
+
+By treating them as foreign build surfaces, not as authorities.
+
+That is the clean answer.
+
+If NGKsDevFabEco is replacing CMake/Ninja, then NGKsGraph should not “obey” them the way a normal build tool would. It should only do one of these:
+
+ignore them
+
+read them as compatibility hints
+
+import and translate them into NGKsGraph’s own build contract
+
+block them if project policy says native NGKs only
+
+That is how you avoid conflicts.
+
+The real separation
+NGKsGraph needs to distinguish between:
+
+1. Detection
+“I found CMakeLists.txt or build.ninja.”
+
+2. Authority
+“Does this file control the build?”
+
+For your ecosystem, the answer should usually be:
+
+CMakeLists.txt detected → yes as evidence
+
+CMakeLists.txt detected → no as build authority
+
+build.ninja detected → yes as evidence
+
+build.ninja detected → no as build authority
+
+So Graph should see them, but not submit to them.
+
+The rule NGKsGraph needs
+You need an explicit concept like this:
+
+build_authority_mode
+Example values:
+
+native_ngks
+
+import_foreign
+
+compatibility_only
+
+foreign_authoritative
+
+For NGKsDevFabEco, your default should be:
+
+native_ngks
+Meaning:
+
+NGKsGraph is source of truth
+
+NGKsBuildCore executes the plan
+
+foreign files are advisory only
+
+no direct handoff to cmake/ninja unless explicitly allowed
+
+Practical behavior
+If Graph sees:
+
+CMakeLists.txt
+
+*.vcxproj
+
+build.ninja
+
+Makefile
+
+it should ask internally:
+
+“Is this a control file or a clue?”
+In your system, those should usually be clues.
+
+Example:
+
+CMakeLists.txt says Qt6 + C++ sources + include dirs
+
+Graph extracts that information
+
+Graph emits its own internal target graph
+
+BuildCore compiles from the NGKsGraph plan
+
+CMake is never invoked
+
+That avoids conflict.
+
+The mistake to avoid
+Do not let detection automatically imply execution.
+
+Bad logic:
+
+found CMakeLists.txt
+
+therefore use cmake
+
+Good logic:
+
+found CMakeLists.txt
+
+therefore parse/import/project-infer from it
+
+then decide whether policy allows execution through cmake
+
+default: no
+
+That single separation fixes most of the conflict.
+
+Recommended policy model
+NGKsGraph should classify foreign build tools into 4 buckets:
+
+A. Native
+Owned by NGKsDevFabEco.
+
+Examples:
+
+NGKsGraph
+
+NGKsBuildCore
+
+NGKsDevFabric
+
+These are authoritative.
+
+B. Importable
+Can be read and translated.
+
+Examples:
+
+CMake
+
+MSBuild project files
+
+Makefiles
+
+Gradle
+
+Cargo
+
+package.json
+
+These are not authoritative unless policy says so.
+
+C. Compatibility fallback
+Can be used only if native support is incomplete.
+
+Examples:
+
+CMake
+
+Ninja
+
+MSBuild
+
+Maven
+
+These should require an explicit policy switch.
+
+D. Blocked
+Known but intentionally not used.
+
+Examples:
+
+legacy/generated Ninja files
+
+stale CMake cache
+
+accidental old project artifacts
+
+Best design: “foreign tool presence” vs “foreign tool dependency”
+These are not the same.
+
+Foreign tool presence
+A file exists:
+
+CMakeLists.txt
+
+build.ninja
+
+Foreign tool dependency
+NGKsGraph determines the repo cannot currently build natively without that tool.
+
+That dependency should only be declared if:
+
+native importer not implemented
+
+native executor lacks feature coverage
+
+policy allows fallback
+
+Otherwise Graph should say:
+
+foreign tool detected
+
+foreign tool not required
+
+native plan generated successfully
+
+How Graph avoids conflicts in practice
+Add these fields to detection output:
+
+{
+  "tool": "cmake",
+  "detected": true,
+  "role": "foreign_build_description",
+  "authoritative": false,
+  "execution_allowed": false,
+  "import_strategy": "parse_only",
+  "conflict_risk": "low"
+}
+And for Ninja:
+
+{
+  "tool": "ninja",
+  "detected": true,
+  "role": "foreign_executor_artifact",
+  "authoritative": false,
+  "execution_allowed": false,
+  "import_strategy": "ignore_or_translate",
+  "conflict_risk": "medium"
+}
+CMake and Ninja should not be treated the same
+This part matters.
+
+CMake
+Usually a project description layer.
+It contains useful semantic information:
+
+targets
+
+source files
+
+link libs
+
+include dirs
+
+Qt packages
+
+compile definitions
+
+So CMake is worth parsing/importing.
+
+Ninja
+Usually an execution artifact.
+It is often generated output, not the original intent.
+
+So Ninja should usually be:
+
+ignored
+
+or treated as derived evidence only
+
+Bluntly:
+
+parse CMake
+
+mostly ignore Ninja
+
+That will save you a lot of junk behavior.
+
+Recommended precedence order
+For your ecosystem, I would use this:
+
+NGKs native manifests/contracts
+
+NGKsGraph inferred project structure
+
+foreign descriptive files (CMakeLists.txt, .vcxproj, package.json, Cargo.toml)
+
+foreign generated executor files (build.ninja, cmake_install.cmake, caches, intermediates)
+
+So if both NGKsGraph contract and CMake exist, NGKsGraph wins.
+
+Conflict resolution rules
+Graph should have hard rules like:
+
+Rule 1
+If native NGKs project contract exists, foreign build files are non-authoritative.
+
+Rule 2
+Generated files are never authoritative.
+
+Examples:
+
+build.ninja
+
+CMakeCache.txt
+
+cmake_install.cmake
+
+Rule 3
+Foreign files may contribute metadata, not control.
+
+Rule 4
+Fallback to foreign execution requires explicit opt-in.
+
+Not automatic. Ever.
+
+Rule 5
+If imported foreign config conflicts with native contract, fail closed and report it.
+
+Example:
+
+native says C++20
+
+old CMake says C++14
+
+do not “guess”
+
+report contract conflict
+
+What Graph should emit
+Something like this:
+
+{
+  "build_authority": "ngks_native",
+  "foreign_tools_detected": [
+    {
+      "name": "cmake",
+      "detected": true,
+      "used_for": "metadata_import",
+      "allowed_to_execute": false
+    },
+    {
+      "name": "ninja",
+      "detected": true,
+      "used_for": "ignored_generated_artifact",
+      "allowed_to_execute": false
+    }
+  ]
+}
+For your Qt/C++17 example
+Graph should do this:
+
+detect Qt from includes, config files, or CMake
+
+infer C++ project
+
+infer compiler standard requirement
+
+emit NGKs native compile contract
+
+BuildCore uses that contract
+
+no need to invoke CMake or Ninja at all
+
+So CMake can help Graph learn, but it should not be the thing that actually drives the build.
+
+The simple mental model
+Use this rule:
+
+“Detect foreign, learn from foreign, do not surrender to foreign.”
+That is how NGKsDevFabEco replaces them without being blind to them.
+
+What I would implement first
+Add a field to every detected tool:
+
+detected
+
+category
+
+authoritative
+
+execution_allowed
+
+import_only
+
+generated_artifact
+
+And default them like this:
+
+CMake
+detected: yes
+
+category: foreign_description
+
+authoritative: no
+
+execution_allowed: no
+
+import_only: yes
+
+generated_artifact: no
+
+Ninja
+detected: yes
+
+category: foreign_executor_artifact
+
+authoritative: no
+
+execution_allowed: no
+
+import_only: no
+
+generated_artifact: yes
+
+That alone would remove a lot of confusion.
+
+Next move is to define a foreign tool policy table for NGKsGraph with entries for CMake, Ninja, MSBuild, Cargo, Gradle, and package.json.
+
+
+Actually if this is being deployed in a system that used cmake, could it also use its documentation as a cheat sheet?   or may that have stale data that could corrupt
+
+
+Thought for a couple of seconds
+Yes, it can use CMake files as a cheat sheet, but never as trusted truth.
+
+That is the safe model.
+
+The right stance
+CMake data should be treated as one of these:
+
+Fresh and useful hints
+
+Legacy hints
+
+Generated junk
+
+Stale/conflicting config
+
+So the answer is:
+
+yes, NGKsGraph can mine it
+
+no, it should not blindly trust it
+
+What is usually safe to read
+These are often useful as intent clues:
+
+CMakeLists.txt
+
+*.cmake
+
+toolchain files
+
+preset files
+
+target definitions
+
+find_package(...)
+
+target_link_libraries(...)
+
+target_include_directories(...)
+
+target_compile_definitions(...)
+
+set(CMAKE_CXX_STANDARD ...)
+
+Those can tell Graph:
+
+likely languages
+
+frameworks
+
+source groupings
+
+include paths
+
+linked libraries
+
+expected standards
+
+target names
+
+optional features
+
+That is good cheat-sheet material.
+
+What is dangerous / often stale
+These should usually be treated as non-authoritative derived artifacts:
+
+build.ninja
+
+CMakeCache.txt
+
+cmake_install.cmake
+
+compile_commands.json from old runs
+
+files inside build/, out/, cmake-build-*
+
+generated project files
+
+stale install manifests
+
+These can absolutely be stale and can corrupt detection if treated as truth.
+
+Example:
+
+repo changed from C++17 to C++20
+
+source files changed
+
+CMake was not reconfigured
+
+old CMakeCache.txt still says old values
+
+Graph trusts cache
+
+Build contract becomes wrong
+
+That is exactly the kind of corruption you want to avoid.
+
+Best practice: split CMake inputs into tiers
+Tier A — Human-authored source-of-intent
+Usually safe to mine as hints:
+
+CMakeLists.txt
+
+*.cmake
+
+CMakePresets.json
+
+toolchain files checked into repo
+
+Tier B — Generated configure outputs
+Use only with caution:
+
+compile_commands.json
+
+generated project files
+
+Tier C — Cache/intermediate/run-state
+Usually ignore:
+
+CMakeCache.txt
+
+cmake_install.cmake
+
+build.ninja
+
+CMakeFiles/
+
+That is the clean policy.
+
+The rule NGKsGraph should use
+“Author-written config may inform. Generated state may not govern.”
+That is the whole game.
+
+Recommended trust policy
+Give every foreign file a trust class:
+
+authoritative_native
+
+foreign_authored_hint
+
+foreign_generated_hint
+
+foreign_runtime_artifact
+
+blocked_stale_risk
+
+Example:
+
+CMakeLists.txt
+class: foreign_authored_hint
+
+allowed for parsing: yes
+
+allowed for execution: no
+
+stale risk: medium
+
+CMakePresets.json
+class: foreign_authored_hint
+
+allowed for parsing: yes
+
+allowed for execution: no
+
+stale risk: medium
+
+build.ninja
+class: foreign_generated_hint
+
+allowed for parsing: maybe
+
+allowed for execution: no
+
+stale risk: high
+
+CMakeCache.txt
+class: blocked_stale_risk
+
+allowed for parsing: normally no
+
+allowed for execution: no
+
+stale risk: very high
+
+How to avoid corruption
+NGKsGraph should never say:
+
+“CMake said it, therefore it is true.”
+
+Instead it should say:
+
+“CMake suggests this; verify against repo reality.”
+
+Verification examples
+If CMakeLists.txt says:
+
+Qt6
+
+C++17
+
+target app
+
+Graph should cross-check:
+
+are .cpp/.h files actually present
+
+do includes reference Qt
+
+does repo structure match
+
+do manifests or native NGKs rules override it
+
+If CMake says one thing and source reality says another, Graph should:
+
+lower confidence
+
+flag mismatch
+
+fail closed if necessary
+
+Safe usage model
+Use CMake as:
+
+discovery aid
+
+migration aid
+
+compatibility translator
+
+bootstrap hint source
+
+Do not use it as:
+
+execution authority
+
+final contract
+
+cache truth
+
+environment truth
+
+Good specific uses
+CMake is very good for extracting:
+
+target names
+
+source file lists
+
+package dependencies
+
+framework references
+
+include directories
+
+compile definitions
+
+language standards
+
+optional feature toggles
+
+That makes it excellent for helping Graph build an initial NGKs-native contract.
+
+Bad specific uses
+Do not trust it blindly for:
+
+current compiler path
+
+current SDK path
+
+current include/lib absolute paths from cache
+
+current generator state
+
+current build directory artifacts
+
+old generated build.ninja
+
+stale cache variables
+
+Those are exactly where rot creeps in.
+
+Best design for NGKsGraph
+When importing foreign build descriptions, Graph should produce fields like:
+
+{
+  "source": "CMakeLists.txt",
+  "classification": "foreign_authored_hint",
+  "facts_extracted": {
+    "frameworks": ["Qt6"],
+    "cpp_standard": "c++17",
+    "targets": ["NGKsUIRuntime"]
+  },
+  "verification_status": "partially_verified",
+  "trust_score": 0.72,
+  "authoritative": false
+}
+And for cache junk:
+
+{
+  "source": "build/CMakeCache.txt",
+  "classification": "blocked_stale_risk",
+  "facts_extracted": {},
+  "verification_status": "ignored",
+  "trust_score": 0.05,
+  "authoritative": false
+}
+Practical recommendation
+For NGKsDevFabEco, I would use this policy:
+
+Parse and mine
+CMakeLists.txt
+
+checked-in *.cmake
+
+checked-in CMakePresets.json
+
+Parse only if explicitly allowed
+compile_commands.json
+
+Ignore by default
+build.ninja
+
+cmake_install.cmake
+
+CMakeFiles/
+
+CMakeCache.txt
+
+anything inside generated build folders
+
+Blunt answer
+Yes, CMake can be used as a cheat sheet.
+
+But:
+
+only the authored project description files
+
+never the generated state files
+
+always verify against actual repo contents
+
+never let it override NGKs native authority
+
+So the safe principle is:
+
+“Use CMake source files as hints. Ignore CMake run artifacts as truth.”
+That keeps you from being blind, while also avoiding stale-data corruption.
+
+I can give you a foreign-build-file trust matrix next — CMake, Ninja, MSBuild, Cargo, Gradle, package.json — with columns for parse, trust, verify, ignore, and stale-risk.
+
+
+ok any other helpful hints we have not discussed to take Graph to the next level?
+
+Yes. A few big ones.
+
+You are already moving from file detection to build intelligence. The next jump is making Graph act like a planner, not just a scanner.
+
+1. Separate facts, inferences, and decisions
+This is a major upgrade.
+
+Graph should never mix these together.
+
+Facts
+Directly observed:
+
+CMakeLists.txt exists
+
+Qt6::Core found in file
+
+.cpp files present
+
+cl.exe found
+
+vcvars not active
+
+Inferences
+Derived from facts:
+
+project is probably C++
+
+Qt6 implies C++17
+
+MSVC likely needs /Zc:__cplusplus
+
+Decisions
+Actions Graph chooses:
+
+emit native compile contract
+
+fail preflight
+
+require env activation
+
+refuse foreign execution
+
+If you keep those 3 separated, debugging Graph becomes far easier.
+
+2. Add confidence scores everywhere
+Not everything Graph sees is equally trustworthy.
+
+Example:
+
+Cargo.toml + many .rs files = 0.98 confidence
+
+one random .cpp file in tools folder = 0.22 confidence
+
+stale compile_commands.json = 0.35 confidence
+
+That lets Graph say:
+
+detected
+
+suspected
+
+verified
+
+conflicted
+
+Much better than fake certainty.
+
+3. Monorepo awareness
+This one matters a lot.
+
+A repo may contain:
+
+app
+
+library
+
+test harness
+
+docs generator
+
+old legacy folder
+
+vendor code
+
+experiments
+
+If Graph treats the whole repo as one project, it gets stupid fast.
+
+So Graph should identify:
+
+repo root
+
+subproject roots
+
+owned code
+
+vendored code
+
+generated code
+
+archived/legacy code
+
+Example output:
+
+{
+  "repo_root": "NGKsDevFabEco",
+  "subprojects": [
+    {"name": "ngksgraph", "type": "python_package"},
+    {"name": "ngksbuildcore", "type": "python_package"},
+    {"name": "samples/qt_probe", "type": "cpp_qt_app"}
+  ]
+}
+That is next-level useful.
+
+4. First-class stale artifact detection
+This is a huge one.
+
+Graph should actively detect stale junk, not just ignore it.
+
+Examples:
+
+build.ninja older than source tree intent files
+
+CMakeCache.txt references dead paths
+
+.vcxproj exists but solution no longer matches repo
+
+generated files reference missing compiler
+
+lockfile mismatches manifest
+
+Graph should say:
+
+stale likely
+
+stale confirmed
+
+orphaned artifact
+
+foreign-generated but inconsistent
+
+That prevents a lot of wasted time.
+
+5. Environment contract output
+Not just “tool found” but “environment contract”.
+
+Example:
+
+{
+  "project": "qt_app",
+  "environment_contract": {
+    "compiler": "msvc",
+    "compiler_min_version": "19.3x",
+    "language_standard": "c++17",
+    "required_env": [
+      "vcvars active",
+      "Qt bin on PATH"
+    ],
+    "required_flags": [
+      "/std:c++17",
+      "/Zc:__cplusplus"
+    ]
+  }
+}
+This is what would have saved you on the Qt miss.
+
+Graph needs to generate the conditions of success, not just the project label.
+
+6. Preflight before planning
+Before Graph emits a full plan, run a preflight gate.
+
+Questions like:
+
+Is repo structure sane?
+
+Are native manifests present?
+
+Are required tools available?
+
+Are there conflicting foreign files?
+
+Is environment initialized?
+
+Are stale outputs likely to poison build?
+
+Then return:
+
+PASS
+
+PASS_WITH_WARNINGS
+
+FAIL_CLOSED
+
+This will save a lot of whack-a-mole.
+
+7. Explainability report
+Graph should always answer:
+
+what did I detect
+
+why did I believe it
+
+what downstream requirements came from that
+
+what blocked planning
+
+what I ignored and why
+
+Example:
+
+Detected Qt6 because:
+- CMakeLists.txt contains find_package(Qt6 ...)
+- source includes <QApplication>
+
+Derived requirements:
+- C++ project
+- minimum C++17
+- MSVC requires /std:c++17
+- MSVC compatibility flag /Zc:__cplusplus recommended
+
+Ignored:
+- build/build.ninja (generated artifact)
+- build/CMakeCache.txt (stale-risk)
+This makes Graph auditable and human-usable.
+
+8. Policy engine
+You need policy, not just detection.
+
+Examples:
+
+foreign execution forbidden
+
+stale generated files ignored
+
+vendored code excluded from primary inference
+
+fail closed on conflicting standards
+
+native NGKs contract overrides foreign config
+
+So instead of hardcoding everything, Graph should apply rules like:
+
+{
+  "policy": {
+    "foreign_execution": "forbid",
+    "generated_artifacts": "ignore",
+    "conflicting_build_authority": "fail_closed",
+    "native_contract_precedence": "highest"
+  }
+}
+This keeps behavior consistent.
+
+9. Ownership boundaries
+Graph should know what is:
+
+first-party
+
+third-party
+
+vendored
+
+generated
+
+test-only
+
+example/sample code
+
+Without this, one embedded demo app can skew the whole repo.
+
+Very useful signals:
+
+third_party/
+
+vendor/
+
+external/
+
+deps/
+
+samples/
+
+examples/
+
+generated/
+
+dist/
+
+build/
+
+Assign lower authority to those unless explicitly promoted.
+
+10. Build intent snapshots
+Graph should emit a stable snapshot of what it thinks the repo is.
+
+Example:
+
+targets
+
+language set
+
+frameworks
+
+required tools
+
+required flags
+
+authority mode
+
+exclusions
+
+warnings
+
+Then future runs can diff against earlier snapshots.
+
+That means Graph can detect:
+
+repo intent changed
+
+environment changed
+
+stale config drift
+
+new dependency introduced
+
+build authority conflict introduced
+
+That becomes extremely powerful in your ecosystem.
+
+11. Tool role classification
+Do not just detect a tool. Detect its role.
+
+Example:
+
+CMake = foreign description layer
+
+Ninja = generated execution layer
+
+MSBuild = foreign project definition / possible executor
+
+package.json = dependency/runtime manifest
+
+pyproject.toml = package/build manifest
+
+Qt = framework
+
+cl.exe = compiler
+
+link.exe = linker
+
+This lets Graph reason properly.
+
+A lot of bad detection systems fail because they treat all files as same-class evidence.
+
+12. Negative detection rules
+This is underrated.
+
+Graph should know when not to conclude something.
+
+Examples:
+
+presence of .ts files does not mean TypeScript app if they are only in tooling
+
+single CMakeLists.txt in third_party/ does not mean repo uses CMake
+
+one .cpp test helper does not make repo a C++ repo
+
+build.ninja in build dir does not mean Ninja should run
+
+Teach Graph how to avoid false positives.
+
+That is big.
+
+13. Capability mapping
+Graph should know what BuildCore can actually execute natively.
+
+Example:
+
+{
+  "detected_stack": ["C++", "Qt6"],
+  "native_execution_support": {
+    "compile_cpp": true,
+    "link_exe": true,
+    "qt_autogen": false
+  }
+}
+Then Graph can say:
+
+native plan possible
+
+native plan partial
+
+fallback needed but forbidden
+
+feature gap detected
+
+This prevents Graph from planning fantasy builds.
+
+14. Remediation hints, not just errors
+Instead of:
+
+Qt build failed
+
+Graph should say:
+
+Qt6 detected
+
+C++17 required
+
+MSVC found
+
+missing /Zc:__cplusplus
+
+recommended fix: inject /std:c++17 /Zc:__cplusplus
+
+So output should include:
+
+issue
+
+reason
+
+evidence
+
+remediation
+
+confidence
+
+That turns Graph into a troubleshooting partner.
+
+15. Detect “migration opportunity”
+Since NGKsDevFabEco is replacing old systems, Graph should identify when a foreign project is a good candidate for native conversion.
+
+Example:
+
+simple CMake project
+
+one executable target
+
+standard include dirs
+
+few dependencies
+
+no custom generators
+
+Graph can label:
+
+easy import
+
+medium import
+
+high-risk import
+
+That helps prioritize where NGKs native support should grow.
+
+16. Separate planning from execution permanently
+Graph should never mutate the repo or execute builds as part of detection/planning.
+
+Graph:
+
+observes
+
+infers
+
+validates
+
+emits plan
+
+BuildCore:
+
+executes
+
+DevFabric:
+
+orchestrates
+
+Keeping these hard boundaries will save you pain later.
+
+17. Native contract cache
+Once Graph successfully infers a project, it should be able to emit and reuse a native NGKs contract file.
+
+Example:
+
+first run: infer from repo + foreign hints
+
+later runs: use native contract first
+
+revalidate if repo changed
+
+That lets you gradually phase out dependence on foreign hints.
+
+18. Contradiction detector
+This is a big one for real projects.
+
+Graph should explicitly detect contradictions like:
+
+CMake says C++17, source or native contract says C++20
+
+package.json says React app, repo has no src/frontend
+
+.csproj exists but no .cs sources
+
+Qt package detected but includes absent
+
+msvc selected but only gcc-style flags present
+
+Contradictions should be surfaced directly, not buried.
+
+19. Evidence weighting by source class
+Best to worst:
+
+native NGKs contract
+
+authored first-party manifests
+
+source-tree reality
+
+foreign authored config
+
+foreign generated outputs
+
+runtime leftovers/cache
+
+If Graph uses this weighting consistently, a lot of conflict logic becomes simple.
+
+20. Human-readable “why build will fail” summary
+Not just machine JSON.
+
+One markdown summary per run:
+
+target detected
+
+authority mode
+
+top risks
+
+missing prerequisites
+
+stale artifacts found
+
+exact blockers
+
+recommended next fix
+
+That is the part humans will actually read.
+
+The highest-value upgrades first
+If you want the biggest payoff fast, I would do these five first:
+
+facts / inferences / decisions separation
+
+confidence scoring
+
+stale artifact detection
+
+environment contract generation
+
+contradiction detection
+
+Those five alone would make Graph much smarter and stop a lot of nonsense before execution.
+
+If you want, I can turn this into a Graph Next-Level Blueprint with modules, JSON schemas, and phase order for implementation.
+
+
+Turn this into a Graph Next-Level Blueprint with modules, JSON schemas, and phase order for implementation
+
+NGKsGraph Next-Level Blueprint
+This is the clean upgrade path from repo scanner to build-intelligence planner.
+
+1. Mission
+NGKsGraph should:
+
+detect what a repo contains
+
+determine what that implies downstream
+
+identify what is trustworthy vs stale
+
+emit a native NGKs build contract
+
+never surrender authority to foreign systems unless policy explicitly allows it
+
+Core rule:
+
+Graph observes, infers, validates, and plans.
+BuildCore executes.
+DevFabric orchestrates.
+
+2. Target architecture
+Core modules
+Module 1 — graph_probe
+Raw repo observation only.
+
+Responsibilities:
+
+walk repo
+
+collect files
+
+classify paths
+
+detect basic languages
+
+detect manifests
+
+detect foreign build files
+
+detect generated/stale-risk areas
+
+Output:
+
+01_probe_facts.json
+
+Module 2 — graph_classifier
+Turns observed files into typed evidence.
+
+Responsibilities:
+
+classify files as:
+
+source
+
+manifest
+
+authored foreign config
+
+generated foreign artifact
+
+cache/runtime artifact
+
+vendored
+
+example/sample
+
+test-only
+
+assign trust classes
+
+assign ownership boundaries
+
+Output:
+
+02_classified_evidence.json
+
+Module 3 — graph_detector
+Primary stack/framework detection.
+
+Responsibilities:
+
+determine likely:
+
+languages
+
+frameworks
+
+toolchains
+
+package ecosystems
+
+project/subproject roots
+
+support confidence scoring
+
+support monorepo segmentation
+
+Output:
+
+03_detected_stack.json
+
+Module 4 — graph_implication_engine
+Downstream requirement engine.
+
+Responsibilities:
+
+take detections and derive:
+
+compiler standard requirements
+
+required tools
+
+required flags
+
+required environment
+
+packaging/runtime needs
+
+build blockers
+
+apply implication rules like:
+
+Qt6 + MSVC → /std:c++17 + /Zc:__cplusplus
+
+PySide6 → Python + deployment/runtime packaging
+
+TS repo → node + package manager + tsconfig expectations
+
+Output:
+
+04_downstream_requirements.json
+
+Module 5 — graph_authority_engine
+Build authority and foreign-tool policy.
+
+Responsibilities:
+
+decide what is authoritative
+
+classify foreign systems as:
+
+hint-only
+
+importable
+
+compatibility fallback
+
+blocked
+
+prevent foreign tools from silently taking control
+
+apply project policy
+
+Output:
+
+05_build_authority.json
+
+Module 6 — graph_stale_guard
+Detect stale/generated poisoning risk.
+
+Responsibilities:
+
+detect stale build artifacts
+
+compare timestamps and source-of-intent vs generated outputs
+
+flag:
+
+orphaned cache
+
+stale compile db
+
+stale Ninja
+
+stale CMake cache
+
+dead toolchain paths
+
+Output:
+
+06_stale_risk_report.json
+
+Module 7 — graph_contradiction_engine
+Conflict and mismatch detection.
+
+Responsibilities:
+
+find contradictions across:
+
+source files
+
+native contracts
+
+foreign config
+
+environment
+
+build standards
+
+examples:
+
+native says C++20, CMake says C++17
+
+Qt detected but Qt includes absent
+
+.csproj exists with no C# source
+
+package.json exists but frontend dirs missing
+
+Output:
+
+07_contradictions.json
+
+Module 8 — graph_env_contract
+Environment contract generator.
+
+Responsibilities:
+
+emit conditions required for successful build
+
+define:
+
+compiler
+
+runtime
+
+SDKs
+
+env vars
+
+PATH expectations
+
+initialization requirements
+
+required flags per compiler family
+
+Output:
+
+08_environment_contract.json
+
+Module 9 — graph_planner
+Native NGKs plan generator.
+
+Responsibilities:
+
+emit normalized internal graph:
+
+targets
+
+source sets
+
+include sets
+
+defines
+
+link requirements
+
+compile mode
+
+packaging requirements
+
+only emit what BuildCore can support or label unsupported areas cleanly
+
+Output:
+
+09_native_plan.json
+
+Module 10 — graph_explainer
+Human-readable output.
+
+Responsibilities:
+
+explain:
+
+what was detected
+
+why it was believed
+
+what was ignored
+
+what is stale
+
+what will block build
+
+what Graph decided
+
+generate markdown summary
+
+Output:
+
+SUMMARY.md
+
+3. Data model layers
+Graph should keep these separate at all times.
+
+Layer A — facts
+Observed directly.
+
+Examples:
+
+CMakeLists.txt exists
+
+find_package(Qt6 found
+
+.cpp files present
+
+cl.exe present
+
+vcvars inactive
+
+Layer B — inferences
+Derived from facts.
+
+Examples:
+
+project is C++
+
+framework is Qt6
+
+C++17 required
+
+/Zc:__cplusplus required on MSVC
+
+Layer C — decisions
+Chosen by Graph.
+
+Examples:
+
+foreign config is hint-only
+
+fail preflight
+
+emit native plan
+
+refuse Ninja execution
+
+This separation needs to be hard-coded into design.
+
+4. Trust model
+Trust classes
+native_authoritative
+NGKs-native contracts/manifests.
+
+first_party_authored
+Repo-authored source-of-intent.
+
+Examples:
+
+CMakeLists.txt
+
+pyproject.toml
+
+Cargo.toml
+
+.csproj
+
+first_party_source_reality
+Actual owned source tree.
+
+foreign_authored_hint
+Foreign build/config docs used as hints.
+
+foreign_generated_hint
+Generated but maybe informative.
+
+Examples:
+
+compile_commands.json
+
+runtime_artifact
+Execution leftovers.
+
+Examples:
+
+build.ninja
+
+cmake_install.cmake
+
+blocked_stale_risk
+Should normally be ignored.
+
+Examples:
+
+CMakeCache.txt
+
+dead build folders
+
+stale generated metadata
+
+5. Source precedence
+Graph should evaluate evidence in this order:
+
+native NGKs contract
+
+first-party authored manifests
+
+first-party source reality
+
+foreign authored config
+
+foreign generated outputs
+
+runtime leftovers/cache
+
+If lower-trust evidence conflicts with higher-trust evidence, lower loses.
+
+6. Module contracts and JSON schemas
+Below are minimal schemas. Keep them strict and boring.
+
+6.1 01_probe_facts.json
+{
+  "repo_root": "string",
+  "scan_id": "string",
+  "timestamp_utc": "string",
+  "files_seen": [
+    {
+      "path": "string",
+      "kind": "file",
+      "extension": "string",
+      "size_bytes": 0,
+      "mtime_utc": "string"
+    }
+  ],
+  "directories_seen": [
+    {
+      "path": "string",
+      "classification_hint": "normal|build|vendor|third_party|sample|generated|cache|test"
+    }
+  ],
+  "tools_found_on_system": [
+    {
+      "tool": "cl.exe",
+      "found": true,
+      "path": "string"
+    }
+  ]
+}
+6.2 02_classified_evidence.json
+{
+  "repo_root": "string",
+  "classified_items": [
+    {
+      "path": "string",
+      "evidence_type": "source|manifest|foreign_authored_config|foreign_generated|runtime_artifact|cache|vendor|sample|test|docs",
+      "ownership": "first_party|third_party|generated|unknown",
+      "trust_class": "native_authoritative|first_party_authored|first_party_source_reality|foreign_authored_hint|foreign_generated_hint|runtime_artifact|blocked_stale_risk",
+      "used_for_detection": true
+    }
+  ]
+}
+6.3 03_detected_stack.json
+{
+  "repo_root": "string",
+  "subprojects": [
+    {
+      "subproject_id": "string",
+      "root_path": "string",
+      "project_type": "cpp_app|cpp_lib|python_package|node_app|dotnet_app|mixed|unknown",
+      "languages": [
+        {
+          "name": "C++",
+          "confidence": 0.98,
+          "evidence": ["src/main.cpp", "CMakeLists.txt"]
+        }
+      ],
+      "frameworks": [
+        {
+          "name": "Qt6",
+          "confidence": 0.95,
+          "evidence": ["find_package(Qt6", "#include <QApplication>"]
+        }
+      ],
+      "package_ecosystems": [
+        {
+          "name": "pip",
+          "confidence": 0.90
+        }
+      ]
+    }
+  ]
+}
+6.4 04_downstream_requirements.json
+{
+  "repo_root": "string",
+  "requirements": [
+    {
+      "subproject_id": "string",
+      "requirement_id": "qt6_msvc_cpp17",
+      "source_detector": "Qt6",
+      "category": "compiler_standard|compiler_flag|tool|sdk|runtime|env|packaging",
+      "description": "Qt6 on MSVC requires C++17 and __cplusplus reporting support",
+      "required_tools": ["msvc", "qt"],
+      "required_minimums": {
+        "cpp_standard": "c++17"
+      },
+      "required_flags": {
+        "msvc": ["/std:c++17", "/Zc:__cplusplus"],
+        "gcc": ["-std=c++17"],
+        "clang": ["-std=c++17"]
+      },
+      "required_env": [
+        "vcvars active",
+        "Qt bin on PATH"
+      ],
+      "severity_if_missing": "build_blocker",
+      "confidence": 0.95
+    }
+  ]
+}
+6.5 05_build_authority.json
+{
+  "repo_root": "string",
+  "authority_mode": "native_ngks|import_foreign|compatibility_only|foreign_authoritative",
+  "items": [
+    {
+      "tool_or_file": "CMakeLists.txt",
+      "detected": true,
+      "role": "foreign_build_description",
+      "authoritative": false,
+      "execution_allowed": false,
+      "import_strategy": "parse_only",
+      "reason": "foreign authored config may inform but cannot govern native NGKs build"
+    },
+    {
+      "tool_or_file": "build.ninja",
+      "detected": true,
+      "role": "foreign_executor_artifact",
+      "authoritative": false,
+      "execution_allowed": false,
+      "import_strategy": "ignore",
+      "reason": "generated artifact with high stale risk"
+    }
+  ]
+}
+6.6 06_stale_risk_report.json
+{
+  "repo_root": "string",
+  "stale_items": [
+    {
+      "path": "build/CMakeCache.txt",
+      "risk_level": "high",
+      "classification": "blocked_stale_risk",
+      "reason": "generated cache older than authored source-of-intent files and references configure-time state",
+      "action": "ignore"
+    }
+  ],
+  "summary": {
+    "high": 1,
+    "medium": 0,
+    "low": 0
+  }
+}
+6.7 07_contradictions.json
+{
+  "repo_root": "string",
+  "contradictions": [
+    {
+      "contradiction_id": "cpp_standard_conflict_001",
+      "subproject_id": "qt_app",
+      "severity": "high",
+      "left": {
+        "source": "native_contract.json",
+        "value": "c++20"
+      },
+      "right": {
+        "source": "CMakeLists.txt",
+        "value": "c++17"
+      },
+      "decision": "fail_closed",
+      "reason": "conflicting language standard requirements"
+    }
+  ]
+}
+6.8 08_environment_contract.json
+{
+  "repo_root": "string",
+  "subprojects": [
+    {
+      "subproject_id": "qt_app",
+      "compiler_family": "msvc",
+      "compiler_min_version": "19.x",
+      "language_standard": "c++17",
+      "required_tools": ["cl.exe", "link.exe", "qt"],
+      "required_env": [
+        "vcvars active",
+        "PATH contains Qt bin"
+      ],
+      "required_flags": ["/std:c++17", "/Zc:__cplusplus"],
+      "missing": [],
+      "status": "pass|warn|fail"
+    }
+  ]
+}
+6.9 09_native_plan.json
+{
+  "repo_root": "string",
+  "subprojects": [
+    {
+      "subproject_id": "qt_app",
+      "target_name": "NGKsUIRuntime",
+      "target_type": "executable|static_lib|shared_lib",
+      "sources": ["src/main.cpp", "src/app.cpp"],
+      "include_dirs": ["src", "include"],
+      "defines": ["UNICODE", "_UNICODE"],
+      "compile_options": {
+        "msvc": ["/std:c++17", "/Zc:__cplusplus"]
+      },
+      "link_libraries": ["Qt6Core", "Qt6Widgets"],
+      "execution_support": {
+        "native_supported": true,
+        "unsupported_features": []
+      }
+    }
+  ]
+}
+6.10 SUMMARY.md
+Human-readable, not JSON.
+
+Structure:
+
+repo summary
+
+subprojects
+
+detections
+
+downstream requirements
+
+authority decisions
+
+stale artifacts ignored
+
+contradictions
+
+environment contract
+
+plan outcome
+
+blockers/fixes
+
+7. Recommended rule engine structure
+Use separate rule tables.
+
+Rule families
+A. detection rules
+Examples:
+
+has_file
+
+has_extension
+
+contains_text
+
+has_directory_shape
+
+B. implication rules
+Examples:
+
+Qt6 + MSVC -> require c++17
+
+Qt6 + MSVC -> require /Zc:__cplusplus
+
+Cargo.toml -> cargo required
+
+PySide6 -> Python + runtime packaging
+
+C. authority rules
+Examples:
+
+build.ninja -> generated_artifact -> never authoritative
+
+CMakeLists.txt -> parse_only when authority_mode=native_ngks
+
+D. stale rules
+Examples:
+
+cache in build dir
+
+generated file older/newer mismatch
+
+file references dead absolute path
+
+E. contradiction rules
+Examples:
+
+conflicting standard levels
+
+framework present in manifest but absent in source
+
+package ecosystem mismatch
+
+8. Python package/module layout
+Suggested internal package layout:
+
+ngksgraph/
+  __init__.py
+  cli.py
+
+  core/
+    models.py
+    enums.py
+    io_json.py
+    timestamps.py
+    hashing.py
+
+  probe/
+    file_walker.py
+    path_classifier.py
+    tool_probe.py
+    ownership_probe.py
+
+  classify/
+    evidence_classifier.py
+    trust_assigner.py
+
+  detect/
+    language_detector.py
+    framework_detector.py
+    manifest_detector.py
+    monorepo_splitter.py
+
+  imply/
+    implication_engine.py
+    implication_rules.py
+
+  authority/
+    authority_engine.py
+    authority_rules.py
+
+  stale/
+    stale_guard.py
+    stale_rules.py
+
+  contradiction/
+    contradiction_engine.py
+    contradiction_rules.py
+
+  env/
+    env_contract.py
+    compiler_contracts.py
+    runtime_contracts.py
+
+  plan/
+    native_plan_builder.py
+    capability_mapper.py
+
+  explain/
+    summary_builder.py
+    markdown_renderer.py
+
+  rules/
+    detection_rules.json
+    implication_rules.json
+    authority_rules.json
+    stale_rules.json
+    contradiction_rules.json
+
+  schemas/
+    probe_facts.schema.json
+    classified_evidence.schema.json
+    detected_stack.schema.json
+    downstream_requirements.schema.json
+    build_authority.schema.json
+    stale_risk_report.schema.json
+    contradictions.schema.json
+    environment_contract.schema.json
+    native_plan.schema.json
+9. Implementation phases
+This is the build order that makes sense.
+
+Phase 1 — fact foundation
+Build:
+
+graph_probe
+
+graph_classifier
+
+basic JSON output
+
+strict enums for evidence/trust classes
+
+Deliverables:
+
+01_probe_facts.json
+
+02_classified_evidence.json
+
+Goal:
+Stop guessing. Build a clean factual base.
+
+Phase 2 — stack detection
+Build:
+
+language detector
+
+manifest detector
+
+framework detector
+
+basic confidence scoring
+
+subproject/monorepo splitter
+
+Deliverables:
+
+03_detected_stack.json
+
+Goal:
+Correct repo/project identification.
+
+Phase 3 — downstream implication engine
+Build:
+
+implication rules
+
+compiler standard requirements
+
+compiler flags
+
+tools/runtime/env requirements
+
+Starter rules:
+
+Qt6 + MSVC
+
+JUCE + MSVC
+
+Python + pyproject
+
+TS + package.json
+
+Cargo
+
+Go
+
+.NET
+
+Java/Gradle/Maven
+
+Deliverables:
+
+04_downstream_requirements.json
+
+Goal:
+Turn detections into actionable requirements.
+
+Phase 4 — foreign authority engine
+Build:
+
+authority modes
+
+tool/file role classification
+
+parse-only vs ignore vs blocked handling
+
+foreign/non-foreign precedence
+
+Deliverables:
+
+05_build_authority.json
+
+Goal:
+Avoid CMake/Ninja conflicts cleanly.
+
+Phase 5 — stale artifact guard
+Build:
+
+stale artifact detector
+
+build-dir poison detection
+
+generated/cache ignore logic
+
+dead path detection
+
+Deliverables:
+
+06_stale_risk_report.json
+
+Goal:
+Prevent corrupted inference from stale leftovers.
+
+Phase 6 — contradiction engine
+Build:
+
+standard-level conflicts
+
+manifest/source mismatches
+
+native/foreign conflict detection
+
+framework mismatch rules
+
+Deliverables:
+
+07_contradictions.json
+
+Goal:
+Fail closed on conflicting project truths.
+
+Phase 7 — environment contract
+Build:
+
+compiler family contract
+
+SDK/runtime checks
+
+env var checks
+
+required flags and preflight output
+
+Deliverables:
+
+08_environment_contract.json
+
+Goal:
+State the exact conditions required for success.
+
+Phase 8 — native plan builder
+Build:
+
+internal target model
+
+source sets
+
+include sets
+
+defines
+
+link requirements
+
+capability mapping to BuildCore support
+
+Deliverables:
+
+09_native_plan.json
+
+Goal:
+Produce BuildCore-ready native plan output.
+
+Phase 9 — explainer/reporting layer
+Build:
+
+markdown renderer
+
+why-detected sections
+
+ignored/stale/conflict explanation
+
+remediation hints
+
+Deliverables:
+
+SUMMARY.md
+
+Goal:
+Make Graph output readable by humans, not just machines.
+
+Phase 10 — contract caching / native promotion
+Build:
+
+persisted native contract file
+
+revalidation logic
+
+drift detection between runs
+
+plan snapshot diffing
+
+Deliverables:
+
+native_contract.json
+
+plan_diff.json
+
+Goal:
+Reduce reliance on foreign hints over time.
+
+10. Recommended starter rule pack
+These are the first rules worth implementing.
+
+Detection rules
+CMakeLists.txt contains find_package(Qt6
+
+source includes QApplication
+
+pyproject.toml present
+
+package.json present
+
+Cargo.toml present
+
+go.mod present
+
+.csproj present
+
+.sln present
+
+build.gradle / pom.xml present
+
+Implication rules
+Qt6 + MSVC -> /std:c++17 + /Zc:__cplusplus
+
+Qt6 -> Qt runtime on PATH
+
+JUCE -> C++17
+
+Cargo.toml -> cargo + rustc
+
+go.mod -> go modules
+
+pyproject.toml -> python + build backend
+
+package.json + tsconfig.json -> node + package manager + tsc
+
+.csproj -> dotnet SDK or MSBuild
+
+Authority rules
+CMakeLists.txt -> parse_only
+
+build.ninja -> ignore
+
+CMakeCache.txt -> blocked
+
+.vcxproj -> importable hint
+
+compile_commands.json -> low-trust hint only
+
+Stale rules
+anything in build/, out/, cmake-build-*
+
+CMakeCache.txt
+
+dead absolute path references
+
+generated file older than source-of-intent mismatch
+
+build outputs referencing missing compiler path
+
+Contradiction rules
+multiple conflicting language standards
+
+framework declared but no source evidence
+
+native contract disagrees with foreign hint
+
+package manager mismatch
+
+project type mismatch
+
+11. Preflight status model
+Every run should end with one of:
+
+PASS
+
+PASS_WITH_WARNINGS
+
+FAIL_CLOSED
+
+PASS
+Enough evidence, no blockers, native plan emitted.
+
+PASS_WITH_WARNINGS
+Plan emitted, but stale or low-confidence issues exist.
+
+FAIL_CLOSED
+Contradictions or blockers prevent trustworthy planning.
+
+12. Human-readable summary template
+SUMMARY.md should always include:
+
+Header
+scan id
+
+repo root
+
+timestamp
+
+authority mode
+
+What Graph detected
+subprojects
+
+languages
+
+frameworks
+
+package ecosystems
+
+What Graph inferred
+standards
+
+flags
+
+tools
+
+env
+
+What Graph ignored
+stale files
+
+generated artifacts
+
+blocked foreign files
+
+What conflicts exist
+contradictions
+
+trust issues
+
+stale poisoning risk
+
+Why build may fail
+missing tool
+
+missing env
+
+missing flag
+
+unsupported native execution path
+
+Recommended fix
+Explicit remediation list.
+
+13. Immediate coding priorities
+If you want the shortest path to useful results, do these first:
+
+Priority 1
+graph_probe, graph_classifier, graph_detector
+
+Priority 2
+graph_implication_engine
+
+Priority 3
+graph_authority_engine, graph_stale_guard
+
+Priority 4
+graph_contradiction_engine, graph_env_contract
+
+Priority 5
+graph_planner, graph_explainer
+
+That order gives you real value early instead of building fancy reporting on top of weak detection.
+
+14. One blunt design rule
+Do not let Graph ever do this:
+
+detect foreign file
+
+assume foreign truth
+
+silently inherit foreign execution behavior
+
+Instead:
+
+detect
+
+classify
+
+score trust
+
+verify
+
+infer
+
+decide
+
+emit native contract
+
+That is the entire difference between smart planner and dumb scanner.
+
+15. Final target state
+When mature, NGKsGraph should be able to say:
+
+what this repo is
+
+what each subproject is
+
+which evidence was trusted
+
+which files were ignored as stale
+
+what downstream conditions are required
+
+what contradictions exist
+
+whether native NGKs planning is possible
+
+exactly what BuildCore should execute
+
+why failure is likely before the build even starts
+
+That is next-level.
+
+If you want, next step is I turn this into a ready-to-build Python scaffold with package structure, dataclasses, enums, and starter rule files.
+
+
+Turn this into a ready-to-build Python scaffold with package structure, dataclasses, enums, and starter rule files
+
+
+Thought for 15s
+Built.
+
+Files:
+
+Download the scaffold ZIP
+
+Browse the scaffold folder
+
+What’s in it:
+
+runnable pyproject.toml
+
+ngksgraph package scaffold
+
+dataclasses + enums
+
+starter CLI: python -m ngksgraph.cli scan .
+
+probe/classify/detect working baseline
+
+starter rule JSON files
+
+starter schema JSON files
+
+phase stubs for implication/authority/stale/contradiction/env/plan
+
+Fast start:
+
+cd <where-you-unzip>\ngksgraph_scaffold
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .
+python -m ngksgraph.cli scan .
+That will emit:
+
+01_probe_facts.json
+
+02_classified_evidence.json
+
+03_detected_stack.json
+
+SUMMARY.md
+
+Best next move is Phase 3: wire the implication engine so Qt/MSVC/C++17 issues get caught before build. 
+
+
+
+

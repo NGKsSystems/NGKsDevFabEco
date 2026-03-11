@@ -88,7 +88,16 @@ if (-not (Test-Path $venvPython)) {
 }
 
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'pip')
-Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--no-index', '--find-links', $wheelSource, 'ngksdevfabric==0.1.0')
+$packages = @(
+    'ngksdevfabric==0.1.15',
+    'ngksgraph==0.1.9',
+    'ngksbuildcore==0.1.4',
+    'ngksenvcapsule==0.1.2',
+    'ngkslibrary==0.1.2'
+)
+$packageNames = @('ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
+Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--no-index', '--no-cache-dir', '--force-reinstall', '--find-links', $wheelSource) + $packages)
+Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'show') + $packageNames)
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksgraph', '--help')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksbuildcore', '--help')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', '--help')

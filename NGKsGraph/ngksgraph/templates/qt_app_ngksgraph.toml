@@ -3,12 +3,12 @@
 name = "qt_app"
 out_dir = "build"
 target_type = "exe"
-cxx_std = 20
+cxx_std = 17
 
 src_glob = ["src/**/*.cpp"]
 include_dirs = ["include"]
 defines = ["UNICODE", "_UNICODE"]
-cflags = []
+cflags = ["/Zc:__cplusplus", "/permissive-"]
 ldflags = []
 libs = []
 lib_dirs = []

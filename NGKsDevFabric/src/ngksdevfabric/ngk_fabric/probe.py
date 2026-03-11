@@ -9,12 +9,13 @@ from .receipts import run_command_capture, utc_now_iso, write_json
 from .resolver import resolve_tools
 
 
-PRIMARY_ORDER = ["graph", "meson", "npm", "python"]
+PRIMARY_ORDER = ["flutter", "graph", "meson", "npm", "python"]
 
 
 PATTERN_MAP: dict[str, tuple[str, bool]] = {
     "meson.build": ("meson", False),
     "package.json": ("npm", False),
+    "pubspec.yaml": ("flutter_pubspec", False),
     "pyproject.toml": ("python_pyproject", False),
     "requirements.txt": ("python_requirements", False),
     "enter_msvc_env.ps1": ("bootstrap_enter_msvc_ps1", False),
@@ -29,6 +30,8 @@ PATTERN_MAP: dict[str, tuple[str, bool]] = {
 
 def _empty_fingerprints() -> dict[str, list[str]]:
     keys = [
+        "flutter_pubspec",
+        "dart_sources",
         "sln",
         "vcxproj",
         "meson",
@@ -89,6 +92,8 @@ def _build_fingerprints(project_path: Path, max_depth: int = 6, max_files: int =
                 found["vcxproj"].add(str((current / filename).relative_to(project_path)).replace("\\", "/"))
             elif lower.endswith(".csproj"):
                 found["csproj"].add(str((current / filename).relative_to(project_path)).replace("\\", "/"))
+            elif lower.endswith(".dart"):
+                found["dart_sources"].add(str((current / filename).relative_to(project_path)).replace("\\", "/"))
 
         f = _empty_fingerprints()
         for key, entries in found.items():
@@ -118,12 +123,40 @@ def _build_fingerprints(project_path: Path, max_depth: int = 6, max_files: int =
 
 
 def _classify(f: dict[str, list[str]]) -> tuple[str, list[str], int, list[str]]:
+    def _is_generated_path(rel_path: str) -> bool:
+        normalized = rel_path.replace("\\", "/").lower()
+        generated_prefixes = (
+            "build/",
+            "out/",
+            "dist/",
+            "target/",
+            ".dart_tool/",
+            "cmake-build/",
+            "cmake-build-",
+        )
+        return normalized.startswith(generated_prefixes)
+
+    def _non_generated(paths: list[str]) -> list[str]:
+        return [path for path in paths if not _is_generated_path(path)]
+
     signals: list[str] = []
     primary = "unknown"
+    non_generated_graph_signals = _non_generated(f["sln"]) + _non_generated(f["csproj"])
+    has_generated_only_graph_signals = bool((f["sln"] or f["csproj"]) and not non_generated_graph_signals)
+    flutter_detected = bool(f["flutter_pubspec"])
+    dart_detected = bool(f["dart_sources"])
 
-    if f["sln"] or f["csproj"]:
+    if flutter_detected:
+        primary = "flutter"
+        signals.append("pubspec.yaml found")
+        if dart_detected:
+            signals.append("Dart sources found")
+    elif non_generated_graph_signals:
         primary = "graph"
         signals.append("Solution/project files found")
+    elif has_generated_only_graph_signals:
+        primary = "graph"
+        signals.append("Generated solution/project artifacts found")
     elif f["meson"]:
         primary = "meson"
         signals.append("meson.build found")
@@ -138,7 +171,9 @@ def _classify(f: dict[str, list[str]]) -> tuple[str, list[str], int, list[str]]:
     for candidate in PRIMARY_ORDER:
         if candidate == primary:
             continue
-        if candidate == "graph" and (f["sln"] or f["csproj"]):
+        if candidate == "flutter" and flutter_detected:
+            secondary.append(candidate)
+        elif candidate == "graph" and (f["sln"] or f["csproj"]):
             secondary.append(candidate)
         elif candidate == "meson" and f["meson"]:
             secondary.append(candidate)
@@ -148,8 +183,10 @@ def _classify(f: dict[str, list[str]]) -> tuple[str, list[str], int, list[str]]:
             secondary.append(candidate)
 
     confidence = 20
-    if primary == "graph":
-        confidence = 90
+    if primary == "flutter":
+        confidence = 90 if dart_detected else 85
+    elif primary == "graph":
+        confidence = 70 if has_generated_only_graph_signals else 90
     elif primary in {"meson", "npm", "python"}:
         confidence = 75
     if len(secondary) > 0:
@@ -161,7 +198,10 @@ def _classify(f: dict[str, list[str]]) -> tuple[str, list[str], int, list[str]]:
 
 def _recommended_commands(primary: str, f: dict[str, list[str]]) -> list[str]:
     commands: list[str] = []
-    if primary == "graph":
+    if primary == "flutter":
+        commands.append("flutter doctor -v")
+        commands.append("dart --version")
+    elif primary == "graph":
         commands.append("dotnet --version")
     elif primary == "meson":
         commands.append("meson --version")

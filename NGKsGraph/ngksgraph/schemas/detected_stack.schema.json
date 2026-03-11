@@ -1,0 +1,60 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["repo_root", "subprojects"],
+	"properties": {
+		"repo_root": {"type": "string", "minLength": 1},
+		"subprojects": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["subproject_id", "root_path", "project_type", "languages", "frameworks", "package_ecosystems"],
+				"properties": {
+					"subproject_id": {"type": "string", "minLength": 1},
+					"root_path": {"type": "string", "minLength": 1},
+					"project_type": {"type": "string", "minLength": 1},
+					"languages": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["name", "confidence", "evidence"],
+							"properties": {
+								"name": {"type": "string", "minLength": 1},
+								"confidence": {"type": "number", "minimum": 0, "maximum": 1},
+								"evidence": {"type": "array", "items": {"type": "string"}}
+							}
+						}
+					},
+					"frameworks": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["name", "confidence", "evidence"],
+							"properties": {
+								"name": {"type": "string", "minLength": 1},
+								"confidence": {"type": "number", "minimum": 0, "maximum": 1},
+								"evidence": {"type": "array", "items": {"type": "string"}}
+							}
+						}
+					},
+					"package_ecosystems": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["name", "confidence"],
+							"properties": {
+								"name": {"type": "string", "minLength": 1},
+								"confidence": {"type": "number", "minimum": 0, "maximum": 1}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

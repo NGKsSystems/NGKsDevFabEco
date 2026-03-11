@@ -12,7 +12,8 @@ if (Test-Path $venv) { Remove-Item -Recurse -Force $venv }
 python -m venv $venv
 $py = Join-Path $venv 'Scripts\python.exe'
 & $py -m pip install --upgrade pip 2>&1 | Tee-Object -FilePath (Join-Path $testPf '10_pip_upgrade.txt')
-& $py -m pip install --no-index --find-links $wheelhouse.FullName ngksdevfabric ngksgraph ngksbuildcore ngksenvcapsule ngkslibrary 2>&1 | Tee-Object -FilePath (Join-Path $testPf '20_install_wheels.txt')
+& $py -m pip install --no-index --no-cache-dir --force-reinstall --find-links $wheelhouse.FullName ngksdevfabric ngksgraph ngksbuildcore ngksenvcapsule ngkslibrary 2>&1 | Tee-Object -FilePath (Join-Path $testPf '20_install_wheels.txt')
+& $py -m pip show ngksdevfabric ngksgraph ngksbuildcore ngksenvcapsule ngkslibrary 2>&1 | Tee-Object -FilePath (Join-Path $testPf '21_installed_packages.txt')
 $emptyProject = Join-Path $eco '_e2e_projects\empty'
 $nodeProject = Join-Path $eco '_e2e_projects\node'
 New-Item -ItemType Directory -Force -Path $emptyProject | Out-Null

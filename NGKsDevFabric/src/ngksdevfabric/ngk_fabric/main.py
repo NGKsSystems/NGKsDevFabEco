@@ -442,7 +442,17 @@ def _is_reasonable_signal_path(project_root: Path, path: Path, max_depth: int = 
         return False
     if len(rel.parts) > max_depth:
         return False
-    blocked = {".git", "node_modules", ".venv", "__pycache__", "_proof"}
+    blocked = {
+        ".git",
+        "node_modules",
+        ".venv",
+        "__pycache__",
+        "_proof",
+        "build",
+        "out",
+        "target",
+        ".dart_tool",
+    }
     return all(part not in blocked for part in rel.parts)
 
 
@@ -460,17 +470,21 @@ def _find_first_signal(project_root: Path, patterns: list[str]) -> Path | None:
 
 
 def _detect_build_inputs(project_root: Path) -> tuple[bool, str, str]:
+    flutter_signal = _find_first_signal(project_root, ["pubspec.yaml"])
+    if flutter_signal is not None:
+        return True, "flutter", str(flutter_signal.relative_to(project_root).as_posix())
+
     dotnet_signal = _find_first_signal(project_root, ["*.sln", "*.csproj"])
     if dotnet_signal is not None:
         return True, "dotnet", str(dotnet_signal.relative_to(project_root).as_posix())
 
-    python_signal = _find_first_signal(project_root, ["pyproject.toml", "requirements.txt"])
-    if python_signal is not None:
-        return True, "python", str(python_signal.relative_to(project_root).as_posix())
-
     node_signal = _find_first_signal(project_root, ["package.json"])
     if node_signal is not None:
         return True, "node", str(node_signal.relative_to(project_root).as_posix())
+
+    python_signal = _find_first_signal(project_root, ["pyproject.toml", "requirements.txt"])
+    if python_signal is not None:
+        return True, "python", str(python_signal.relative_to(project_root).as_posix())
 
     return False, "none", "no_build_inputs"
 
@@ -483,7 +497,7 @@ def _ensure_ngks_operating_rules(project_root: Path) -> None:
             {
                 "schema": "ngks.project.rules.v1",
                 "project_root": str(project_root),
-                "autodetect": ["node", "python", "dotnet"],
+                "autodetect": ["flutter", "node", "python", "dotnet"],
             },
             indent=2,
         ),
@@ -508,6 +522,7 @@ def _ensure_ngks_operating_rules(project_root: Path) -> None:
 
 def _missing_required_tool(build_system: str) -> str | None:
     tool_map = {
+        "flutter": "flutter",
         "node": "npm",
         "python": "python",
         "dotnet": "dotnet",
@@ -980,6 +995,90 @@ def cmd_run(args: argparse.Namespace) -> int:
             failed_stage="10_envcapsule",
         )
 
+    resolve_stdout = ""
+    resolve_stderr = ""
+    resolve_exit = 0
+    resolve_os_error = False
+    resolve_cmd = [*env_base_argv, "resolve", "--pf", str(env_dir)]
+    try:
+        resolve_proc = subprocess.run(resolve_cmd, cwd=str(project_root), check=False, capture_output=True, text=True)
+        resolve_stdout = resolve_proc.stdout or ""
+        resolve_stderr = resolve_proc.stderr or ""
+        resolve_exit = int(resolve_proc.returncode)
+    except OSError as exc:
+        resolve_stderr = f"{exc}\ncommand={' '.join(str(part) for part in resolve_cmd)}"
+        resolve_exit = 2
+        resolve_os_error = True
+
+    env_stdout_parts = ["=== resolve ===\n", resolve_stdout]
+    env_stderr_parts = ["=== resolve ===\n", resolve_stderr]
+
+    if resolve_exit != 0:
+        if resolve_os_error:
+            env_hash_reason = "tool_missing"
+            plan_hash_reason = "skipped_due_to_precondition"
+            _mark_stage("envcapsule", "ran", "tool_missing")
+            _mark_stage("graph", "skipped", "upstream_failed")
+            _mark_stage("buildcore", "skipped", "upstream_failed")
+            _mark_stage("library", "skipped", "upstream_failed")
+            _write_stage_contract_files(
+                stage_dir=env_dir,
+                mode=env_mode,
+                why=env_why,
+                argv=resolve_cmd,
+                stdout="".join(env_stdout_parts),
+                stderr="".join(env_stderr_parts),
+                exit_code=resolve_exit,
+            )
+            failure = StageResult(stage="10_envcapsule", exit_code=resolve_exit, stdout=resolve_stdout, stderr=resolve_stderr)
+            _append_failure(
+                run_dir,
+                failure,
+                failure_class="tool_missing",
+                stdout_path=env_dir / "01_stdout.txt",
+                stderr_path=env_dir / "02_stderr.txt",
+            )
+            return _finish(
+                exit_code=2,
+                build_success=False,
+                build_action="attempted",
+                build_reason="tool_missing",
+                failure_class="tool_missing",
+                failed_stage="10_envcapsule",
+            )
+
+        env_hash_reason = "precondition_failed"
+        plan_hash_reason = "skipped_due_to_precondition"
+        _mark_stage("envcapsule", "ran", "precondition_failed")
+        _mark_stage("graph", "skipped", "upstream_failed")
+        _mark_stage("buildcore", "skipped", "upstream_failed")
+        _mark_stage("library", "skipped", "upstream_failed")
+        _write_stage_contract_files(
+            stage_dir=env_dir,
+            mode=env_mode,
+            why=env_why,
+            argv=resolve_cmd,
+            stdout="".join(env_stdout_parts),
+            stderr="".join(env_stderr_parts),
+            exit_code=resolve_exit,
+        )
+        failure = StageResult(stage="10_envcapsule", exit_code=resolve_exit, stdout=resolve_stdout, stderr=resolve_stderr)
+        _append_failure(
+            run_dir,
+            failure,
+            failure_class="precondition_failed",
+            stdout_path=env_dir / "01_stdout.txt",
+            stderr_path=env_dir / "02_stderr.txt",
+        )
+        return _finish(
+            exit_code=2,
+            build_success=False,
+            build_action="attempted",
+            build_reason="precondition_failed",
+            failure_class="precondition_failed",
+            failed_stage="10_envcapsule",
+        )
+
     lock_stdout = ""
     lock_stderr = ""
     lock_exit = 0
@@ -995,8 +1094,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         lock_exit = 2
         lock_os_error = True
 
-    env_stdout_parts = ["=== lock ===\n", lock_stdout]
-    env_stderr_parts = ["=== lock ===\n", lock_stderr]
+    env_stdout_parts.extend(["=== lock ===\n", lock_stdout])
+    env_stderr_parts.extend(["=== lock ===\n", lock_stderr])
 
     if lock_exit != 0:
         if lock_os_error:
@@ -1232,22 +1331,36 @@ def cmd_run(args: argparse.Namespace) -> int:
     env_hash_value, env_hash_reason = _hash_with_reason(env_hash, True)
     _mark_stage("envcapsule", "ran", "ok")
 
+    # Always require graph to regenerate plan artifacts for the current run.
+    for stale_path in (plan_file, plan_hash):
+        try:
+            if stale_path.exists():
+                stale_path.unlink()
+        except OSError:
+            pass
+
     _mark_stage("graph", "ran", "attempted")
+    graph_tail_args = [
+        "plan",
+        "--mode",
+        args.mode,
+        "--env-capsule-lock",
+        str(env_lock),
+        "--pf",
+        str(graph_dir),
+    ]
+    if args.profile:
+        graph_tail_args.extend(["--profile", str(args.profile)])
+    if args.target:
+        graph_tail_args.extend(["--target", str(args.target)])
+
     stage = _run_stage_with_resolver(
         stage="20_graph",
         stage_dir=graph_dir,
         project_root=project_root,
         component_name="ngksgraph",
         module_name="ngksgraph",
-        tail_args=[
-            "plan",
-            "--mode",
-            args.mode,
-            "--env-capsule-lock",
-            str(env_lock),
-            "--pf",
-            str(graph_dir),
-        ],
+        tail_args=graph_tail_args,
     )
     if stage.exit_code != 0:
         ok_outputs, missing_outputs = _verify_required_outputs(graph_required_outputs)
@@ -1354,10 +1467,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         "--pf",
         str(buildcore_dir),
     ]
-    if args.profile:
-        build_tail_args.extend(["--profile", str(args.profile)])
-    if args.target:
-        build_tail_args.extend(["--target", str(args.target)])
 
     _mark_stage("buildcore", "ran", "attempted")
     stage = _run_stage_with_resolver(

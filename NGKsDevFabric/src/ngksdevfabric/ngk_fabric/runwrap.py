@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -385,13 +386,14 @@ def _resolve_graph_invocation(project_path: Path, pf: Path) -> tuple[list[str] |
 
 def _resolve_graph_project(project_path: Path, pf: Path) -> tuple[Path | None, dict[str, Any]]:
     configured = os.environ.get("NGKS_GRAPH_PROJECT", "").strip()
+    candidate_project = project_path.resolve()
     sibling_graph = (project_path.parent / "NGKsGraph").resolve()
     candidate_sample = (sibling_graph / "artifacts" / "phaseA_sample").resolve()
     candidate_repo = sibling_graph
     details: dict[str, Any] = {
         "source": "env" if configured else "default",
         "configured": configured,
-        "candidates": [str(candidate_sample), str(candidate_repo)],
+        "candidates": [str(candidate_project), str(candidate_sample), str(candidate_repo)],
         "selected": None,
     }
 
@@ -402,6 +404,10 @@ def _resolve_graph_project(project_path: Path, pf: Path) -> tuple[Path | None, d
             return selected, details
         details["error"] = "NGKS_GRAPH_PROJECT set but path not found"
         return None, details
+
+    if (candidate_project / "ngksgraph.toml").exists():
+        details["selected"] = str(candidate_project)
+        return candidate_project, details
 
     if (candidate_sample / "ngksgraph.toml").exists():
         details["selected"] = str(candidate_sample)
@@ -909,6 +915,87 @@ def _precreate_output_dirs(nodes: list[dict[str, Any]], graph_project_path: Path
     return sorted(created_dirs)
 
 
+def _resolve_windeployqt_exe(graph_env: dict[str, str]) -> str:
+    configured = str(graph_env.get("NGKS_WINDEPLOYQT_EXE", "") or "").strip()
+    if configured:
+        candidate = Path(configured)
+        if candidate.exists():
+            return str(candidate.resolve())
+    detected = shutil.which("windeployqt.exe", path=graph_env.get("PATH"))
+    if detected:
+        return str(Path(detected).resolve())
+    return ""
+
+
+def _inject_qt_deploy_fallback_nodes(
+    payload: dict[str, Any],
+    *,
+    graph_project_path: Path,
+    graph_env: dict[str, str],
+) -> int:
+    nodes_obj = payload.get("nodes")
+    if not isinstance(nodes_obj, list):
+        return 0
+
+    nodes = [node for node in nodes_obj if isinstance(node, dict)]
+    if not nodes:
+        return 0
+
+    has_deploy = any(
+        str(node.get("id", "")).startswith("windeployqt:")
+        or "deploy qt runtime" in str(node.get("desc", "")).lower()
+        or "windeployqt" in _node_command_text(node).lower()
+        for node in nodes
+    )
+    if has_deploy:
+        return 0
+
+    windeployqt_exe = _resolve_windeployqt_exe(graph_env)
+    if not windeployqt_exe:
+        return 0
+
+    existing_ids = {str(node.get("id", "")) for node in nodes}
+    additions: list[dict[str, Any]] = []
+    for node in nodes:
+        cmd_text = _node_command_text(node).lower()
+        if "qt6" not in cmd_text and "qt5" not in cmd_text:
+            continue
+        outputs = node.get("outputs", []) or []
+        if not isinstance(outputs, list):
+            continue
+        for output in outputs:
+            out_value = str(output).strip()
+            if not out_value or not out_value.lower().endswith(".exe"):
+                continue
+            stem = Path(out_value).stem or "app"
+            deploy_id_base = f"windeployqt:{stem}:deploy:fallback"
+            deploy_id = deploy_id_base
+            suffix = 1
+            while deploy_id in existing_ids:
+                suffix += 1
+                deploy_id = f"{deploy_id_base}:{suffix}"
+            existing_ids.add(deploy_id)
+            dep_id = str(node.get("id", "")).strip()
+            additions.append(
+                {
+                    "id": deploy_id,
+                    "desc": f"Deploy Qt runtime for {stem}",
+                    "cwd": str(graph_project_path.resolve()),
+                    "cmd": f'{_quote_if_needed(windeployqt_exe)} {_quote_if_needed(out_value)}',
+                    "deps": [dep_id] if dep_id else [],
+                    "inputs": [out_value],
+                    "outputs": [],
+                    "env": {},
+                }
+            )
+
+    if not additions:
+        return 0
+
+    nodes_obj.extend(additions)
+    return len(additions)
+
+
 def _run_buildcore_backend(project_path: Path, pf: Path, mode: str, target: str | None, jobs: int | None) -> int:
     pf.mkdir(parents=True, exist_ok=True)
     run_dir = pf / "run_buildcore"
@@ -998,10 +1085,22 @@ def _run_buildcore_backend(project_path: Path, pf: Path, mode: str, target: str 
         return 2
 
     valid, validation_errors, nodes = _validate_plan_payload(payload if isinstance(payload, dict) else {})
+    fallback_added = 0
+    if valid and isinstance(payload, dict):
+        fallback_added = _inject_qt_deploy_fallback_nodes(
+            payload,
+            graph_project_path=graph_project_path,
+            graph_env=graph_env,
+        )
+        if fallback_added > 0:
+            write_json(plan_path, payload)
+            valid, validation_errors, nodes = _validate_plan_payload(payload)
+
     graph_nodes_count = len(nodes)
     validation_lines = [
         f"status={'PASS' if valid else 'FAIL'}",
         f"nodes_count={graph_nodes_count}",
+        f"fallback_qt_deploy_nodes_added={fallback_added}",
         f"errors_count={(0 if valid else len([x for x in validation_errors.splitlines() if x.strip()]))}",
     ]
     if validation_errors:

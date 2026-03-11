@@ -422,6 +422,21 @@ def _validate_configure_contracts(paths: dict[str, Path], graph: BuildGraph, con
     return (len(compdb_violations) == 0, len(graph_violations) == 0, compdb_violations + graph_violations)
 
 
+def _inject_qt_target_overrides(config: Config) -> None:
+    if not config.qt.enabled:
+        return
+
+    qt_include_dirs = list(config.qt.include_dirs)
+    qt_lib_dirs = list(config.qt.lib_dirs)
+    qt_libs = [str(v)[:-4] if str(v).lower().endswith(".lib") else str(v) for v in config.qt.libs]
+
+    for target in config.targets:
+        target.include_dirs = sorted(set(target.include_dirs + qt_include_dirs))
+        target.lib_dirs = sorted(set(target.lib_dirs + qt_lib_dirs))
+        target.libs = sorted(set(target.libs + qt_libs))
+        target.normalize()
+
+
 def _apply_cached_target_overrides(config: Config, plan: dict[str, Any]) -> None:
     overrides = plan.get("target_overrides", {}) if isinstance(plan.get("target_overrides", {}), dict) else {}
     for target in config.targets:
@@ -439,6 +454,8 @@ def _apply_cached_target_overrides(config: Config, plan: dict[str, Any]) -> None
         if "ldflags" in body and isinstance(body["ldflags"], list):
             target.ldflags = list(body["ldflags"])
         target.normalize()
+
+    _inject_qt_target_overrides(config)
 
 
 def _qt_result_from_plan(plan: dict[str, Any]) -> QtIntegrationResult:
@@ -660,9 +677,10 @@ def configure_project(
 
             if key_sha == cached_key_sha:
                 _apply_cached_target_overrides(config, plan_data)
-                qt_result = _qt_result_from_plan(plan_data)
+                qt_started = perf_counter()
+                qt_result = integrate_qt(repo_root, config, cached_source_map, paths["out_dir"])
+                durations["qt_detect_ms"] += int((perf_counter() - qt_started) * 1000)
                 artifacts = _generate_artifacts(repo_root, config, cached_source_map, paths, msvc_auto=msvc_auto, qt_result=qt_result)
-                durations["qt_detect_ms"] += 0
                 durations["plan_build_ms"] += int(artifacts.get("plan_build_ms", 0))
                 durations["emit_compdb_ms"] += int(artifacts.get("emit_compdb_ms", 0))
                 snapshot_info = _write_snapshot(
@@ -878,6 +896,8 @@ def resolve_plan_context(
     config = load_config(config_path)
     selected_profile = config.apply_profile(profile)
     selected_target = _selected_target(config, target)
+    paths = _paths(repo_root, config)
+    paths["out_dir"].mkdir(parents=True, exist_ok=True)
 
     source_map = scan_sources_by_target(repo_root, config)
     selected_sources = list(source_map.get(selected_target, []))
@@ -903,6 +923,8 @@ def resolve_plan_context(
         details = "; ".join(f"{src} -> {', '.join(owners)}" for src, owners in sorted(ambiguous.items()))
         raise ValueError(f"AMBIGUOUS_OWNERSHIP: {details}")
 
+    qt_result = integrate_qt(repo_root, config, source_map, paths["out_dir"])
+
     graph = build_graph_from_project(config, source_map=source_map, msvc_auto=False)
     return {
         "config": config,
@@ -910,6 +932,7 @@ def resolve_plan_context(
         "selected_target": selected_target,
         "source_map": source_map,
         "graph": graph,
+        "qt_result": qt_result,
     }
 
 

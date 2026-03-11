@@ -1,0 +1,52 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["repo_root", "subprojects"],
+	"properties": {
+		"repo_root": {"type": "string", "minLength": 1},
+		"subprojects": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"subproject_id",
+					"target_name",
+					"target_type",
+					"sources",
+					"include_dirs",
+					"defines",
+					"compile_options",
+					"link_libraries",
+					"execution_support"
+				],
+				"properties": {
+					"subproject_id": {"type": "string", "minLength": 1},
+					"target_name": {"type": "string", "minLength": 1},
+					"target_type": {"type": "string", "minLength": 1},
+					"sources": {"type": "array", "items": {"type": "string"}},
+					"include_dirs": {"type": "array", "items": {"type": "string"}},
+					"defines": {"type": "array", "items": {"type": "string"}},
+					"compile_options": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "array",
+							"items": {"type": "string"}
+						}
+					},
+					"link_libraries": {"type": "array", "items": {"type": "string"}},
+					"execution_support": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["native_supported", "unsupported_features"],
+						"properties": {
+							"native_supported": {"type": "boolean"},
+							"unsupported_features": {"type": "array", "items": {"type": "string"}}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,7 @@
+{
+  "rules": [
+    {"id": "build_dir_stale", "path_glob": "build/**", "risk_level": "high", "action": "ignore"},
+    {"id": "out_dir_stale", "path_glob": "out/**", "risk_level": "high", "action": "ignore"},
+    {"id": "cmake_cache_stale", "path_glob": "**/CMakeCache.txt", "risk_level": "high", "action": "ignore"}
+  ]
+}

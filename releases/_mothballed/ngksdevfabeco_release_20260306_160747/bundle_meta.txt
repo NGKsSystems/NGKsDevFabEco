@@ -1,0 +1,3 @@
+bundle_dir=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\releases\ngksdevfabeco_release_20260306_160747
+wheel_source=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\wheelhouse\e2e_20260306_152115
+wheel_count=5

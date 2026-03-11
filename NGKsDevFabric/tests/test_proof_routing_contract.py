@@ -34,6 +34,9 @@ def test_proof_routing_avoids_root_level_legacy_spill(monkeypatch, tmp_path: Pat
 
     def _fake_run(command, cwd=None, check=False, capture_output=True, text=True):
         del cwd, check, capture_output, text
+        if command[:2] == ["ngksenvcapsule", "resolve"]:
+            (tmp_path / "env_capsule.resolved.json").write_text('{"resolved":true}\n', encoding="utf-8")
+            return _Proc(returncode=0, stdout="ok\n")
         if command[:2] == ["ngksenvcapsule", "lock"]:
             (tmp_path / "env_capsule.lock.json").write_text('{"ok":true}\n', encoding="utf-8")
             (tmp_path / "env_capsule.hash.txt").write_text("envhash\n", encoding="utf-8")

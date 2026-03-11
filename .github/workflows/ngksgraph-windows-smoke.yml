@@ -1,0 +1,49 @@
+name: NGKsGraph Windows Smoke
+
+on:
+  push:
+    paths:
+      - ".github/workflows/ngksgraph-windows-smoke.yml"
+      - "NGKsGraph/**"
+      - "NGKsBuildCore/**"
+  pull_request:
+    paths:
+      - ".github/workflows/ngksgraph-windows-smoke.yml"
+      - "NGKsGraph/**"
+      - "NGKsBuildCore/**"
+
+jobs:
+  windows-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./NGKsBuildCore
+          python -m pip install -e ./NGKsGraph
+          python -m pip install pytest
+
+      - name: Regression tests (MSVC + buildplan contract)
+        shell: pwsh
+        run: |
+          python -m pytest -q `
+            ./NGKsGraph/tests/test_msvc_env_parse.py `
+            ./NGKsGraph/tests/test_buildplan_buildcore_contract.py
+
+      - name: Smoke build with --msvc-auto
+        shell: pwsh
+        working-directory: ./NGKsGraph/examples/hello_msvc
+        run: |
+          ngksgraph configure --profile debug
+          ngksgraph build --profile debug --msvc-auto

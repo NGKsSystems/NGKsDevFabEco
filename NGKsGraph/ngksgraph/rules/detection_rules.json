@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {"id": "detect_qt6_cmake", "type": "contains_text", "file": "CMakeLists.txt", "pattern": "find_package(Qt6"},
+    {"id": "detect_qt6_source", "type": "contains_text", "file_glob": "**/*.{cpp,h,hpp}", "pattern": "QApplication"},
+    {"id": "detect_pyproject", "type": "has_file", "file": "pyproject.toml"},
+    {"id": "detect_package_json", "type": "has_file", "file": "package.json"},
+    {"id": "detect_cargo", "type": "has_file", "file": "Cargo.toml"},
+    {"id": "detect_go_mod", "type": "has_file", "file": "go.mod"},
+    {"id": "detect_pubspec", "type": "has_file", "file": "pubspec.yaml"},
+    {"id": "detect_csproj", "type": "has_file", "file_glob": "**/*.csproj"},
+    {"id": "detect_pom_xml", "type": "has_file", "file": "pom.xml"},
+    {"id": "detect_build_gradle", "type": "has_file", "file": "build.gradle"},
+    {"id": "detect_pyside6", "type": "contains_text", "file_glob": "**/*.py", "pattern": "PySide6"},
+    {"id": "detect_django", "type": "contains_text", "file_glob": "**/*.py", "pattern": "django"},
+    {"id": "detect_electron", "type": "contains_text", "file": "package.json", "pattern": "electron"},
+    {"id": "detect_react", "type": "contains_text", "file": "package.json", "pattern": "react"},
+    {"id": "detect_juce", "type": "contains_text", "file": "CMakeLists.txt", "pattern": "juce_add_"},
+    {"id": "detect_flutter", "type": "contains_text", "file": "pubspec.yaml", "pattern": "flutter"}
+  ]
+}

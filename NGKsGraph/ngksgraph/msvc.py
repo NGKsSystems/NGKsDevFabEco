@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,6 +25,13 @@ class MSVCToolchainPaths:
     lib_path: str
     rc_path: str
     source: str
+
+
+def _strip_wrapping_quotes(value: str) -> str:
+    text = str(value or "").strip()
+    if len(text) >= 2 and text[0] == '"' and text[-1] == '"':
+        return text[1:-1].strip()
+    return text
 
 
 def find_vswhere_path() -> Path | None:
@@ -52,7 +60,7 @@ def find_vs_installation(vswhere_path: Path) -> str | None:
     )
     if proc.returncode != 0:
         return None
-    value = (proc.stdout or "").strip()
+    value = _strip_wrapping_quotes(proc.stdout or "")
     return value or None
 
 
@@ -119,11 +127,21 @@ def resolve_msvc_toolchain_paths(env: dict[str, str] | None = None) -> MSVCToolc
 
 
 def resolve_vsdevcmd_path(vs_install_path: str) -> Path:
-    return Path(vs_install_path) / "Common7" / "Tools" / "VsDevCmd.bat"
+    normalized_install = _strip_wrapping_quotes(vs_install_path)
+    candidate = Path(normalized_install) / "Common7" / "Tools" / "VsDevCmd.bat"
+    if candidate.exists():
+        return candidate
+    # Fallback for BuildTools which might be in Program Files (x86)
+    alt_path = normalized_install.replace("Program Files", "Program Files (x86)")
+    alt_candidate = Path(alt_path) / "Common7" / "Tools" / "VsDevCmd.bat"
+    if alt_candidate.exists():
+        return alt_candidate
+    return candidate  # Return original even if not exists, for error reporting
 
 
 def build_capture_env_command(vsdevcmd_path: str | Path, arch: str = "amd64") -> str:
-    return f'call "{Path(vsdevcmd_path)}" -arch={arch} >nul && set'
+    normalized_vsdevcmd = _strip_wrapping_quotes(str(vsdevcmd_path))
+    return f'call "{normalized_vsdevcmd}" -arch={arch} >nul && set'
 
 
 def build_capture_env_invocation(vsdevcmd_path: str | Path, arch: str = "amd64") -> str:
@@ -153,13 +171,27 @@ def _env_get(env: dict[str, str], key: str) -> str | None:
 
 
 def capture_msvc_environment(vsdevcmd_path: str | Path, arch: str = "amd64") -> dict[str, str]:
-    invocation = build_capture_env_invocation(vsdevcmd_path, arch=arch)
-    proc = subprocess.run(
-        invocation,
-        capture_output=True,
-        text=True,
-        shell=True,
-    )
+    command = build_capture_env_command(vsdevcmd_path, arch=arch)
+    script_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".bat", delete=False, encoding="utf-8") as handle:
+            handle.write("@echo off\n")
+            handle.write(f"{command}\n")
+            script_path = Path(handle.name)
+
+        proc = subprocess.run(
+            ["cmd.exe", "/d", "/c", str(script_path)],
+            capture_output=True,
+            text=True,
+            shell=False,
+        )
+    finally:
+        if script_path and script_path.exists():
+            try:
+                script_path.unlink()
+            except OSError:
+                pass
+
     if proc.returncode != 0:
         raise RuntimeError((proc.stderr or proc.stdout or "MSVC environment capture failed").strip())
     return parse_set_output(proc.stdout or "")

@@ -109,3 +109,110 @@ def test_ecosystem_build_emits_build_plan_and_hash(tmp_path: Path) -> None:
     payload = json.loads(plan_path.read_text(encoding="utf-8"))
     assert payload["env_capsule_hash"] == hash_value
     assert isinstance(payload.get("actions"), list) and payload["actions"]
+
+
+def test_ecosystem_build_prefers_node_plan_when_package_json_present(tmp_path: Path) -> None:
+    project = _make_project(tmp_path)
+    (project / "package.json").write_text(
+        json.dumps({"name": "app", "scripts": {"build": "vite build", "dev": "vite"}}),
+        encoding="utf-8",
+    )
+    (project / "package-lock.json").write_text("{}\n", encoding="utf-8")
+
+    hash_value = "1" * 64
+    hash_path = project / "env_capsule.hash.txt"
+    hash_path.write_text(hash_value + "\n", encoding="utf-8")
+
+    rc = main(
+        [
+            "build",
+            "--project",
+            str(project),
+            "--mode",
+            "ecosystem",
+            "--env-capsule-hash",
+            str(hash_path),
+            "--profile",
+            "debug",
+            "--target",
+            "app",
+        ]
+    )
+
+    assert rc == 0
+    payload = json.loads((project / "build_plan.json").read_text(encoding="utf-8"))
+    assert payload["requirements"]["language"] == "node"
+    assert payload["target"] == "build"
+    assert payload["actions"][0]["id"] == "node:script:build"
+    assert payload["actions"][0]["argv"][:3] == ["npm", "run", "build"]
+
+
+def test_ecosystem_plan_works_without_ngksgraph_toml_for_node(tmp_path: Path) -> None:
+    project = tmp_path
+    (project / "package.json").write_text(
+        json.dumps({"name": "app", "scripts": {"build": "vite build"}}),
+        encoding="utf-8",
+    )
+    (project / "pnpm-lock.yaml").write_text("lockfileVersion: '9.0'\n", encoding="utf-8")
+
+    hash_value = "2" * 64
+    hash_path = project / "env_capsule.hash.txt"
+    hash_path.write_text(hash_value + "\n", encoding="utf-8")
+
+    rc = main(
+        [
+            "plan",
+            "--project",
+            str(project),
+            "--mode",
+            "ecosystem",
+            "--env-capsule-hash",
+            str(hash_path),
+            "--target",
+            "build",
+        ]
+    )
+
+    assert rc == 0
+    payload = json.loads((project / "build_plan.json").read_text(encoding="utf-8"))
+    assert payload["requirements"]["language"] == "node"
+    assert payload["actions"][0]["argv"][:3] == ["pnpm", "run", "build"]
+
+
+def test_ecosystem_plan_works_without_ngksgraph_toml_for_flutter(tmp_path: Path) -> None:
+    project = tmp_path
+    (project / "pubspec.yaml").write_text(
+        "name: demo_flutter\n"
+        "description: demo\n"
+        "environment:\n"
+        "  sdk: '>=3.0.0 <4.0.0'\n"
+        "dependencies:\n"
+        "  flutter:\n"
+        "    sdk: flutter\n",
+        encoding="utf-8",
+    )
+    (project / "windows").mkdir(parents=True, exist_ok=True)
+
+    hash_value = "3" * 64
+    hash_path = project / "env_capsule.hash.txt"
+    hash_path.write_text(hash_value + "\n", encoding="utf-8")
+
+    rc = main(
+        [
+            "plan",
+            "--project",
+            str(project),
+            "--mode",
+            "ecosystem",
+            "--env-capsule-hash",
+            str(hash_path),
+            "--target",
+            "build",
+        ]
+    )
+
+    assert rc == 0
+    payload = json.loads((project / "build_plan.json").read_text(encoding="utf-8"))
+    assert payload["requirements"]["language"] == "flutter"
+    assert payload["requirements"]["package_manager"] == "pub"
+    assert payload["actions"][0]["argv"] == ["flutter", "build", "windows"]
