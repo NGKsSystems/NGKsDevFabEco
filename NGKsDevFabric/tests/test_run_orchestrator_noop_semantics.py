@@ -109,6 +109,32 @@ def test_node_detected_missing_target_is_precondition_failed(monkeypatch, tmp_pa
     assert "exit_code=2" in summary_text
 
 
+def test_node_nested_manifest_target_precheck_uses_detected_manifest(monkeypatch, tmp_path: Path):
+    desktop_dir = tmp_path / "desktop"
+    desktop_dir.mkdir(parents=True, exist_ok=True)
+    (desktop_dir / "package.json").write_text(
+        '{"name":"app","scripts":{"build":"node app.js"}}\n',
+        encoding="utf-8",
+    )
+
+    def _raise_missing(component_name: str, module_name: str):
+        del component_name, module_name
+        raise fabric_main.ComponentResolutionError("ngksenvcapsule", "ngksenvcapsule")
+
+    monkeypatch.setattr(fabric_main, "resolve_component_cmd", _raise_missing)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--profile", "debug", "--target", "build", "--mode", "ecosystem"])
+
+    assert code == 2
+    run_dir = _latest_run_dir(tmp_path)
+    summary_text = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
+    assert "build_detected=true" in summary_text
+    assert "build_system=node" in summary_text
+    assert "build_detect_reason=desktop/package.json" in summary_text
+    assert "failure_class=tool_missing" in summary_text
+    assert "build_reason=missing_required_target" not in summary_text
+
+
 def test_detect_precedence_sln_over_package_json(monkeypatch, tmp_path: Path):
     (tmp_path / "package.json").write_text('{"name":"app","scripts":{"smoke":"node app.js"}}\n', encoding="utf-8")
     (tmp_path / "dummy.sln").write_text("Microsoft Visual Studio Solution File\n", encoding="utf-8")

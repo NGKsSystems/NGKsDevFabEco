@@ -563,6 +563,50 @@ def _node_target_exists(project_root: Path, target: str) -> bool:
     return isinstance(script, str) and bool(script.strip())
 
 
+def _node_target_exists_in_package(package_json_path: Path, target: str) -> bool:
+    pkg = package_json_path
+    if not pkg.is_file():
+        return False
+    try:
+        data = json.loads(pkg.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    scripts = data.get("scripts") if isinstance(data, dict) else None
+    if not isinstance(scripts, dict):
+        return False
+    script = scripts.get(target)
+    return isinstance(script, str) and bool(script.strip())
+
+
+def _resolve_node_package_json(project_root: Path, build_detect_reason: str) -> Path:
+    default_pkg = project_root / "package.json"
+    reason = str(build_detect_reason or "").strip()
+    if not reason or reason == "package.json":
+        return default_pkg
+    candidate = (project_root / reason).resolve()
+    try:
+        candidate.relative_to(project_root.resolve())
+    except Exception:
+        return default_pkg
+    if candidate.name != "package.json":
+        return default_pkg
+    return candidate
+
+
+def _resolve_detected_build_root(project_root: Path, build_detect_reason: str) -> Path:
+    reason = str(build_detect_reason or "").strip()
+    if not reason or reason == "no_build_inputs":
+        return project_root
+    candidate = (project_root / reason).resolve()
+    try:
+        candidate.relative_to(project_root.resolve())
+    except Exception:
+        return project_root
+    if candidate.is_dir():
+        return candidate
+    return candidate.parent
+
+
 def _write_run_summary(
     run_dir: Path,
     run_id: str,
@@ -759,6 +803,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def cmd_run(args: argparse.Namespace) -> int:
     project_root = _resolve_project_root(getattr(args, "project", None))
+    build_detected, build_system, build_detect_reason = _detect_build_inputs(project_root)
+    build_root = _resolve_detected_build_root(project_root, build_detect_reason)
     run_id = _runid_now()
     run_dir = project_root / "_proof" / f"devfabric_run_{run_id}"
 
@@ -803,15 +849,14 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     env_lock = project_root / "env_capsule.lock.json"
     env_hash = project_root / "env_capsule.hash.txt"
-    plan_file = project_root / "build_plan.json"
-    plan_hash = project_root / "build_plan.hash.txt"
+    plan_file = build_root / "build_plan.json"
+    plan_hash = build_root / "build_plan.hash.txt"
     env_required_outputs = [env_lock, env_hash]
     graph_required_outputs = [plan_file, plan_hash]
     env_hash_value = ""
     plan_hash_value = ""
     env_hash_reason = "skipped_due_to_precondition"
     plan_hash_reason = "skipped_due_to_precondition"
-    build_detected, build_system, build_detect_reason = _detect_build_inputs(project_root)
     requested_target = str(args.target or "").strip()
     missing_tool = _missing_required_tool(build_system) if build_detected else None
 
@@ -922,14 +967,16 @@ def cmd_run(args: argparse.Namespace) -> int:
             failed_stage="30_buildcore",
         )
 
-    if requested_target and build_system == "node" and not _node_target_exists(project_root, requested_target):
+    node_package_json = _resolve_node_package_json(project_root, build_detect_reason)
+
+    if requested_target and build_system == "node" and not _node_target_exists_in_package(node_package_json, requested_target):
         env_hash_reason = "skipped_due_to_precondition"
         plan_hash_reason = "skipped_due_to_precondition"
         _mark_stage("envcapsule", "skipped", "missing_required_target")
         _mark_stage("graph", "skipped", "missing_required_target")
         _mark_stage("buildcore", "skipped", "missing_required_target")
         _mark_stage("library", "skipped", "missing_required_target")
-        message = f"target '{requested_target}' is missing from package.json scripts"
+        message = f"target '{requested_target}' is missing from {node_package_json.name} scripts"
         _write_stage_contract_files(
             stage_dir=buildcore_dir,
             mode="precheck",
@@ -1342,6 +1389,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     _mark_stage("graph", "ran", "attempted")
     graph_tail_args = [
         "plan",
+        "--project",
+        str(build_root),
         "--mode",
         args.mode,
         "--env-capsule-lock",

@@ -200,3 +200,66 @@ def test_graph_stage_does_not_reuse_stale_plan_outputs(monkeypatch, tmp_path: Pa
     # Stale artifacts should not survive as valid outputs.
     assert not (tmp_path / "build_plan.json").exists()
     assert not (tmp_path / "build_plan.hash.txt").exists()
+
+
+def test_graph_uses_detected_nested_build_root(monkeypatch, tmp_path: Path):
+    desktop = tmp_path / "desktop"
+    desktop.mkdir(parents=True, exist_ok=True)
+    (desktop / "package.json").write_text(
+        '{"name":"app","scripts":{"build":"node app.js"}}\n',
+        encoding="utf-8",
+    )
+
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+
+    def _fake_run(command, cwd=None, check=False, capture_output=True, text=True):
+        del cwd, check, capture_output, text
+        calls.append(list(command))
+
+        if command[:2] == ["ngksenvcapsule", "resolve"]:
+            (tmp_path / "env_capsule.resolved.json").write_text('{"resolved":true}\n', encoding="utf-8")
+            return _Proc(returncode=0, stdout="resolve ok\n")
+
+        if command[:2] == ["ngksenvcapsule", "lock"]:
+            (tmp_path / "env_capsule.lock.json").write_text('{"lock":true}\n', encoding="utf-8")
+            (tmp_path / "env_capsule.hash.txt").write_text("envhash123\n", encoding="utf-8")
+            return _Proc(returncode=0, stdout="lock ok\n")
+
+        if command[:2] == ["ngksenvcapsule", "verify"]:
+            return _Proc(returncode=0, stdout="verify ok\n")
+
+        if command[:2] == ["ngksgraph", "plan"]:
+            (desktop / "build_plan.json").write_text('{"plan":true}\n', encoding="utf-8")
+            (desktop / "build_plan.hash.txt").write_text("planhash456\n", encoding="utf-8")
+            return _Proc(returncode=0, stdout="plan ok\n")
+
+        if command[:2] == ["ngksbuildcore", "run"]:
+            return _Proc(returncode=0, stdout="build ok\n")
+
+        if command[:2] == ["ngkslibrary", "assemble"]:
+            return _Proc(returncode=0, stdout="library ok\n")
+
+        return _Proc(returncode=1, stderr="unexpected command")
+
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_run)
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem", "--target", "build"])
+
+    assert code == 0
+    graph_cmd = next(cmd for cmd in calls if cmd[:2] == ["ngksgraph", "plan"])
+    assert "--project" in graph_cmd
+    assert str(desktop) in graph_cmd
+
+    buildcore_cmd = next(cmd for cmd in calls if cmd[:2] == ["ngksbuildcore", "run"])
+    plan_arg = buildcore_cmd[buildcore_cmd.index("--plan") + 1]
+    assert Path(plan_arg) == desktop / "build_plan.json"
