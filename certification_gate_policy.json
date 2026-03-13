@@ -1,0 +1,29 @@
+{
+  "version": "certification_gate_policy_v1",
+  "states": {
+    "CERTIFIED_IMPROVEMENT": {
+      "gate": "PASS",
+      "exit_code": 0,
+      "severity": "success",
+      "recommended_next_action": "promote_this_baseline_or_continue_monitoring"
+    },
+    "CERTIFIED_STABLE": {
+      "gate": "PASS",
+      "exit_code": 0,
+      "severity": "success",
+      "recommended_next_action": "continue_periodic_validation"
+    },
+    "CERTIFIED_REGRESSION": {
+      "gate": "FAIL",
+      "exit_code": 1,
+      "severity": "failure",
+      "recommended_next_action": "block_release_and_fix_regressions"
+    },
+    "CERTIFICATION_INCONCLUSIVE": {
+      "gate": "FAIL",
+      "exit_code": 1,
+      "severity": "failure",
+      "recommended_next_action": "repair_inputs_and_rerun_validation"
+    }
+  }
+}

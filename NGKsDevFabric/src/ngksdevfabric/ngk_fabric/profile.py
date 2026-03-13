@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .node_toolchain import detect_node_toolchain
 from .probe import probe_project
 from .receipts import file_sha256, is_writable_directory, write_json
 
@@ -34,6 +35,20 @@ def init_profile(project_path: Path, pf: Path, write_project: bool = False) -> d
     bootstrap_candidates = probe.get("bootstrap_ritual_candidates", [])
     bootstrap_command = bootstrap_candidates[0] if bootstrap_candidates else ""
 
+    npm_entries = probe.get("fingerprint_map", {}).get("npm", [])
+    package_json_path = project_path / "package.json"
+    if npm_entries:
+        package_json_path = (project_path / str(npm_entries[0])).resolve()
+    node_toolchain = detect_node_toolchain(project_path, package_json_path)
+
+    node_component = "root"
+    if package_json_path.parent != project_path:
+        node_component = package_json_path.parent.name
+
+    node_language = "javascript"
+    if (package_json_path.parent / "tsconfig.json").is_file():
+        node_language = "typescript"
+
     payload = {
         "version": 1,
         "detected": {
@@ -58,6 +73,18 @@ def init_profile(project_path: Path, pf: Path, write_project: bool = False) -> d
         "runner": {
             "default_path": probe.get("primary_path", "unknown"),
             "overrides": {},
+        },
+        "node_toolchain": node_toolchain,
+        "contracts": {
+            "node_toolchain": [
+                {
+                    "component": node_component,
+                    "language": node_language,
+                    "build_system": "node",
+                    "package_manager": node_toolchain.get("selected_manager", ""),
+                    "reason": node_toolchain.get("reason", ""),
+                }
+            ]
         },
     }
 

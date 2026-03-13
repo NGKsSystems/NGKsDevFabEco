@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 from ngksdevfabric.ngk_fabric import main as fabric_main
@@ -44,7 +45,10 @@ def _fake_run_factory(project: Path, calls: list[list[str]]):
             return _Proc(returncode=0, stdout="verify ok\n")
 
         if command[:2] == ["ngksgraph", "plan"]:
-            (project / "build_plan.json").write_text('{"plan":true}\n', encoding="utf-8")
+            (project / "build_plan.json").write_text(
+                '{"requirements":{"language":"node","package_manager":"npm"},"actions":[{"argv":["npm","run","build"]}]}\n',
+                encoding="utf-8",
+            )
             (project / "build_plan.hash.txt").write_text("planhash456\n", encoding="utf-8")
             return _Proc(returncode=0, stdout="plan ok\n")
 
@@ -142,7 +146,8 @@ def test_summary_generation(monkeypatch, tmp_path: Path):
     text = summary.read_text(encoding="utf-8")
     assert "components_executed=envcapsule,graph,buildcore,library" in text
     assert "env_capsule_hash=envhash123" in text
-    assert "build_plan_hash=planhash456" in text
+    assert "build_plan_hash=" in text
+    assert "build_plan_hash=planhash456" not in text
     assert "build_success=true" in text
     graph_cmd = calls[3]
     assert "--profile" in graph_cmd
@@ -153,6 +158,108 @@ def test_summary_generation(monkeypatch, tmp_path: Path):
     buildcore_cmd = calls[4]
     assert "--profile" not in buildcore_cmd
     assert "--target" not in buildcore_cmd
+
+
+def test_node_toolchain_decision_prefers_pnpm_without_lockfile(monkeypatch, tmp_path: Path):
+    _write_package_json(tmp_path)
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+
+    monkeypatch.setattr(
+        fabric_main.shutil,
+        "which",
+        lambda name: f"C:/fake/{name}.cmd" if name in {"node", "pnpm", "npm"} else None,
+    )
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_run_factory(tmp_path, calls))
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem", "--target", "all"])
+
+    assert code == 0
+    run_dir = _latest_run_dir(tmp_path)
+    decision = json.loads((run_dir / "node_toolchain_decision.json").read_text(encoding="utf-8"))
+    assert decision["selected_manager"] == "pnpm"
+    assert decision["reason"] == "policy_default_no_lockfile"
+    assert decision["scan_scope"] == "repo_root_only"
+
+    plan = json.loads((tmp_path / "build_plan.json").read_text(encoding="utf-8"))
+    assert plan["requirements"]["package_manager"] == "pnpm"
+    assert plan["actions"][0]["argv"][0] == "pnpm"
+
+
+def test_node_toolchain_fallback_to_npm_when_pnpm_unavailable(monkeypatch, tmp_path: Path):
+    _write_package_json(tmp_path)
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+
+    monkeypatch.setattr(
+        fabric_main.shutil,
+        "which",
+        lambda name: f"C:/fake/{name}.cmd" if name in {"node", "npm"} else None,
+    )
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_run_factory(tmp_path, calls))
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem", "--target", "all"])
+
+    assert code == 0
+    run_dir = _latest_run_dir(tmp_path)
+    decision = json.loads((run_dir / "node_toolchain_decision.json").read_text(encoding="utf-8"))
+    assert decision["selected_manager"] == "npm"
+    assert decision["reason"] == "fallback_tool_unavailable"
+
+
+def test_conflict_outcome_promoted_to_summary(monkeypatch, tmp_path: Path):
+    (tmp_path / "package.json").write_text('{"name":"app","scripts":{"all":"node app.js"}}\n', encoding="utf-8")
+    (tmp_path / "package-lock.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / "pnpm-lock.yaml").write_text("lockfileVersion: '9.0'\n", encoding="utf-8")
+
+    calls: list[list[str]] = []
+
+    monkeypatch.setattr(
+        fabric_main,
+        "resolve_component_cmd",
+        lambda component_name, module_name: {
+            "mode": "console",
+            "argv": [component_name],
+            "why": "test console resolver",
+        },
+    )
+    monkeypatch.setattr(
+        fabric_main.shutil,
+        "which",
+        lambda name: f"C:/fake/{name}.cmd" if name in {"node", "pnpm", "npm"} else None,
+    )
+    monkeypatch.setattr(fabric_main.subprocess, "run", _fake_run_factory(tmp_path, calls))
+
+    code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem", "--target", "all"])
+
+    assert code == 0
+    run_dir = _latest_run_dir(tmp_path)
+    summary = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
+    assert "conflict_detected=true" in summary
+    assert "conflict_type=node_package_manager_lockfile_conflict" in summary
+    assert "conflict_resolution=pnpm" in summary
+
+    conflict = json.loads((run_dir / "conflict_outcome.json").read_text(encoding="utf-8"))
+    assert conflict["conflict_detected"] is True
+    assert conflict["selected_resolution"] == "pnpm"
 
 
 def test_graph_stage_does_not_reuse_stale_plan_outputs(monkeypatch, tmp_path: Path):

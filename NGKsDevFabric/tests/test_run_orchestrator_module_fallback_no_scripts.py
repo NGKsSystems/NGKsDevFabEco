@@ -31,7 +31,11 @@ def _write_package_json(project: Path) -> None:
 def test_run_uses_module_fallback_when_console_scripts_missing(monkeypatch, tmp_path: Path):
     _write_package_json(tmp_path)
     monkeypatch.setattr(component_exec.shutil, "which", lambda _: None)
-    monkeypatch.setattr(fabric_main.shutil, "which", lambda name: "C:/fake/npm.cmd" if name == "npm" else None)
+    monkeypatch.setattr(
+        fabric_main.shutil,
+        "which",
+        lambda name: f"C:/fake/{name}.cmd" if name in {"node", "npm", "pnpm"} else None,
+    )
 
     def _fake_find_spec(name: str):
         allowed = {
@@ -60,6 +64,9 @@ def test_run_uses_module_fallback_when_console_scripts_missing(monkeypatch, tmp_
             (tmp_path / "env_capsule.hash.txt").write_text("envhash_module\n", encoding="utf-8")
             return _Proc(returncode=0, stdout="lock ok\n")
 
+        if cmd[:3] == [sys.executable, "-m", "ngksenvcapsule"] and cmd[3] == "resolve":
+            return _Proc(returncode=0, stdout="resolve ok\n")
+
         if cmd[:3] == [sys.executable, "-m", "ngksenvcapsule"] and cmd[3:5] == ["verify", "--lock"]:
             return _Proc(returncode=0, stdout="verify ok\n")
 
@@ -81,7 +88,8 @@ def test_run_uses_module_fallback_when_console_scripts_missing(monkeypatch, tmp_
     code = fabric_main.main(["run", "--project", str(tmp_path), "--mode", "ecosystem"])
 
     assert code == 0
-    assert [cmd[:3] for cmd in calls[:5]] == [
+    assert [cmd[:3] for cmd in calls[:6]] == [
+        [sys.executable, "-m", "ngksenvcapsule"],
         [sys.executable, "-m", "ngksenvcapsule"],
         [sys.executable, "-m", "ngksenvcapsule"],
         [sys.executable, "-m", "ngksgraph"],
@@ -100,14 +108,19 @@ def test_run_uses_module_fallback_when_console_scripts_missing(monkeypatch, tmp_
     summary_text = (run_dir / "99_summary.txt").read_text(encoding="utf-8")
     assert "env_capsule_hash=envhash_module" in summary_text
     assert "env_capsule_hash_reason=ok" in summary_text
-    assert "build_plan_hash=planhash_module" in summary_text
+    assert "build_plan_hash=" in summary_text
+    assert "build_plan_hash=planhash_module" not in summary_text
     assert "build_plan_hash_reason=ok" in summary_text
 
 
 def test_module_fallback_missing_outputs_maps_to_precondition_failed(monkeypatch, tmp_path: Path):
     _write_package_json(tmp_path)
     monkeypatch.setattr(component_exec.shutil, "which", lambda _: None)
-    monkeypatch.setattr(fabric_main.shutil, "which", lambda name: "C:/fake/npm.cmd" if name == "npm" else None)
+    monkeypatch.setattr(
+        fabric_main.shutil,
+        "which",
+        lambda name: f"C:/fake/{name}.cmd" if name in {"node", "npm", "pnpm"} else None,
+    )
 
     def _fake_find_spec(name: str):
         allowed = {

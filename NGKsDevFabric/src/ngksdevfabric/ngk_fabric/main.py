@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import importlib.metadata
 import json
@@ -13,6 +14,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .component_exec import ComponentResolutionError, resolve_component_cmd
+from .certify_compare import ComparisonPolicy, run_certification_comparison
+from .certify_gate import GateEnforcementPolicy, run_certification_gate
+from .decision_validation import run_decision_validation
+from .explain_engine import persist_explain_bundle, run_explain_query
+from .node_toolchain import detect_node_toolchain
+from .proof_manager import register_proof_bundle
 from .proof_contract import doc_gate, ensure_unified_pf, repo_state, run_docengine_render, write_component_report
 from .probe import probe_project
 from .profile import init_profile
@@ -20,6 +27,7 @@ from .runwrap import doctor_toolchain, run_build
 from .smart_terminal import detect_shell, resolve_smart_terminal_enabled, run_shell, run_shell_direct
 
 DEVFABRIC_ROOT = Path(__file__).resolve().parents[3]
+_NOTEBOOK_POLICY_TOKENS = (".ipynb", "jupyter", "ipykernel", "notebook", "run_notebook_cell")
 
 
 @dataclass(frozen=True)
@@ -111,10 +119,20 @@ def _emit_component_reports_for_build(
 
 
 def _default_pf(project: Path, prefix: str) -> Path:
-    proof_root = (project / "_proof").resolve()
-    proof_root.mkdir(parents=True, exist_ok=True)
+    runs_root = (project / "_proof" / "runs").resolve()
+    runs_root.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return proof_root / f"{prefix}_{stamp}"
+    return runs_root / f"{prefix}_{stamp}"
+
+
+def _canonical_pf(project_root: Path, candidate: Path) -> Path:
+    runs_root = (project_root / "_proof" / "runs").resolve()
+    runs_root.mkdir(parents=True, exist_ok=True)
+    try:
+        candidate.resolve().relative_to(runs_root)
+        return candidate.resolve()
+    except Exception:
+        return (runs_root / candidate.name).resolve()
 
 
 def _git_root_for(path: Path) -> Path | None:
@@ -141,6 +159,51 @@ def _resolve_project_root(project_path: str | None) -> Path:
     cwd = Path.cwd().resolve()
     git_root = _git_root_for(cwd)
     return git_root if git_root else cwd
+
+
+def _project_path_from_argv(argv: list[str]) -> str | None:
+    for index, token in enumerate(argv):
+        if token == "--project-path" and index + 1 < len(argv):
+            return argv[index + 1]
+    return None
+
+
+def _collect_notebook_policy_hits(argv: list[str]) -> list[str]:
+    hits: list[str] = []
+    for raw in argv:
+        lowered = str(raw).lower()
+        for token in _NOTEBOOK_POLICY_TOKENS:
+            if token in lowered:
+                hits.append(str(raw))
+                break
+    return hits
+
+
+def _record_notebook_policy_violation(*, project_root: Path, argv: list[str], hits: list[str]) -> Path:
+    policy_dir = (project_root / "_proof" / "policy_violations").resolve()
+    policy_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = policy_dir / f"notebook_policy_violation_{ts}.json"
+    payload = {
+        "timestamp": _iso_now(),
+        "policy": "forbid_notebook_jupyter_ipykernel_in_core_workflows",
+        "argv": argv,
+        "hits": hits,
+        "result": "blocked",
+    }
+    out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return out_path
+
+
+def _enforce_notebook_policy(argv: list[str]) -> int:
+    hits = _collect_notebook_policy_hits(argv)
+    if not hits:
+        return 0
+    project_root = _resolve_project_root(_project_path_from_argv(argv))
+    violation_path = _record_notebook_policy_violation(project_root=project_root, argv=argv, hits=hits)
+    _print_result("error=policy_violation_notebook_execution_forbidden")
+    _print_result(f"policy_violation_file={violation_path}")
+    return 2
 
 
 def _is_interactive_tty() -> bool:
@@ -272,7 +335,7 @@ def _resolve_backup_root(args: argparse.Namespace, project_root: Path, allow_pro
 
 def _resolve_pf(args: argparse.Namespace, project_root: Path, prefix: str) -> Path:
     if getattr(args, "pf", None):
-        return Path(args.pf).resolve()
+        return _canonical_pf(project_root, Path(args.pf))
     return _default_pf(project_root, prefix)
 
 
@@ -286,6 +349,14 @@ def _copy_required_file(src: Path, dst: Path) -> None:
         raise ValueError(f"expected_output_missing: {src}")
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
+
+
+def _register_bundle_safely(bundle: Path) -> None:
+    try:
+        register_proof_bundle(bundle_path=bundle, devfab_root=DEVFABRIC_ROOT)
+    except Exception:
+        # Proof registration must not break the primary command outcome.
+        pass
 
 
 def _run_stage_command(stage: str, command: list[str], cwd: Path, stdout_file: Path) -> StageResult:
@@ -694,6 +765,41 @@ def _resolve_detected_build_root(project_root: Path, build_detect_reason: str) -
     return candidate.parent
 
 
+def _apply_node_package_manager_to_plan(plan_file: Path, package_manager: str) -> tuple[bool, str]:
+    if not plan_file.exists() or package_manager not in {"pnpm", "npm", "yarn"}:
+        return False, "invalid_input"
+
+    try:
+        data = json.loads(plan_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False, "invalid_plan_json"
+    if not isinstance(data, dict):
+        return False, "invalid_plan_object"
+
+    requirements = data.get("requirements")
+    if not isinstance(requirements, dict):
+        requirements = {}
+        data["requirements"] = requirements
+    requirements["package_manager"] = package_manager
+
+    actions = data.get("actions")
+    if isinstance(actions, list):
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            argv = action.get("argv")
+            if isinstance(argv, list) and argv:
+                first = str(argv[0]).strip().lower()
+                if first in {"npm", "pnpm", "yarn"}:
+                    argv[0] = package_manager
+
+    plan_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    digest = hashlib.sha256(plan_file.read_bytes()).hexdigest()
+    plan_hash_file = plan_file.with_name("build_plan.hash.txt")
+    plan_hash_file.write_text(digest + "\n", encoding="utf-8")
+    return True, "ok"
+
+
 def _write_run_summary(
     run_dir: Path,
     run_id: str,
@@ -710,6 +816,12 @@ def _write_run_summary(
     build_reason: str,
     components_state: str,
     exit_code: int,
+    conflict_detected: bool = False,
+    conflict_type: str = "none",
+    conflicting_inputs: str = "",
+    conflict_resolution: str = "none",
+    conflict_confidence: str = "",
+    unresolved_risk: str = "",
     failure_class: str = "",
     failed_stage: str = "",
 ) -> None:
@@ -728,6 +840,12 @@ def _write_run_summary(
         f"components_state={components_state}",
         f"build_success={'true' if build_success else 'false'}",
         f"exit_code={int(exit_code)}",
+        f"conflict_detected={'true' if conflict_detected else 'false'}",
+        f"conflict_type={conflict_type}",
+        f"conflicting_inputs={conflicting_inputs}",
+        f"conflict_resolution={conflict_resolution}",
+        f"conflict_confidence={conflict_confidence}",
+        f"unresolved_risk={unresolved_risk}",
     ]
     if failure_class:
         lines.append(f"failure_class={failure_class}")
@@ -770,6 +888,7 @@ def cmd_probe(args: argparse.Namespace) -> int:
     report = probe_project(project, pf, run_dynamic_checks=True)
     if backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -787,6 +906,7 @@ def cmd_profile_init(args: argparse.Namespace) -> int:
     receipt = init_profile(project, pf, write_project=bool(args.write_project))
     if backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -865,6 +985,7 @@ def cmd_build(args: argparse.Namespace) -> int:
     _print_result(f"build_run_dir={pf / 'run_build'}")
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -880,6 +1001,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     code = doctor_toolchain(project, pf)
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -893,7 +1015,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     build_detected, build_system, build_detect_reason = _detect_build_inputs(project_root)
     build_root = _resolve_detected_build_root(project_root, build_detect_reason)
     run_id = _runid_now()
-    run_dir = project_root / "_proof" / f"devfabric_run_{run_id}"
+    run_dir = project_root / "_proof" / "runs" / f"devfabric_run_{run_id}"
 
     env_dir = run_dir / "10_envcapsule"
     graph_dir = run_dir / "20_graph"
@@ -916,6 +1038,53 @@ def cmd_run(args: argparse.Namespace) -> int:
             ]
         ),
     )
+
+    node_package_json = _resolve_node_package_json(project_root, build_detect_reason)
+    node_toolchain_decision: dict[str, object] = {
+        "repo_root": str(project_root),
+        "package_json_path": "",
+        "evidence_found": {
+            "package_json": False,
+            "pnpm_lock": False,
+            "npm_lock": False,
+            "yarn_lock": False,
+            "npmrc": False,
+            "pnpmfile": False,
+            "ngk_profile": False,
+        },
+        "policy_preference": ["pnpm", "npm"],
+        "selected_manager": "",
+        "selected_manager_available": False,
+        "node_runtime_available": bool(shutil.which("node")),
+        "reason": "not_applicable",
+        "repo_boundary_enforced": True,
+        "scan_scope": "repo_root_only",
+    }
+    if build_detected and build_system == "node":
+        node_toolchain_decision = detect_node_toolchain(project_root, node_package_json)
+    _write_text(run_dir / "node_toolchain_decision.json", json.dumps(node_toolchain_decision, indent=2))
+
+    evidence = node_toolchain_decision.get("evidence_found", {}) if isinstance(node_toolchain_decision, dict) else {}
+    lock_hits = []
+    if isinstance(evidence, dict):
+        if bool(evidence.get("pnpm_lock", False)):
+            lock_hits.append("pnpm-lock.yaml")
+        if bool(evidence.get("npm_lock", False)):
+            lock_hits.append("package-lock.json")
+        if bool(evidence.get("yarn_lock", False)):
+            lock_hits.append("yarn.lock")
+    conflict_detected = build_detected and build_system == "node" and len(lock_hits) > 1
+    conflict_outcome = {
+        "conflict_detected": bool(conflict_detected),
+        "conflict_type": "node_package_manager_lockfile_conflict" if conflict_detected else "none",
+        "conflicting_inputs": lock_hits,
+        "resolution_policy_used": "lockfile_precedence_pnpm_then_npm_then_yarn_else_policy",
+        "selected_resolution": str(node_toolchain_decision.get("selected_manager", "")) if isinstance(node_toolchain_decision, dict) else "",
+        "reason": str(node_toolchain_decision.get("reason", "")) if isinstance(node_toolchain_decision, dict) else "",
+        "confidence": "high" if conflict_detected else "none",
+        "unresolved_risk": "none" if not conflict_detected else "lockfile divergence risk if lockfiles disagree",
+    }
+    _write_text(run_dir / "conflict_outcome.json", json.dumps(conflict_outcome, indent=2))
 
     stage_map = {
         "envcapsule": env_dir,
@@ -946,6 +1115,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     plan_hash_reason = "skipped_due_to_precondition"
     requested_target = str(args.target or "").strip()
     missing_tool = _missing_required_tool(build_system) if build_detected else None
+    if build_detected and build_system == "node":
+        if not bool(node_toolchain_decision.get("node_runtime_available", False)):
+            missing_tool = "node"
+        elif not bool(node_toolchain_decision.get("selected_manager_available", False)):
+            selected_manager = str(node_toolchain_decision.get("selected_manager", "")).strip() or "pnpm"
+            missing_tool = selected_manager
 
     def _finish(
         *,
@@ -979,6 +1154,12 @@ def cmd_run(args: argparse.Namespace) -> int:
             build_reason=build_reason,
             components_state=components_state,
             exit_code=exit_code,
+            conflict_detected=bool(conflict_outcome.get("conflict_detected", False)),
+            conflict_type=str(conflict_outcome.get("conflict_type", "none")),
+            conflicting_inputs=",".join(str(item) for item in conflict_outcome.get("conflicting_inputs", [])),
+            conflict_resolution=str(conflict_outcome.get("selected_resolution", "none")),
+            conflict_confidence=str(conflict_outcome.get("confidence", "")),
+            unresolved_risk=str(conflict_outcome.get("unresolved_risk", "")),
             failure_class=failure_class,
             failed_stage=failed_stage,
         )
@@ -997,6 +1178,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         _print_result(f"run_id={run_id}")
         _print_result(f"proof_dir={run_dir}")
         _print_result(f"exit_code={int(exit_code)}")
+        _register_bundle_safely(run_dir)
         return int(exit_code)
 
     if not build_detected:
@@ -1150,8 +1332,6 @@ def cmd_run(args: argparse.Namespace) -> int:
             failure_class="precondition_failed",
             failed_stage="30_buildcore",
         )
-
-    node_package_json = _resolve_node_package_json(project_root, build_detect_reason)
 
     if requested_target and build_system == "node" and not _node_target_exists_in_package(node_package_json, requested_target):
         env_hash_reason = "skipped_due_to_precondition"
@@ -1664,6 +1844,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
 
     try:
+        if build_system == "node":
+            selected_manager = str(node_toolchain_decision.get("selected_manager", "")).strip().lower()
+            _apply_node_package_manager_to_plan(plan_file, selected_manager)
         _copy_required_file(plan_file, graph_dir / "build_plan.json")
         _copy_required_file(plan_hash, graph_dir / "build_plan.hash.txt")
     except ValueError as exc:
@@ -1800,11 +1983,18 @@ def cmd_run(args: argparse.Namespace) -> int:
             ]
         ),
         exit_code=0,
+        conflict_detected=bool(conflict_outcome.get("conflict_detected", False)),
+        conflict_type=str(conflict_outcome.get("conflict_type", "none")),
+        conflicting_inputs=",".join(str(item) for item in conflict_outcome.get("conflicting_inputs", [])),
+        conflict_resolution=str(conflict_outcome.get("selected_resolution", "none")),
+        conflict_confidence=str(conflict_outcome.get("confidence", "")),
+        unresolved_risk=str(conflict_outcome.get("unresolved_risk", "")),
     )
 
     _print_result(f"run_id={run_id}")
     _print_result(f"proof_dir={run_dir}")
     _print_result("exit_code=0")
+    _register_bundle_safely(run_dir)
     return 0
 
 
@@ -1824,6 +2014,7 @@ def cmd_term_run(args: argparse.Namespace) -> int:
 
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
 
     _print_result(f"smart_terminal_enabled={enabled}")
     _print_result(f"smart_terminal_source={source}")
@@ -1843,6 +2034,7 @@ def cmd_render_doc(args: argparse.Namespace) -> int:
     code, details = run_docengine_render(pf=pf, devfabric_root=DEVFABRIC_ROOT)
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -1863,6 +2055,7 @@ def cmd_doc_gate(args: argparse.Namespace) -> int:
     code, report = doc_gate(pf=pf)
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
@@ -1911,6 +2104,240 @@ def cmd_eco_doctor(args: argparse.Namespace) -> int:
         return 2
     _print_result("eco_doctor=ok")
     return 0
+
+
+def cmd_explain(args: argparse.Namespace) -> int:
+    project = _resolve_project_root(getattr(args, "project_path", None))
+    _print_doc_notice(project)
+    backup_root = _resolve_backup_root(args, project)
+    pf = _resolve_pf(args, project, "devfab_explain_engine")
+
+    query_mode = str(getattr(args, "explain_cmd", "")).strip()
+    query: dict[str, object] = {"mode": query_mode}
+    if query_mode == "file":
+        query["path"] = str(getattr(args, "path", ""))
+    elif query_mode == "route":
+        query["route_id"] = str(getattr(args, "route_id", ""))
+    elif query_mode == "dependency":
+        query["component"] = str(getattr(args, "component", ""))
+
+    result, ctx = run_explain_query(query, project)
+    saved = persist_explain_bundle(pf=pf, project_root=project, query=query, result=result, ctx=ctx)
+
+    if backup_root is not None:
+        _mirror_docs_to_backup(project, backup_root, pf)
+    _register_bundle_safely(pf)
+
+    _print_result(f"project_root={project}")
+    _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
+    _print_result(f"proof_dir={pf}")
+    _print_result(f"entity={result.get('entity', '')}")
+    _print_result(f"entity_type={result.get('entity_type', '')}")
+    _print_result(f"confidence={result.get('confidence', '')}")
+    _print_result(f"queries_executed={saved.get('queries_executed', 0)}")
+    _print_result(f"final_gate={saved.get('final_gate', 'PARTIAL')}")
+    _print_result("exit_code=0")
+    return 0
+
+
+def _resolve_baseline_arg(project_root: Path, baseline: str, compare: str) -> Path:
+    baseline_raw = (baseline or "").strip()
+    compare_raw = (compare or "").strip()
+
+    if baseline_raw:
+        candidate = Path(baseline_raw)
+        return candidate.resolve() if candidate.is_absolute() else (project_root / candidate).resolve()
+
+    if compare_raw:
+        compare_candidate = Path(compare_raw)
+        if compare_candidate.is_absolute() and compare_candidate.exists():
+            return compare_candidate.resolve()
+
+        direct = (project_root / compare_raw).resolve()
+        if direct.exists():
+            return direct
+
+        cert_named = (project_root / "certification" / compare_raw).resolve()
+        if cert_named.exists():
+            return cert_named
+
+        proof_named = (project_root / "_proof" / compare_raw).resolve()
+        if proof_named.exists():
+            return proof_named
+
+    raise ValueError("baseline_required: provide --baseline <path> or --compare <baseline_name_or_path>")
+
+
+def cmd_certify(args: argparse.Namespace) -> int:
+    target_project_root = _resolve_project_root(getattr(args, "project", None))
+    repo_root = DEVFABRIC_ROOT.parent.resolve()
+    expected_proof_root = (repo_root / "_proof").resolve()
+
+    baseline_path = _resolve_baseline_arg(
+        target_project_root,
+        str(getattr(args, "baseline", "") or ""),
+        str(getattr(args, "compare", "") or ""),
+    )
+    current_run_path_raw = str(getattr(args, "current_run", "") or "").strip()
+    if current_run_path_raw:
+        current_run_path = Path(current_run_path_raw).resolve()
+    else:
+        current_run_path = target_project_root
+
+    if not baseline_path.exists():
+        raise ValueError(f"baseline_path_missing:{baseline_path}")
+    if not current_run_path.exists():
+        raise ValueError(f"current_run_path_missing:{current_run_path}")
+
+    if getattr(args, "pf", None):
+        pf = _canonical_pf(repo_root, Path(str(args.pf)))
+    else:
+        pf = _default_pf(repo_root, "certification_compare")
+
+    proof_root = pf.resolve().parent.parent
+    proof_root_match = proof_root == expected_proof_root
+    _write_text(
+        pf / "14_proof_root_check.txt",
+        "\n".join(
+            [
+                f"repo={repo_root}",
+                f"proofRoot={proof_root}",
+                f"expectedProofRoot={expected_proof_root}",
+                f"match={str(proof_root_match).lower()}",
+                "",
+            ]
+        ),
+    )
+    if not proof_root_match:
+        _print_result(f"baseline_path={baseline_path}")
+        _print_result(f"current_run_path={current_run_path}")
+        _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+        _print_result("GATE=FAIL")
+        return 1
+
+    policy = ComparisonPolicy(
+        diagnostic_score_tolerance=float(getattr(args, "tolerance", 0.02) or 0.02),
+        diagnostic_score_improvement_threshold=float(getattr(args, "improvement_threshold", 0.03) or 0.03),
+        severe_core_drop_threshold=float(getattr(args, "severe_drop_threshold", 0.15) or 0.15),
+    )
+    result = run_certification_comparison(
+        repo_root=repo_root,
+        baseline_path=baseline_path,
+        current_path=current_run_path,
+        pf=pf,
+        policy=policy,
+    )
+
+    actual_pf = Path(str(result.get("pf", pf.resolve()))).resolve()
+    actual_zip = Path(str(result.get("zip", pf.with_suffix(".zip").resolve()))).resolve()
+    pf_starts = str(actual_pf).lower().startswith(str(expected_proof_root).lower())
+    zip_starts = str(actual_zip).lower().startswith(str(expected_proof_root).lower())
+    comparison_gate_pass = str(result.get("gate", "FAIL")).upper() == "PASS"
+    compatibility_ok = str(result.get("compatibility_state", "INCOMPATIBLE")).upper() != "INCOMPATIBLE"
+    gate_rule_satisfied = pf_starts and zip_starts and proof_root_match and comparison_gate_pass and compatibility_ok
+    final_gate = "PASS" if gate_rule_satisfied else "FAIL"
+
+    _write_text(
+        actual_pf / "15_pf_zip_assertions.txt",
+        "\n".join(
+            [
+                f"pf={actual_pf}",
+                f"zip={actual_zip}",
+                f"pf_starts_with_expected={str(pf_starts).lower()}",
+                f"zip_starts_with_expected={str(zip_starts).lower()}",
+                f"gate_rule_satisfied={str(gate_rule_satisfied).lower()}",
+                "",
+            ]
+        ),
+    )
+
+    _register_bundle_safely(actual_pf)
+    _print_result(f"baseline_path={baseline_path}")
+    _print_result(f"current_run_path={current_run_path}")
+    _print_result(f"overall_classification={result.get('classification', '')}")
+    _print_result(f"compatibility_state={result.get('compatibility_state', '')}")
+    _print_result(f"strongest_improvement={result.get('strongest_improvement', {}).get('metric', 'none')}")
+    _print_result(f"worst_regression={result.get('worst_regression', {}).get('metric', 'none')}")
+    _print_result(f"PF={actual_pf}")
+    _print_result(f"ZIP={actual_zip}")
+    _print_result(f"GATE={final_gate}")
+    return 0 if final_gate == "PASS" else 1
+
+
+def cmd_certify_validate(args: argparse.Namespace) -> int:
+    target_project_root = _resolve_project_root(getattr(args, "project", None))
+    baseline_path = _resolve_baseline_arg(
+        target_project_root,
+        str(getattr(args, "baseline", "") or ""),
+        str(getattr(args, "compare", "") or ""),
+    )
+    current_run_path_raw = str(getattr(args, "current_run", "") or "").strip()
+    current_run_path = Path(current_run_path_raw).resolve() if current_run_path_raw else target_project_root
+
+    result = run_decision_validation(
+        repo_root=DEVFABRIC_ROOT.parent.resolve(),
+        baseline_path=baseline_path,
+        current_path=current_run_path,
+    )
+    _print_result(f"baseline_path={baseline_path}")
+    _print_result(f"current_run_path={current_run_path}")
+    _print_result(f"validation_dir={result.get('validation_dir', '')}")
+    _print_result(f"validation_zip={result.get('validation_zip', '')}")
+    _print_result(f"validation_cases={len(result.get('cases', []))}")
+    _print_result(f"validation_mismatches={len(result.get('mismatches', []))}")
+    _print_result(f"GATE={result.get('gate', 'FAIL')}")
+    return 0 if str(result.get("gate", "FAIL")).upper() == "PASS" else 1
+
+
+def cmd_certify_gate(args: argparse.Namespace) -> int:
+    target_project_root = _resolve_project_root(getattr(args, "project", None))
+    repo_root = DEVFABRIC_ROOT.parent.resolve()
+
+    baseline_path = _resolve_baseline_arg(
+        target_project_root,
+        str(getattr(args, "baseline", "") or ""),
+        str(getattr(args, "compare", "") or ""),
+    )
+    current_run_path_raw = str(getattr(args, "current_run", "") or "").strip()
+    current_run_path = Path(current_run_path_raw).resolve() if current_run_path_raw else target_project_root
+
+    if getattr(args, "pf", None):
+        pf = _canonical_pf(repo_root, Path(str(args.pf)))
+    else:
+        pf = _default_pf(repo_root, "certification_gate")
+
+    compare_policy = ComparisonPolicy(
+        diagnostic_score_tolerance=float(getattr(args, "tolerance", 0.02) or 0.02),
+        diagnostic_score_improvement_threshold=float(getattr(args, "improvement_threshold", 0.03) or 0.03),
+        severe_core_drop_threshold=float(getattr(args, "severe_drop_threshold", 0.15) or 0.15),
+    )
+    strict_mode = str(getattr(args, "strict_mode", "on") or "on").lower() != "off"
+    enforcement_policy = GateEnforcementPolicy(strict_mode=strict_mode)
+
+    result = run_certification_gate(
+        repo_root=repo_root,
+        baseline_path=baseline_path,
+        current_path=current_run_path,
+        pf=pf,
+        comparison_policy=compare_policy,
+        enforcement_policy=enforcement_policy,
+    )
+
+    _register_bundle_safely(Path(str(result.get("pf", pf))))
+    _print_result(f"baseline_path={baseline_path}")
+    _print_result(f"current_run_path={current_run_path}")
+    _print_result(f"certification_decision={result.get('decision', '')}")
+    _print_result(f"compatibility_state={result.get('compatibility_state', '')}")
+    _print_result(f"compare_gate={result.get('compare_gate', '')}")
+    _print_result(f"enforced_gate={result.get('enforced_gate', '')}")
+    _print_result(f"exit_code={result.get('exit_code', 1)}")
+    _print_result(f"enforcement_reason={result.get('enforcement_reason', '')}")
+    _print_result(f"recommended_next_action={result.get('recommended_next_action', '')}")
+    _print_result(f"PF={result.get('pf', '')}")
+    _print_result(f"ZIP={result.get('zip', '')}")
+    _print_result(f"GATE={result.get('enforced_gate', 'FAIL')}")
+    return int(result.get("exit_code", 1))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1991,13 +2418,69 @@ def build_parser() -> argparse.ArgumentParser:
     doc_gate_parser.add_argument("--backup-root", required=False)
     doc_gate_parser.set_defaults(func=cmd_doc_gate)
 
+    explain_parser = sub.add_parser("explain")
+    explain_parser.add_argument("--project-path", required=False)
+    explain_parser.add_argument("--pf", required=False)
+    explain_parser.add_argument("--backup-root", required=False)
+    explain_sub = explain_parser.add_subparsers(dest="explain_cmd", required=True)
+
+    explain_file = explain_sub.add_parser("file")
+    explain_file.add_argument("path")
+    explain_file.set_defaults(func=cmd_explain)
+
+    explain_rebuild = explain_sub.add_parser("rebuild")
+    explain_rebuild.set_defaults(func=cmd_explain)
+
+    explain_route = explain_sub.add_parser("route")
+    explain_route.add_argument("route_id")
+    explain_route.set_defaults(func=cmd_explain)
+
+    explain_dependency = explain_sub.add_parser("dependency")
+    explain_dependency.add_argument("component")
+    explain_dependency.set_defaults(func=cmd_explain)
+
+    certify_parser = sub.add_parser("certify")
+    certify_parser.add_argument("--project", required=False, default=".")
+    certify_parser.add_argument("--baseline", required=False, default="")
+    certify_parser.add_argument("--compare", required=False, default="")
+    certify_parser.add_argument("--current-run", required=False, default="")
+    certify_parser.add_argument("--pf", required=False)
+    certify_parser.add_argument("--tolerance", type=float, default=0.02)
+    certify_parser.add_argument("--improvement-threshold", type=float, default=0.03)
+    certify_parser.add_argument("--severe-drop-threshold", type=float, default=0.15)
+    certify_parser.set_defaults(func=cmd_certify)
+
+    certify_validate_parser = sub.add_parser("certify-validate")
+    certify_validate_parser.add_argument("--project", required=False, default=".")
+    certify_validate_parser.add_argument("--baseline", required=False, default="")
+    certify_validate_parser.add_argument("--compare", required=False, default="")
+    certify_validate_parser.add_argument("--current-run", required=False, default="")
+    certify_validate_parser.set_defaults(func=cmd_certify_validate)
+
+    certify_gate_parser = sub.add_parser("certify-gate")
+    certify_gate_parser.add_argument("--project", required=False, default=".")
+    certify_gate_parser.add_argument("--baseline", required=False, default="")
+    certify_gate_parser.add_argument("--compare", required=False, default="")
+    certify_gate_parser.add_argument("--current-run", required=False, default="")
+    certify_gate_parser.add_argument("--pf", required=False)
+    certify_gate_parser.add_argument("--tolerance", type=float, default=0.02)
+    certify_gate_parser.add_argument("--improvement-threshold", type=float, default=0.03)
+    certify_gate_parser.add_argument("--severe-drop-threshold", type=float, default=0.15)
+    certify_gate_parser.add_argument("--strict-mode", choices=["on", "off"], default="on")
+    certify_gate_parser.set_defaults(func=cmd_certify_gate)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    effective_argv = list(argv) if argv is not None else list(sys.argv[1:])
+    policy_code = _enforce_notebook_policy(effective_argv)
+    if policy_code != 0:
+        return policy_code
+
     parser = build_parser()
     try:
-        args = parser.parse_args(argv)
+        args = parser.parse_args(effective_argv)
         return int(args.func(args))
     except ValueError as exc:
         _print_result(f"error={exc}")
