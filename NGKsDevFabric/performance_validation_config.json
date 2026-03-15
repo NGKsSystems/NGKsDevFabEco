@@ -1,0 +1,7 @@
+{
+  "total_runtime_warning_seconds": 30.0,
+  "total_runtime_fail_seconds": 60.0,
+  "stage_share_warning_ratio": 0.45,
+  "scenario_runtime_warning_seconds": 10.0,
+  "repeated_slow_path_threshold": 3
+}

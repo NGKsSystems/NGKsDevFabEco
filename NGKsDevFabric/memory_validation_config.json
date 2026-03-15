@@ -1,0 +1,7 @@
+{
+  "peak_memory_warning_mb": 512,
+  "peak_memory_fail_mb": 1024,
+  "stage_memory_share_warning_ratio": 0.45,
+  "memory_growth_warning_mb": 128,
+  "repeated_high_memory_threshold": 3
+}

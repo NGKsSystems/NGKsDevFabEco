@@ -1,0 +1,5 @@
+{
+  "schema": "ngks.profile.default.v1",
+  "mode": "ecosystem",
+  "safety": "fail_closed"
+}

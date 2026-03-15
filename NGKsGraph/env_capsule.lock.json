@@ -1,0 +1,23 @@
+{
+  "capsule_version": 1,
+  "generated_utc": "2026-03-14T17:23:34Z",
+  "host": {
+    "arch": "x64",
+    "os": "windows"
+  },
+  "runtimes": {
+    "python": {
+      "exe": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_validation_venv\\Scripts\\python.exe",
+      "version": "3.13.5"
+    }
+  },
+  "toolchains": {
+    "msvc": {
+      "install_id": "Microsoft.VisualStudio.Product.BuildTools",
+      "toolset": "2022"
+    },
+    "windows_sdk": {
+      "version": "10.0.26100.0"
+    }
+  }
+}

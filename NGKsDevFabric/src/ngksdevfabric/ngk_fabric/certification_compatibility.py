@@ -69,6 +69,7 @@ def run_compatibility_preflight(
     current_metrics: dict[str, Any],
     current_manifest: dict[str, Any],
     required_metric_keys: list[str],
+    supported_baseline_versions: list[str] | None = None,
 ) -> CompatibilityResult:
     out_dir = pf / "compatibility"
     warnings: list[str] = []
@@ -90,7 +91,10 @@ def run_compatibility_preflight(
     }
 
     baseline_version = str(baseline_manifest.get("baseline_version", "")).strip()
-    supported_baseline_versions = {"v1", "current_run", "fixture_improvement", "fixture_regression", "fixture_inconclusive"}
+    supported_versions = set(
+        supported_baseline_versions
+        or ["v1", "current_run", "fixture_improvement", "fixture_regression", "fixture_inconclusive"]
+    )
 
     inputs_payload = {
         "baseline_bundle_root": str(baseline_bundle_root.resolve()),
@@ -112,7 +116,7 @@ def run_compatibility_preflight(
             "baseline_manifest": baseline_manifest_path.is_file(),
         },
         "baseline_version": baseline_version,
-        "baseline_version_supported": baseline_version in supported_baseline_versions,
+        "baseline_version_supported": baseline_version in supported_versions,
         "required_fields": {
             "manifest.baseline_version": bool(baseline_version),
             "matrix.scenarios": isinstance(baseline_matrix.get("scenarios"), list),

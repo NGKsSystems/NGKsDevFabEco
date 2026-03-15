@@ -8,7 +8,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .assignment_policy import generate_assignment_safety_operator_actions
 from .certification_compatibility import run_compatibility_preflight
+from .delivery_adapters import generate_connector_ready_delivery_payloads
+from .connector_transport import run_connector_transport
+from .execution_profiles import load_execution_profile
+from .export_adapters import generate_ticket_export_adapters
+from .history_engine import record_regression_history
+from .history_trends import analyze_historical_trends
+from .ownership_confidence import generate_ownership_confidence_evidence
+from .team_ownership_mapping import apply_team_ownership_mapping
+from .resolution_tracking import analyze_regression_resolution
+from .regression_intelligence import analyze_regression_intelligence
+from .regression_hotspots import analyze_regression_hotspots
+from .remediation_guidance import generate_remediation_guidance
+from .triage_tickets import generate_auto_triage_tickets
 
 _REQUIRED_AGG_METRICS = [
     "average_detection_accuracy",
@@ -543,11 +557,16 @@ def run_certification_comparison(
     current_path: Path,
     pf: Path,
     policy: ComparisonPolicy | None = None,
+    supported_baseline_versions: list[str] | None = None,
+    profile_project_root: Path | None = None,
+    history_enabled: bool = True,
 ) -> dict[str, Any]:
     policy = policy or ComparisonPolicy()
     decision_policy = DecisionPolicy()
     run_id = pf.name
     pf.mkdir(parents=True, exist_ok=True)
+
+    profile_state = load_execution_profile(project_root=profile_project_root or repo_root)
 
     validation_errors: list[str] = []
 
@@ -595,11 +614,14 @@ def run_certification_comparison(
         current_metrics=current_metrics,
         current_manifest=current_manifest,
         required_metric_keys=_REQUIRED_AGG_METRICS,
+        supported_baseline_versions=supported_baseline_versions,
     )
 
     if compatibility_result.state == "INCOMPATIBLE":
         validation_errors.append("compatibility_incompatible")
         validation_errors.extend(compatibility_result.errors)
+
+    validation_errors.extend(profile_state.warnings)
 
     baseline_scenarios = _to_scenario_map(baseline_matrix)
     current_scenarios = _to_scenario_map(current_matrix)
@@ -644,6 +666,8 @@ def run_certification_comparison(
         current_diag = _safe_float(curr, "diagnostic_score")
         baseline_root = _scenario_metric_value(base, "root_cause_accuracy")
         current_root = _scenario_metric_value(curr, "root_cause_accuracy")
+        baseline_detection = _scenario_metric_value(base, "detection_accuracy")
+        current_detection = _scenario_metric_value(curr, "detection_accuracy")
         baseline_owner = _scenario_metric_value(base, "component_ownership_accuracy")
         current_owner = _scenario_metric_value(curr, "component_ownership_accuracy")
         baseline_remediation = _scenario_metric_value(base, "remediation_quality")
@@ -664,6 +688,9 @@ def run_certification_comparison(
                 "baseline_root_cause_accuracy": round(baseline_root, 4),
                 "current_root_cause_accuracy": round(current_root, 4),
                 "delta_root_cause_accuracy": round(current_root - baseline_root, 4),
+                "baseline_detection_accuracy": round(baseline_detection, 4),
+                "current_detection_accuracy": round(current_detection, 4),
+                "delta_detection_accuracy": round(current_detection - baseline_detection, 4),
                 "baseline_ownership_accuracy": round(baseline_owner, 4),
                 "current_ownership_accuracy": round(current_owner, 4),
                 "delta_ownership_accuracy": round(current_owner - baseline_owner, 4),
@@ -677,6 +704,136 @@ def run_certification_comparison(
         )
 
     classification, class_reasons = _classify(aggregate_diff, policy, validation_errors)
+    hotspot_analysis: dict[str, Any]
+    if profile_state.is_enabled("hotspot_analysis"):
+        hotspot_analysis = analyze_regression_hotspots(
+            pf=pf,
+            scenario_diff_rows=scenario_diff_rows,
+            aggregate_diff=aggregate_diff,
+            classification=classification,
+        )
+    else:
+        hotspot_analysis = {
+            "aggregate_impact": {},
+            "top_scenario": {},
+            "top_metric": {},
+            "scenario_rows": [],
+            "metric_rows": [],
+            "artifacts": [],
+        }
+
+    remediation_guidance: dict[str, Any]
+    if profile_state.is_enabled("remediation_guidance"):
+        remediation_guidance = generate_remediation_guidance(
+            pf=pf,
+            classification=classification,
+            hotspot_analysis=hotspot_analysis,
+        )
+    else:
+        remediation_guidance = {
+            "summary": {},
+            "top_priority": {},
+            "entries": [],
+            "artifacts": [],
+        }
+
+    project_root_for_history = (profile_project_root or repo_root).resolve()
+
+    ownership_confidence: dict[str, Any]
+    if profile_state.is_enabled("ownership_confidence"):
+        ownership_confidence = generate_ownership_confidence_evidence(
+            pf=pf,
+            classification=classification,
+            remediation_guidance=remediation_guidance,
+            hotspot_analysis=hotspot_analysis,
+        )
+    else:
+        ownership_confidence = {
+            "summary": {},
+            "entries": [],
+            "artifacts": [],
+        }
+
+    ownership_mapping: dict[str, Any]
+    if profile_state.is_enabled("ownership_confidence"):
+        ownership_mapping = apply_team_ownership_mapping(
+            project_root=project_root_for_history,
+            pf=pf,
+            classification=classification,
+            ownership_confidence=ownership_confidence,
+        )
+    else:
+        ownership_mapping = {
+            "summary": {},
+            "entries": [],
+            "artifacts": [],
+        }
+
+    assignment_policy: dict[str, Any]
+    if profile_state.is_enabled("assignment_policy"):
+        assignment_policy = generate_assignment_safety_operator_actions(
+            pf=pf,
+            classification=classification,
+            ownership_confidence=ownership_mapping,
+        )
+    else:
+        assignment_policy = {
+            "summary": {},
+            "entries": [],
+            "artifacts": [],
+        }
+
+    triage_tickets: dict[str, Any]
+    if profile_state.is_enabled("triage_tickets"):
+        triage_tickets = generate_auto_triage_tickets(
+            pf=pf,
+            classification=classification,
+            assignment_policy=assignment_policy,
+            ownership_confidence=ownership_mapping,
+        )
+    else:
+        triage_tickets = {
+            "summary": {},
+            "tickets": [],
+            "artifacts": [],
+        }
+
+    export_adapters: dict[str, Any]
+    if profile_state.is_enabled("export_adapters"):
+        export_adapters = generate_ticket_export_adapters(
+            pf=pf,
+            classification=classification,
+            triage_tickets=triage_tickets,
+        )
+    else:
+        export_adapters = {
+            "summary": {},
+            "artifacts": [],
+        }
+
+    delivery_adapters: dict[str, Any]
+    if profile_state.is_enabled("delivery_payload_adapters"):
+        delivery_adapters = generate_connector_ready_delivery_payloads(
+            pf=pf,
+        )
+    else:
+        delivery_adapters = {
+            "summary": {},
+            "artifacts": [],
+        }
+
+    connector_transport: dict[str, Any]
+    if profile_state.is_enabled("delivery_payload_adapters"):
+        connector_transport = run_connector_transport(
+            project_root=project_root_for_history,
+            pf=pf,
+            mode_override=None,
+        )
+    else:
+        connector_transport = {
+            "summary": {},
+            "artifacts": [],
+        }
     baseline_count = max(len(baseline_scenarios), 1)
     coverage_ratio = len(current_scenarios) / baseline_count
     decision_eval, hotspots = _evaluate_decision(
@@ -688,6 +845,39 @@ def run_certification_comparison(
     )
     certification_decision = str(decision_eval.get("decision", "CERTIFICATION_INCONCLUSIVE"))
     gate_outcome = _decision_gate_outcome(certification_decision)
+
+    history_payload: dict[str, Any] = {
+        "history_run_id": "",
+        "detected_fingerprints": [],
+        "recurrence_matches": [],
+        "component_context": [],
+        "history_root": str((project_root_for_history / "devfabeco_history").resolve()),
+        "artifacts": [],
+    }
+    if history_enabled:
+        history_payload = record_regression_history(
+            history_root=project_root_for_history / "devfabeco_history",
+            pf=pf,
+            run_id=run_id,
+            project_name=project_root_for_history.name,
+            execution_profile=profile_state.profile_name,
+            certification_decision=certification_decision,
+            gate_result=str(gate_outcome.get("gate", "FAIL")),
+            subtarget_count=1,
+        )
+
+    trend_payload = analyze_historical_trends(
+        history_root=project_root_for_history / "devfabeco_history",
+        pf=pf,
+    )
+    resolution_payload = analyze_regression_resolution(
+        history_root=project_root_for_history / "devfabeco_history",
+        pf=pf,
+    )
+    intelligence_payload = analyze_regression_intelligence(
+        history_root=project_root_for_history / "devfabeco_history",
+        pf=pf,
+    )
 
     metric_rows = sorted(
         [
@@ -766,6 +956,16 @@ def run_certification_comparison(
     classification_json = {
         "overall_classification": classification,
         "certification_decision": certification_decision,
+        "execution_profile": profile_state.profile_name,
+        "execution_profile_artifact_scaling": profile_state.artifact_scaling,
+        "execution_profile_enabled_subsystems": profile_state.enabled_subsystems,
+        "history_run_id": str(history_payload.get("history_run_id", "")),
+        "history_artifacts": history_payload.get("artifacts", []),
+        "history_trend_artifacts": trend_payload.get("artifacts", []),
+        "resolution_artifacts": resolution_payload.get("artifacts", []),
+        "resolution_summary": resolution_payload.get("summary", {}),
+        "intelligence_artifacts": intelligence_payload.get("artifacts", []),
+        "intelligence_summary": intelligence_payload.get("summary", {}),
         "gate": gate,
         "gate_reason": str(gate_outcome.get("reason", "")),
         "recommended_next_action": str(gate_outcome.get("recommended_next_action", "")),
@@ -773,6 +973,15 @@ def run_certification_comparison(
         "compatibility_errors": compatibility_result.errors,
         "compatibility_warnings": compatibility_result.warnings,
         "compatibility_artifacts": compatibility_result.artifacts,
+        "hotspot_artifacts": hotspot_analysis.get("artifacts", []),
+        "remediation_artifacts": remediation_guidance.get("artifacts", []),
+        "ownership_artifacts": ownership_confidence.get("artifacts", []),
+        "ownership_mapping_artifacts": ownership_mapping.get("artifacts", []),
+        "assignment_policy_artifacts": assignment_policy.get("artifacts", []),
+        "triage_artifacts": triage_tickets.get("artifacts", []),
+        "export_artifacts": export_adapters.get("artifacts", []),
+        "delivery_artifacts": delivery_adapters.get("artifacts", []),
+        "transport_artifacts": connector_transport.get("artifacts", []),
         "reasons": class_reasons,
         "validation_errors": validation_errors,
     }
@@ -785,7 +994,26 @@ def run_certification_comparison(
         f"- Gate: {gate}",
         f"- Gate reason: {gate_outcome.get('reason', '')}",
         f"- Recommended next action: {gate_outcome.get('recommended_next_action', '')}",
+        f"- Execution profile: {profile_state.profile_name}",
+        f"- Execution profile artifact scaling: {profile_state.artifact_scaling}",
+        f"- History run id: {history_payload.get('history_run_id', '')}",
+        f"- Recurrence matches: {len(history_payload.get('recurrence_matches', []))}",
+        f"- Trend classification: {trend_payload.get('trend_analysis', {}).get('trend_classification', '')}",
+        f"- Resolved regressions: {resolution_payload.get('summary', {}).get('resolved_count', 0)}",
+        f"- Unresolved regressions: {resolution_payload.get('summary', {}).get('unresolved_count', 0)}",
+        f"- Intelligence watchlist component count: {intelligence_payload.get('summary', {}).get('component_count', 0)}",
         f"- Compatibility state: {compatibility_result.state}",
+        f"- Top hotspot scenario: {hotspot_analysis.get('top_scenario', {}).get('scenario_id', 'none')}",
+        f"- Top hotspot metric: {hotspot_analysis.get('top_metric', {}).get('metric', 'none')}",
+        f"- Top remediation scenario: {remediation_guidance.get('top_priority', {}).get('scenario_id', 'none')}",
+        f"- Top ownership confidence scenario: {ownership_confidence.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+        f"- Team mapping configured components: {ownership_mapping.get('summary', {}).get('configured_component_count', 0)}",
+        f"- Top assignment policy scenario: {assignment_policy.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+        f"- Top triage scenario: {triage_tickets.get('summary', {}).get('top_ticket', {}).get('scenario_id', 'none')}",
+        f"- Top exported issue scenario: {export_adapters.get('summary', {}).get('top_exported_issue', {}).get('issue_id', 'none')}",
+        f"- Top delivery issue: {delivery_adapters.get('summary', {}).get('top_issue_id', 'none')}",
+        f"- Transport mode: {connector_transport.get('summary', {}).get('mode', 'DRY_RUN')}",
+        f"- Transport failures: {connector_transport.get('summary', {}).get('total_failure_count', 0)}",
         f"- Baseline: {baseline_bundle.root}",
         f"- Current: {current_bundle.root}",
         f"- Strongest improvement: {strongest_improvement.get('metric', 'none')} ({strongest_improvement.get('delta', 0.0)})",
@@ -860,7 +1088,23 @@ def run_certification_comparison(
             "status": gate,
             "classification": classification,
             "certification_decision": certification_decision,
+            "execution_profile": profile_state.profile_name,
+            "execution_profile_artifact_scaling": profile_state.artifact_scaling,
+            "history_run_id": str(history_payload.get("history_run_id", "")),
+            "history_summary": {
+                "detected_fingerprint_count": len(history_payload.get("detected_fingerprints", [])),
+                "recurrence_count": len(history_payload.get("recurrence_matches", [])),
+            },
+            "history_trend_summary": trend_payload.get("trend_analysis", {}),
+            "intelligence_summary": intelligence_payload.get("summary", {}),
             "compatibility_state": compatibility_result.state,
+            "hotspot_summary": hotspot_analysis.get("aggregate_impact", {}),
+            "remediation_summary": remediation_guidance.get("summary", {}),
+            "ownership_confidence_summary": ownership_confidence.get("summary", {}),
+            "assignment_policy_summary": assignment_policy.get("summary", {}),
+            "triage_summary": triage_tickets.get("summary", {}),
+            "export_summary": export_adapters.get("summary", {}),
+            "delivery_summary": delivery_adapters.get("summary", {}),
             "gate": gate,
             "gate_reason": str(gate_outcome.get("reason", "")),
             "recommended_next_action": str(gate_outcome.get("recommended_next_action", "")),
@@ -872,6 +1116,7 @@ def run_certification_comparison(
     _write_json(pf / "09_decision_policy.json", decision_policy.to_dict())
     _write_json(pf / "10_decision_evaluation.json", decision_eval)
     _write_json(pf / "11_regression_hotspots.json", {"hotspots": hotspots})
+    _write_json(pf / "13_execution_profile.json", profile_state.to_dict())
     _write_text(
         pf / "12_certification_decision.md",
         "\n".join(
@@ -883,7 +1128,21 @@ def run_certification_comparison(
                 f"- gate: {gate}",
                 f"- gate_reason: {gate_outcome.get('reason', '')}",
                 f"- recommended_next_action: {gate_outcome.get('recommended_next_action', '')}",
+                f"- execution_profile: {profile_state.profile_name}",
+                f"- history_run_id: {history_payload.get('history_run_id', '')}",
+                f"- recurrence_matches: {len(history_payload.get('recurrence_matches', []))}",
+                f"- trend_classification: {trend_payload.get('trend_analysis', {}).get('trend_classification', '')}",
+                f"- resolved_regressions: {resolution_payload.get('summary', {}).get('resolved_count', 0)}",
+                f"- unresolved_regressions: {resolution_payload.get('summary', {}).get('unresolved_count', 0)}",
+                f"- intelligence_component_count: {intelligence_payload.get('summary', {}).get('component_count', 0)}",
                 f"- compatibility_state: {compatibility_result.state}",
+                f"- top_hotspot_scenario: {hotspot_analysis.get('top_scenario', {}).get('scenario_id', 'none')}",
+                f"- top_remediation_scenario: {remediation_guidance.get('top_priority', {}).get('scenario_id', 'none')}",
+                f"- top_ownership_confidence_scenario: {ownership_confidence.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+                f"- top_assignment_policy_scenario: {assignment_policy.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+                f"- top_triage_scenario: {triage_tickets.get('summary', {}).get('top_ticket', {}).get('scenario_id', 'none')}",
+                f"- top_exported_issue: {export_adapters.get('summary', {}).get('top_exported_issue', {}).get('issue_id', 'none')}",
+                f"- top_delivery_issue: {delivery_adapters.get('summary', {}).get('top_issue_id', 'none')}",
                 f"- strongest_improvement: {strongest_improvement.get('metric', 'none')} ({strongest_improvement.get('delta', 0.0)})",
                 f"- worst_regression: {worst_regression.get('metric', 'none')} ({worst_regression.get('delta', 0.0)})",
                 f"- hotspot_count: {len(hotspots)}",
@@ -908,7 +1167,19 @@ def run_certification_comparison(
                 "",
                 f"- overall_classification: {classification}",
                 f"- certification_decision: {certification_decision}",
+                f"- execution_profile: {profile_state.profile_name}",
+                f"- history_run_id: {history_payload.get('history_run_id', '')}",
+                f"- recurrence_matches: {len(history_payload.get('recurrence_matches', []))}",
+                f"- trend_classification: {trend_payload.get('trend_analysis', {}).get('trend_classification', '')}",
+                f"- intelligence_component_count: {intelligence_payload.get('summary', {}).get('component_count', 0)}",
                 f"- compatibility_state: {compatibility_result.state}",
+                f"- top_hotspot_scenario: {hotspot_analysis.get('top_scenario', {}).get('scenario_id', 'none')}",
+                f"- top_remediation_scenario: {remediation_guidance.get('top_priority', {}).get('scenario_id', 'none')}",
+                f"- top_ownership_confidence_scenario: {ownership_confidence.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+                f"- top_assignment_policy_scenario: {assignment_policy.get('summary', {}).get('top_entry', {}).get('scenario_id', 'none')}",
+                f"- top_triage_scenario: {triage_tickets.get('summary', {}).get('top_ticket', {}).get('scenario_id', 'none')}",
+                f"- top_exported_issue: {export_adapters.get('summary', {}).get('top_exported_issue', {}).get('issue_id', 'none')}",
+                f"- top_delivery_issue: {delivery_adapters.get('summary', {}).get('top_issue_id', 'none')}",
                 f"- gate_reason: {gate_outcome.get('reason', '')}",
                 f"- strongest_improvement: {strongest_improvement.get('metric', 'none')} ({strongest_improvement.get('delta', 0.0)})",
                 f"- worst_regression: {worst_regression.get('metric', 'none')} ({worst_regression.get('delta', 0.0)})",
@@ -931,9 +1202,43 @@ def run_certification_comparison(
         "gate_reason": str(gate_outcome.get("reason", "")),
         "recommended_next_action": str(gate_outcome.get("recommended_next_action", "")),
         "compatibility_state": compatibility_result.state,
+        "execution_profile": profile_state.profile_name,
+        "execution_profile_artifact_scaling": profile_state.artifact_scaling,
+        "execution_profile_enabled_subsystems": profile_state.enabled_subsystems,
+        "execution_profile_artifact": "13_execution_profile.json",
+        "history_run_id": str(history_payload.get("history_run_id", "")),
+        "history_artifacts": history_payload.get("artifacts", []),
+        "history_summary": {
+            "detected_fingerprint_count": len(history_payload.get("detected_fingerprints", [])),
+            "recurrence_count": len(history_payload.get("recurrence_matches", [])),
+        },
+        "history_trend_summary": trend_payload.get("trend_analysis", {}),
+        "history_trend_artifacts": trend_payload.get("artifacts", []),
+        "resolution_summary": resolution_payload.get("summary", {}),
+        "resolution_artifacts": resolution_payload.get("artifacts", []),
+        "intelligence_summary": intelligence_payload.get("summary", {}),
+        "intelligence_artifacts": intelligence_payload.get("artifacts", []),
         "compatibility_errors": compatibility_result.errors,
         "compatibility_warnings": compatibility_result.warnings,
         "compatibility_artifacts": compatibility_result.artifacts,
+        "hotspot_summary": hotspot_analysis.get("aggregate_impact", {}),
+        "hotspot_artifacts": hotspot_analysis.get("artifacts", []),
+        "remediation_summary": remediation_guidance.get("summary", {}),
+        "remediation_artifacts": remediation_guidance.get("artifacts", []),
+        "ownership_confidence_summary": ownership_confidence.get("summary", {}),
+        "ownership_artifacts": ownership_confidence.get("artifacts", []),
+        "ownership_mapping_summary": ownership_mapping.get("summary", {}),
+        "ownership_mapping_artifacts": ownership_mapping.get("artifacts", []),
+        "assignment_policy_summary": assignment_policy.get("summary", {}),
+        "assignment_policy_artifacts": assignment_policy.get("artifacts", []),
+        "triage_summary": triage_tickets.get("summary", {}),
+        "triage_artifacts": triage_tickets.get("artifacts", []),
+        "export_summary": export_adapters.get("summary", {}),
+        "export_artifacts": export_adapters.get("artifacts", []),
+        "delivery_summary": delivery_adapters.get("summary", {}),
+        "delivery_artifacts": delivery_adapters.get("artifacts", []),
+        "transport_summary": connector_transport.get("summary", {}),
+        "transport_artifacts": connector_transport.get("artifacts", []),
         "pf": str(pf.resolve()),
         "zip": str(zip_path.resolve()),
         "validation_errors": validation_errors,

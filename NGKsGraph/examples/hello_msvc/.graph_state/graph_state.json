@@ -1,0 +1,17 @@
+{
+  "workspace_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\NGKsGraph\\examples\\hello_msvc",
+  "graph_state_version": 1,
+  "last_refresh_utc": "2026-03-15T08:00:34.739731+00:00",
+  "last_refresh_status": "failed",
+  "dirty": true,
+  "dirty_reasons": [
+    "profile_changed",
+    "refresh_failed",
+    "source_or_config_tree_changed"
+  ],
+  "project_fingerprint": "ffa7ba691db7e019146535c4ac21b34d5cb862e7b58f23d3c2fd1d2d688aa635",
+  "graph_artifact_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\NGKsGraph\\examples\\hello_msvc\\_proof\\runs\\graph_state_manager_automation_20260315_104400\\20_graph_auto_refresh",
+  "active_profile": "debug",
+  "active_target": "build",
+  "toolchain_fingerprint": "a270f7df7389bd1229af16bad61c36704a3f2d9cb348adaf028e78f9e106d4ea"
+}

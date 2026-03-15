@@ -1,0 +1,7 @@
+{
+  "treat_hard_coded_secret_as_fail": true,
+  "treat_insecure_protocol_as_fail": true,
+  "treat_weak_crypto_as_fail": true,
+  "allow_local_admin_interface": true,
+  "strict_header_requirements": true
+}

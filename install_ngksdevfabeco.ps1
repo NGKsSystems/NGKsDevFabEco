@@ -1,6 +1,12 @@
 param(
     [string]$WheelhousePath,
-    [switch]$ForceRecreateVenv
+    [switch]$ForceRecreateVenv,
+    [switch]$UserInstall,
+    [string]$Version = '1.2.0',
+    [switch]$CleanupInvalidUserDistributions,
+    [switch]$PersistUserScriptsPath,
+    [ValidateSet('auto', 'wheelhouse', 'pypi')]
+    [string]$InstallSource = 'auto'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,7 +51,123 @@ function Invoke-Logged {
     }
 }
 
+function Get-UserScriptsPath {
+    return (Join-Path $env:APPDATA 'Python\Python313\Scripts')
+}
+
+function Add-UserScriptsPath {
+    param([switch]$Persist)
+    $scriptsPath = Get-UserScriptsPath
+    if (-not (Test-Path $scriptsPath)) {
+        return
+    }
+
+    $pathParts = ($env:Path -split ';' | Where-Object { $_.Trim() })
+    if ($pathParts -notcontains $scriptsPath) {
+        $env:Path = "$env:Path;$scriptsPath"
+        Write-Log "added_user_scripts_to_session_path=$scriptsPath"
+    }
+
+    if ($Persist) {
+        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+        $userParts = ($userPath -split ';' | Where-Object { $_.Trim() })
+        if ($userParts -notcontains $scriptsPath) {
+            $nextUserPath = if ([string]::IsNullOrWhiteSpace($userPath)) { $scriptsPath } else { "$userPath;$scriptsPath" }
+            [Environment]::SetEnvironmentVariable('Path', $nextUserPath, 'User')
+            Write-Log "persisted_user_scripts_path=$scriptsPath"
+        }
+    }
+}
+
+function Remove-InvalidUserDistributions {
+    $userSite = Join-Path $env:APPDATA 'Python\Python313\site-packages'
+    if (-not (Test-Path $userSite)) {
+        Write-Log "user_site_not_found=$userSite"
+        return
+    }
+
+    $removed = 0
+    Get-ChildItem -Path $userSite -Force -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -like '~*' -or $_.Name -like '*.dist-info' -and $_.Name -like '~*'
+        } |
+        ForEach-Object {
+            try {
+                Remove-Item -Recurse -Force $_.FullName -ErrorAction Stop
+                $removed += 1
+                Write-Log "removed_invalid_distribution=$($_.FullName)"
+            }
+            catch {
+                Write-Log "warn_failed_remove_invalid_distribution=$($_.FullName)"
+            }
+        }
+
+    Write-Log "invalid_distribution_cleanup_removed=$removed"
+}
+
+function Resolve-InstallerPython {
+    $candidates = @('py', 'python')
+    foreach ($candidate in $candidates) {
+        $cmd = Get-Command $candidate -ErrorAction SilentlyContinue
+        if ($cmd) {
+            return $cmd.Source
+        }
+    }
+    throw 'PYTHON_NOT_FOUND: cannot locate py or python in PATH'
+}
+
+function Invoke-Pip {
+    param(
+        [string]$PythonExe,
+        [string[]]$PipArgs
+    )
+    Invoke-Logged -Executable $PythonExe -Arguments (@('-m', 'pip') + $PipArgs)
+}
+
+function Test-WheelhouseContains {
+    param(
+        [string]$SourcePath,
+        [string]$PackageName,
+        [string]$PackageVersion
+    )
+    $prefix = ($PackageName + '-' + $PackageVersion + '-').ToLowerInvariant()
+    $wheel = Get-ChildItem -Path $SourcePath -Filter '*.whl' -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name.ToLowerInvariant().StartsWith($prefix) } |
+        Select-Object -First 1
+    return $null -ne $wheel
+}
+
 Write-Log "repo_root=$repoRoot"
+
+if ($UserInstall) {
+    $installerPython = Resolve-InstallerPython
+    Write-Log "install_mode=user"
+    Write-Log "python_executable=$installerPython"
+
+    if ($CleanupInvalidUserDistributions) {
+        Remove-InvalidUserDistributions
+    }
+
+    Add-UserScriptsPath -Persist:$PersistUserScriptsPath
+
+    Invoke-Pip -PythonExe $installerPython -PipArgs @('install', '--user', '--upgrade', 'pip', 'setuptools', 'wheel')
+    Invoke-Pip -PythonExe $installerPython -PipArgs @('install', '--user', '--upgrade', ("ngksdevfabeco==" + $Version))
+    Invoke-Pip -PythonExe $installerPython -PipArgs @('show', 'ngksdevfabeco', 'ngksdevfabric')
+    Invoke-Pip -PythonExe $installerPython -PipArgs @('check')
+
+    Invoke-Logged -Executable $installerPython -Arguments @('-m', 'ngksdevfabric', '--help')
+    Invoke-Logged -Executable $installerPython -Arguments @('-m', 'ngksdevfabric', 'predict-risk', '--help')
+
+    @(
+        "repo_root=$repoRoot",
+        "install_mode=user",
+        "version=$Version",
+        "status=PASS"
+    ) | Set-Content -Encoding UTF8 (Join-Path $proofDir 'result.txt')
+
+    Write-Host "INSTALL_OK mode=user version=$Version proof=$proofDir"
+    return
+}
 
 $wheelSource = $null
 if ($WheelhousePath) {
@@ -71,6 +193,9 @@ if ($wheelCount -eq 0) {
 }
 Write-Log "wheelhouse=$wheelSource"
 Write-Log "wheel_count=$wheelCount"
+Write-Log "install_mode=venv"
+Write-Log "version=$Version"
+Write-Log "install_source=$InstallSource"
 
 $venvDir = Join-Path $repoRoot '.venv'
 if ($ForceRecreateVenv -and (Test-Path $venvDir)) {
@@ -88,24 +213,61 @@ if (-not (Test-Path $venvPython)) {
 }
 
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'pip')
+Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'setuptools', 'wheel')
 $packages = @(
-    'ngksdevfabric==0.1.15',
+    ("ngksdevfabeco==" + $Version),
+    ("ngksdevfabric==" + $Version),
     'ngksgraph==0.1.9',
     'ngksbuildcore==0.1.4',
     'ngksenvcapsule==0.1.2',
     'ngkslibrary==0.1.2'
 )
-$packageNames = @('ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
-Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--no-index', '--no-cache-dir', '--force-reinstall', '--find-links', $wheelSource) + $packages)
+$packageNames = @('ngksdevfabeco', 'ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
+
+$canUseWheelhouse = $true
+foreach ($spec in $packages) {
+    $parts = $spec -split '=='
+    if ($parts.Count -ne 2) {
+        continue
+    }
+    if (-not (Test-WheelhouseContains -SourcePath $wheelSource -PackageName $parts[0] -PackageVersion $parts[1])) {
+        $canUseWheelhouse = $false
+        Write-Log "wheelhouse_missing_package=$spec"
+    }
+}
+
+$useWheelhouse = $false
+if ($InstallSource -eq 'wheelhouse') {
+    if (-not $canUseWheelhouse) {
+        throw "WHEELHOUSE_INCOMPLETE_FOR_REQUESTED_VERSION: $wheelSource"
+    }
+    $useWheelhouse = $true
+} elseif ($InstallSource -eq 'pypi') {
+    $useWheelhouse = $false
+} else {
+    $useWheelhouse = $canUseWheelhouse
+}
+
+if ($useWheelhouse) {
+    Write-Log 'install_path=wheelhouse'
+    Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--no-index', '--no-cache-dir', '--force-reinstall', '--find-links', $wheelSource) + $packages)
+} else {
+    Write-Log 'install_path=pypi'
+    Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--upgrade') + $packages)
+}
+
 Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'show') + $packageNames)
+Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'check')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksgraph', '--help')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksbuildcore', '--help')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', '--help')
+Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', 'predict-risk', '--help')
 
 @(
     "repo_root=$repoRoot",
     "wheelhouse=$wheelSource",
     "venv=$venvDir",
+    "version=$Version",
     "status=PASS"
 ) | Set-Content -Encoding UTF8 (Join-Path $proofDir 'result.txt')
 

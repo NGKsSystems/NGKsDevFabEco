@@ -11,6 +11,27 @@ from .plan import load_plan
 from .runner import make_proof_dir, run_build
 
 
+def _allow_direct_buildcore() -> bool:
+    return os.environ.get("NGKS_ALLOW_DIRECT_BUILDCORE", "").strip() == "1"
+
+
+def _route_to_devfabeco_pipeline(plan_path: str, proof_root: str | None) -> int:
+    plan = Path(plan_path).resolve()
+    project_root = plan.parent.resolve()
+    command = [
+        sys.executable,
+        "-m",
+        "ngksdevfabric",
+        "build",
+        str(project_root),
+    ]
+    if proof_root:
+        command.extend(["--pf", str(proof_root)])
+    print("BuildCore direct run intercepted: delegating to DevFabEco orchestrator")
+    proc = subprocess.run(command, check=False)
+    return int(proc.returncode)
+
+
 def _default_jobs(value: int | None) -> int:
     if value is not None:
         return value
@@ -146,6 +167,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "run":
+        if not _allow_direct_buildcore():
+            proof_root = args.pf or args.proof
+            return _route_to_devfabeco_pipeline(args.plan, proof_root)
         jobs = _default_jobs(args.jobs)
         proof_root = args.pf or args.proof
         return run_build(plan_path=args.plan, jobs=jobs, proof=proof_root, env_lock=args.env_lock)

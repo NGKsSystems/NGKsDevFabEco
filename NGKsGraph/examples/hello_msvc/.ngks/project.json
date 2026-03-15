@@ -1,0 +1,10 @@
+{
+  "schema": "ngks.project.rules.v1",
+  "project_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\NGKsGraph\\examples\\hello_msvc",
+  "autodetect": [
+    "flutter",
+    "node",
+    "python",
+    "dotnet"
+  ]
+}

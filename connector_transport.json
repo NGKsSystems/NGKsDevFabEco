@@ -1,0 +1,25 @@
+{
+  "mode": "DRY_RUN",
+  "github": {
+    "enabled": true,
+    "repo_owner": "example-org",
+    "repo_name": "example-repo",
+    "token_env_var": "GITHUB_TOKEN"
+  },
+  "jira": {
+    "enabled": true,
+    "base_url": "https://jira.example.com",
+    "project_key": "ENG",
+    "token_env_var": "JIRA_TOKEN"
+  },
+  "email": {
+    "enabled": true,
+    "smtp_host": "smtp.example.com",
+    "port": 587,
+    "sender": "devfabeco@example.com"
+  },
+  "webhook": {
+    "enabled": true,
+    "endpoint_env_var": "DEVFABECO_WEBHOOK_URL"
+  }
+}

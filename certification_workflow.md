@@ -2,7 +2,32 @@
 
 ## Overview
 
-This workflow integrates baseline comparison, compatibility preflight, certification decision policy, and decision validation into the normal DevFabEco command surface.
+This workflow integrates target capability validation, baseline comparison, compatibility preflight, certification decision policy, and decision validation into the normal DevFabEco command surface.
+
+## Target Capability Front Door
+
+Certification commands validate the project target contract before compare/gate logic.
+
+Target capability states:
+
+- CERTIFICATION_READY
+- CERTIFICATION_READY_WITH_WARNINGS
+- CERTIFICATION_NOT_READY
+
+Validation artifacts are emitted under a target validation subfolder in the run PF:
+
+- `target_validation/00_target_inputs.json`
+- `target_validation/01_target_contract_load.json`
+- `target_validation/02_target_shape_validation.json`
+- `target_validation/03_target_artifact_check.json`
+- `target_validation/04_target_capability_classification.json`
+- `target_validation/05_target_report.md`
+
+Standalone target readiness check:
+
+```powershell
+python -m ngksdevfabric certify-target-check --project <target_project>
+```
 
 ## Baseline Compare Flow
 

@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-03-14T16:39:58.350617+00:00",
+  "project_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\NGKsBuildCore\\examples",
+  "manifest_hash": "a0f49c5dff6a8ef89887a3289e86932552bbeec11f9caba8874c403aea20c457",
+  "tracked_file_count": 1,
+  "changed_since_last": true,
+  "rows": [
+    {
+      "path": "hello_plan.json",
+      "size": 1225,
+      "mtime_ns": 1772456257171564500,
+      "sha256": "b6c297a09c5008a682dd679ea15ced1ed360df259668f5d81c66b8fe581371d8"
+    }
+  ]
+}

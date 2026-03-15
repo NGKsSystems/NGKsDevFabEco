@@ -1,0 +1,89 @@
+{
+  "schema_version": "1",
+  "plugins": [
+    {
+      "plugin_name": "ui_layout_integrity",
+      "plugin_category": "UI_LAYOUT_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["ui"],
+      "required_project_capabilities": ["ui.present"],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "medium",
+      "default_enabled": true,
+      "blocking_stages": ["build", "test", "ship"],
+      "advisory_stages": ["doctor", "plan"]
+    },
+    {
+      "plugin_name": "performance_bottleneck_validation",
+      "plugin_category": "PERFORMANCE_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["code"],
+      "required_project_capabilities": [],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "medium",
+      "default_enabled": true,
+      "blocking_stages": ["build", "test", "ship"],
+      "advisory_stages": ["doctor", "plan"]
+    },
+    {
+      "plugin_name": "memory_usage_validation",
+      "plugin_category": "MEMORY_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["code"],
+      "required_project_capabilities": [],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "medium",
+      "default_enabled": true,
+      "blocking_stages": ["build", "test", "ship"],
+      "advisory_stages": ["doctor", "plan"]
+    },
+    {
+      "plugin_name": "architectural_complexity_validation",
+      "plugin_category": "ARCHITECTURE_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["code"],
+      "required_project_capabilities": [],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "high",
+      "default_enabled": true,
+      "blocking_stages": ["build", "ship"],
+      "advisory_stages": ["doctor", "plan", "test"]
+    },
+    {
+      "plugin_name": "api_contract_validation",
+      "plugin_category": "API_CONTRACT_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["api_contract"],
+      "required_project_capabilities": ["api.contract.present"],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "high",
+      "default_enabled": true,
+      "blocking_stages": ["build", "ship"],
+      "advisory_stages": ["doctor", "plan", "test"]
+    },
+    {
+      "plugin_name": "security_misconfiguration_validation",
+      "plugin_category": "SECURITY_CONFIGURATION_VALIDATION",
+      "trigger_stages": ["doctor", "plan", "build", "test", "ship"],
+      "required_artifact_types": ["config", "manifest", "env"],
+      "required_project_capabilities": ["security.relevant.config"],
+      "required_languages": [],
+      "required_target_types": [],
+      "mode": "mixed",
+      "severity": "critical",
+      "default_enabled": true,
+      "blocking_stages": ["build", "ship"],
+      "advisory_stages": ["doctor", "plan", "test"]
+    }
+  ]
+}

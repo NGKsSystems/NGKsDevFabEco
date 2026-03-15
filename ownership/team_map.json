@@ -1,0 +1,20 @@
+{
+  "diagnostic_scoring_pipeline": {
+    "team": "diagnostics_engineering",
+    "primary_assignee": "alice",
+    "fallback_assignee": "bob",
+    "escalation_owner": "diagnostics_lead"
+  },
+  "dependency_graph_resolver": {
+    "team": "core_infrastructure",
+    "primary_assignee": "charlie",
+    "fallback_assignee": "dana",
+    "escalation_owner": "platform_lead"
+  },
+  "component_ownership_model": {
+    "team": "reliability_operations",
+    "primary_assignee": "erin",
+    "fallback_assignee": "frank",
+    "escalation_owner": "ops_lead"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "max_nesting_depth_warning": 6,
+  "max_module_size_warning": 1200,
+  "max_dependency_fanout_warning": 12,
+  "max_dependency_fanin_warning": 12,
+  "god_module_risk_factor_threshold": 3,
+  "architectural_concentration_warning_ratio": 0.35
+}

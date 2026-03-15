@@ -29,3 +29,4 @@ if ($RemoveInstallProof) {
 }
 
 Write-Host 'UNINSTALL_OK'
+Write-Host 'Hint: install_ngksdevfabeco.ps1 supports -UserInstall, -CleanupInvalidUserDistributions, and -PersistUserScriptsPath for smoother runtime installs.'

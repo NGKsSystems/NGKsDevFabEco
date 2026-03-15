@@ -46,6 +46,9 @@ from ngksgraph.msvc import bootstrap_msvc, resolve_msvc_toolchain_paths
 from ngksgraph.proof import TeeTextIO, gather_git_metadata, new_proof_run, write_summary, zip_run, resolve_repo_root
 from ngksgraph.repo_classifier import classify_repo, synthesize_init_toml
 from ngksgraph.scan_pipeline import run_scan
+from ngksgraph.targetspec import load_or_derive_target_spec
+from ngksgraph.capability import build_capability_inventory
+from ngksgraph.resolver import resolve_target_capabilities, write_resolution_artifacts
 
 
 CONTRACTS_STAMP = "6G,6H,7,9"
@@ -231,6 +234,42 @@ def _write_ecosystem_error(proof_dir: Path, message: str) -> None:
     (proof_dir / "30_errors.txt").write_text(str(message).strip() + "\n", encoding="utf-8")
 
 
+def _run_target_resolution(
+    *,
+    repo_root: Path,
+    configured: dict[str, Any],
+    resolution_out_dir: Path,
+) -> tuple[bool, dict[str, str], dict[str, Any]]:
+    config = configured["config"]
+    graph = configured["graph"]
+    selected_target = str(configured["selected_target"])
+    profile = str(configured.get("profile", "debug"))
+
+    target_spec, spec_source, spec_path = load_or_derive_target_spec(
+        repo_root=repo_root,
+        config=config,
+        graph=graph,
+        selected_target=selected_target,
+        profile=profile,
+    )
+    target = graph.targets[selected_target]
+    inventory = build_capability_inventory(config=config, target=target)
+    report = resolve_target_capabilities(target_spec=target_spec, inventory=inventory)
+    artifact_map = write_resolution_artifacts(
+        output_dir=resolution_out_dir,
+        target_spec=target_spec,
+        inventory=inventory,
+        report=report,
+        spec_source=spec_source,
+        spec_path=spec_path,
+    )
+    resolution_payload = report.to_dict()
+    resolution_payload["artifact_map"] = artifact_map
+    resolution_payload["spec_source"] = spec_source
+    resolution_payload["spec_path"] = spec_path
+    return bool(report.build_allowed), artifact_map, resolution_payload
+
+
 def _read_init_template_text(template_name: str, repo_root: Path) -> str | None:
     repo_template = repo_root / "templates" / template_name
     if repo_template.exists():
@@ -312,9 +351,31 @@ def cmd_build(args: argparse.Namespace) -> int:
                 target=args.target,
                 profile=args.profile,
             )
+            profile_name = str(configured.get("profile", args.profile or "debug"))
+            resolution_out_dir = (proof_dir / "graph_resolution").resolve()
+            build_allowed, _artifact_map, resolution_payload = _run_target_resolution(
+                repo_root=repo_root,
+                configured=configured,
+                resolution_out_dir=resolution_out_dir,
+            )
+            if not build_allowed:
+                _write_ecosystem_error(
+                    proof_dir,
+                    "TARGET_RESOLUTION_BLOCKED: required capabilities missing/conflicting/downgraded."
+                    f" resolution_report={resolution_out_dir / '14_resolution_report.json'}",
+                )
+                print(
+                    "TARGET_RESOLUTION_BLOCKED: "
+                    f"missing={len(resolution_payload.get('missing', []))} "
+                    f"conflicting={len(resolution_payload.get('conflicting', []))} "
+                    f"downgraded={len(resolution_payload.get('downgraded', []))}",
+                    file=sys.stderr,
+                )
+                print(f"Resolution report: {resolution_out_dir / '14_resolution_report.json'}", file=sys.stderr)
+                return 2
             plan = create_ecosystem_build_plan(
                 repo_root,
-                profile=str(configured.get("profile", args.profile or "debug")),
+                profile=profile_name,
                 selected_target=str(configured["selected_target"]),
                 graph=configured["graph"],
                 env_capsule_hash=env_capsule_hash,
@@ -366,6 +427,22 @@ def cmd_build(args: argparse.Namespace) -> int:
         profile=args.profile,
     )
     selected_profile = str(configured.get("profile", args.profile or "debug"))
+    resolution_out_dir = (repo_root / "build_graph" / selected_profile / "resolution").resolve()
+    build_allowed, _artifact_map, resolution_payload = _run_target_resolution(
+        repo_root=repo_root,
+        configured=configured,
+        resolution_out_dir=resolution_out_dir,
+    )
+    if not build_allowed:
+        print(
+            "TARGET_RESOLUTION_WARNING: "
+            f"missing={len(resolution_payload.get('missing', []))} "
+            f"conflicting={len(resolution_payload.get('conflicting', []))} "
+            f"downgraded={len(resolution_payload.get('downgraded', []))}",
+            file=sys.stderr,
+        )
+        print(f"Resolution report: {resolution_out_dir / '14_resolution_report.json'}", file=sys.stderr)
+
     out_path = repo_root / "build_graph" / selected_profile / "ngksbuildcore_plan.json"
     written, warnings = emit_buildcore_plan(repo_root, configured, out_path)
     print(f"BuildCore plan: {written}")
@@ -465,6 +542,27 @@ def cmd_plan(args: argparse.Namespace) -> int:
         selected_target = str(configured["selected_target"]) if configured else str(args.target or "build")
         selected_graph = configured["graph"] if configured else None
 
+        if configured is not None:
+            if getattr(args, "pf", None):
+                resolution_out_dir = (Path(str(args.pf)).resolve() / "graph_resolution").resolve()
+            else:
+                resolution_out_dir = (repo_root / "build_graph" / profile_name / "resolution").resolve()
+            build_allowed, _artifact_map, resolution_payload = _run_target_resolution(
+                repo_root=repo_root,
+                configured=configured,
+                resolution_out_dir=resolution_out_dir,
+            )
+            if not build_allowed:
+                print(
+                    "TARGET_RESOLUTION_BLOCKED: "
+                    f"missing={len(resolution_payload.get('missing', []))} "
+                    f"conflicting={len(resolution_payload.get('conflicting', []))} "
+                    f"downgraded={len(resolution_payload.get('downgraded', []))}",
+                    file=sys.stderr,
+                )
+                print(f"Resolution report: {resolution_out_dir / '14_resolution_report.json'}", file=sys.stderr)
+                return 2
+
         plan = create_ecosystem_build_plan(
             repo_root,
             profile=profile_name,
@@ -500,6 +598,22 @@ def cmd_plan(args: argparse.Namespace) -> int:
         print(f"Unsupported format: {args.format}", file=sys.stderr)
         return 2
 
+    resolution_out_dir = (repo_root / "build_graph" / str(configured.get("profile", args.profile or "debug")) / "resolution").resolve()
+    build_allowed, _artifact_map, resolution_payload = _run_target_resolution(
+        repo_root=repo_root,
+        configured=configured,
+        resolution_out_dir=resolution_out_dir,
+    )
+    if not build_allowed:
+        print(
+            "TARGET_RESOLUTION_WARNING: "
+            f"missing={len(resolution_payload.get('missing', []))} "
+            f"conflicting={len(resolution_payload.get('conflicting', []))} "
+            f"downgraded={len(resolution_payload.get('downgraded', []))}",
+            file=sys.stderr,
+        )
+        print(f"Resolution report: {resolution_out_dir / '14_resolution_report.json'}", file=sys.stderr)
+
     out_path = emit_build_plan(repo_root, configured)
     print(f"Plan file: {out_path}")
     return 0
@@ -533,6 +647,22 @@ def cmd_buildplan(args: argparse.Namespace) -> int:
     else:
         out_path = (repo_root / "build_graph" / profile_name / "ngksbuildcore_plan.json").resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    resolution_out_dir = (out_path.parent / "resolution").resolve()
+    build_allowed, _artifact_map, resolution_payload = _run_target_resolution(
+        repo_root=repo_root,
+        configured=configured,
+        resolution_out_dir=resolution_out_dir,
+    )
+    if not build_allowed:
+        print(
+            "TARGET_RESOLUTION_WARNING: "
+            f"missing={len(resolution_payload.get('missing', []))} "
+            f"conflicting={len(resolution_payload.get('conflicting', []))} "
+            f"downgraded={len(resolution_payload.get('downgraded', []))}",
+            file=sys.stderr,
+        )
+        print(f"Resolution report: {resolution_out_dir / '14_resolution_report.json'}", file=sys.stderr)
 
     written, warnings = emit_buildcore_plan(repo_root, configured, out_path)
     print(f"BuildCore plan file: {written}")

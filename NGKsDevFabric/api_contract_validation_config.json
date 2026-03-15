@@ -1,0 +1,7 @@
+{
+  "strict_unknown_fields": true,
+  "max_version_drift_minor": 1,
+  "treat_nullability_violation_as_fail": true,
+  "treat_type_mismatch_as_fail": true,
+  "treat_missing_required_field_as_fail": true
+}

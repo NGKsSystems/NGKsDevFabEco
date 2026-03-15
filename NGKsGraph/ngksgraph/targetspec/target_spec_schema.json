@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ngkssystems.local/schemas/canonical-target-spec.schema.json",
+  "title": "Canonical Target Spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "target_name",
+    "target_type",
+    "language",
+    "platform",
+    "configuration",
+    "required_capabilities",
+    "optional_capabilities",
+    "policy_flags",
+    "source_roots",
+    "entrypoints"
+  ],
+  "properties": {
+    "target_name": { "type": "string", "minLength": 1 },
+    "target_type": {
+      "type": "string",
+      "enum": ["desktop_app", "static_library", "shared_library", "service", "cli"]
+    },
+    "language": { "type": "string", "minLength": 1 },
+    "platform": { "type": "string", "minLength": 1 },
+    "configuration": { "type": "string", "minLength": 1 },
+    "required_capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "optional_capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "policy_flags": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "boolean" },
+          { "type": "string" },
+          { "type": "number" }
+        ]
+      }
+    },
+    "source_roots": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "entrypoints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

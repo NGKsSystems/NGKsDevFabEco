@@ -60,6 +60,8 @@ def run_certification_gate(
     pf: Path,
     comparison_policy: ComparisonPolicy | None = None,
     enforcement_policy: GateEnforcementPolicy | None = None,
+    supported_baseline_versions: list[str] | None = None,
+    profile_project_root: Path | None = None,
 ) -> dict[str, Any]:
     enforcement_policy = enforcement_policy or GateEnforcementPolicy()
 
@@ -69,6 +71,8 @@ def run_certification_gate(
         current_path=current_path,
         pf=pf,
         policy=comparison_policy,
+        supported_baseline_versions=supported_baseline_versions,
+        profile_project_root=profile_project_root,
     )
 
     decision = str(compare_result.get("certification_decision", "CERTIFICATION_INCONCLUSIVE"))

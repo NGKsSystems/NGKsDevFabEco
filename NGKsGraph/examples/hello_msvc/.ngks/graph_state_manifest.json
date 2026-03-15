@@ -1,0 +1,63 @@
+{
+  "generated_at": "2026-03-15T08:00:31.807345+00:00",
+  "project_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\NGKsGraph\\examples\\hello_msvc",
+  "manifest_hash": "0ce1f92abab0ab6a2e72d396821a733d510288c90f3c6109d9e559b237bb8b6e",
+  "tracked_file_count": 9,
+  "changed_since_last": true,
+  "rows": [
+    {
+      "path": ".graph_state/graph_state.json",
+      "size": 749,
+      "mtime_ns": 1773561631717129500,
+      "sha256": "90858f9877c3b52421133991f3e6293f7526726c1c0b4e02d3e5020d2df46278"
+    },
+    {
+      "path": ".ngks/profile.default.json",
+      "size": 95,
+      "mtime_ns": 1773561243908551300,
+      "sha256": "d919fa9a1c7bdb98862aab9ca8aac0b660e43ecfbe9064e9829e05a194f1ff4a"
+    },
+    {
+      "path": ".ngks/project.json",
+      "size": 233,
+      "mtime_ns": 1773561243907148400,
+      "sha256": "65d0724a30bb32338063a0c8e3bb3bb6eafc5e7025ceb36c1cacee35fa5d8915"
+    },
+    {
+      "path": ".ngks/README.txt",
+      "size": 85,
+      "mtime_ns": 1773561243908551300,
+      "sha256": "993264544d753c457ac57226c45467cedf018188703a2d764eba035eb51525fd"
+    },
+    {
+      "path": "env_capsule.hash.txt",
+      "size": 65,
+      "mtime_ns": 1773509692697935400,
+      "sha256": "bcf03c39c88baa702e4d1e06ad20ca2f43f065b4925761186c21665708ca66be"
+    },
+    {
+      "path": "env_capsule.lock.json",
+      "size": 496,
+      "mtime_ns": 1773509692690449300,
+      "sha256": "533150a29f30ec9f9d5e53927a61f6742163a05da165aa7fb6168ae6dd85c58f"
+    },
+    {
+      "path": "env_capsule.resolved.hash.txt",
+      "size": 65,
+      "mtime_ns": 1773509692384383600,
+      "sha256": "bcf03c39c88baa702e4d1e06ad20ca2f43f065b4925761186c21665708ca66be"
+    },
+    {
+      "path": "env_capsule.resolved.json",
+      "size": 496,
+      "mtime_ns": 1773509692368384400,
+      "sha256": "533150a29f30ec9f9d5e53927a61f6742163a05da165aa7fb6168ae6dd85c58f"
+    },
+    {
+      "path": "ngksgraph.toml",
+      "size": 505,
+      "mtime_ns": 1772088198155017000,
+      "sha256": "d1964dc8e8407de51b955c50302559afadfb923d99cfcfff927c44adbbe73dc7"
+    }
+  ]
+}

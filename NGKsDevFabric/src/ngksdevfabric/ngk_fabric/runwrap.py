@@ -239,10 +239,16 @@ def _load_profile(project_path: Path, profile_path: Path | None, pf: Path) -> tu
         path = (pf / "profile.json").resolve()
 
     if not path.exists() or not path.is_file():
-        raise FileNotFoundError(
-            f"Profile not found. Provide --profile <path> or run 'ngk profile init <project> --pf <pf>'. "
-            f"Checked: {path}"
-        )
+        default_profile: dict[str, Any] = {
+            "profile_name": "default",
+            "build_type": "debug",
+            "compiler": "auto",
+            "capabilities": [],
+            "generated_by": "DevFabEco",
+            "version": 1,
+        }
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(default_profile, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -1167,6 +1173,7 @@ def _run_buildcore_backend(project_path: Path, pf: Path, mode: str, target: str 
     build_stdout = run_dir / "buildcore_stdout.txt"
     build_stderr = run_dir / "buildcore_stderr.txt"
     build_env = dict(graph_env)
+    build_env["NGKS_ALLOW_DIRECT_BUILDCORE"] = "1"
     build_rc = run_command_capture(buildcore_command, buildcore_cwd, build_stdout, build_stderr, env=build_env)
 
     summary_candidates = sorted(buildcore_proof.glob("buildcore_run_*/summary.json"), key=lambda p: str(p))
