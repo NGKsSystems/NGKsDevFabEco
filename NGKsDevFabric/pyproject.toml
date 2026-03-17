@@ -5,16 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "ngksdevfabric"
 description = "NGKs DevFabric build/ship/doctor orchestration CLI"
-version = "1.2.2"
+version = "1.2.3"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
 authors = [{ name = "NGKsSystems" }]
 dependencies = [
-	"ngksgraph==0.1.11",
-	"ngksbuildcore==0.1.6",
-	"ngksenvcapsule==0.1.4",
-	"ngkslibrary==0.1.4",
+	"ngksgraph==0.1.12",
+	"ngksbuildcore==0.1.7",
+	"ngksenvcapsule==0.1.5",
+	"ngkslibrary==0.1.5",
 ]
 
 [project.scripts]

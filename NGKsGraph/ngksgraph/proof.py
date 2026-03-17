@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import io
 import os
+import shutil
 import subprocess
 import zipfile
 
@@ -42,6 +43,28 @@ def resolve_proof_root(repo_root: Path) -> Path:
     if not str(proof_root).startswith(str(repo_root.resolve())):
         raise RuntimeError("INVALID_PROOF_PATH")
     return proof_root
+
+
+def _resolve_easy_access_root(repo_root: Path) -> Path:
+    easy_root = (repo_root / "proofs").resolve()
+    easy_root.mkdir(parents=True, exist_ok=True)
+    return easy_root
+
+
+def _mirror_easy_access(run_dir: Path, zip_path: Path) -> None:
+    try:
+        repo_root = run_dir.parent.parent.resolve()
+        easy_root = _resolve_easy_access_root(repo_root)
+        latest_run_dir = easy_root / "latest_ngksgraph_run"
+        if latest_run_dir.exists():
+            shutil.rmtree(latest_run_dir)
+        shutil.copytree(run_dir, latest_run_dir)
+        shutil.copy2(zip_path, easy_root / "latest_ngksgraph_run.zip")
+        (easy_root / "LATEST_NGKSGRAPH_PROOF_DIR.txt").write_text(str(run_dir) + "\n", encoding="utf-8")
+        (easy_root / "LATEST_NGKSGRAPH_PROOF_ZIP.txt").write_text(str(zip_path) + "\n", encoding="utf-8")
+    except Exception:
+        # Proof mirroring is best-effort and must never fail the primary run.
+        pass
 
 
 def new_proof_run(repo_root: Path) -> ProofRun:
@@ -132,3 +155,4 @@ def zip_run(run_dir: Path, zip_path: Path) -> None:
         for path in sorted(run_dir.rglob("*"), key=lambda p: p.as_posix()):
             if path.is_file():
                 zf.write(path, arcname=path.relative_to(run_dir).as_posix())
+    _mirror_easy_access(run_dir, zip_path)

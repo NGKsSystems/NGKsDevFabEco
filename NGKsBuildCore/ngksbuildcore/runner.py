@@ -234,6 +234,20 @@ def _write_input_records(
     )
 
 
+def _mirror_easy_access(proof_dir: Path) -> None:
+    try:
+        easy_root = (Path.cwd().resolve() / "proofs").resolve()
+        easy_root.mkdir(parents=True, exist_ok=True)
+        latest_dir = easy_root / "latest_ngksbuildcore_run"
+        if latest_dir.exists():
+            shutil.rmtree(latest_dir)
+        shutil.copytree(proof_dir, latest_dir)
+        (easy_root / "LATEST_NGKSBUILDCORE_PROOF_DIR.txt").write_text(str(proof_dir) + "\n", encoding="utf-8")
+    except Exception:
+        # Easy-access mirroring is best-effort only.
+        pass
+
+
 def run_build(
     plan_path: str,
     jobs: int = 1,
@@ -387,6 +401,7 @@ def run_build(
         logger.emit("BUILD_END", status=status, progress_pct=final_progress_pct, failures=failures, summary=summary)
         logger.print(f"Build {status.lower()}: {final_progress_pct}% ({len(completed)}/{total_nodes} tasks)")
         _write_summary(proof_dir, summary)
+        _mirror_easy_access(proof_dir)
         store.close()
         return 1 if failures else 0
     finally:
