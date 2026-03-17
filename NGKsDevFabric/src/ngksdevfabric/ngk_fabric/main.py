@@ -15,9 +15,17 @@ from pathlib import Path
 
 from .component_exec import ComponentResolutionError, resolve_component_cmd
 from .certification_rollup import run_subtarget_rollup_comparison, run_subtarget_rollup_gate
+from .certification_bootstrap_generator import run_certification_bootstrap
 from .certification_target import run_target_validation_precheck
+from .certification_status import inspect_certification_status
+from .certification_policy_surface import (
+    evaluate_replay_validation_status,
+    evaluate_structural_certification_state,
+    evaluate_target_capability_state,
+)
 from .certify_compare import ComparisonPolicy, run_certification_comparison
 from .certify_gate import GateEnforcementPolicy, run_certification_gate
+from .decision_replay_validator import validate_decision_chain_from_proof
 from .decision_validation import run_decision_validation
 from .explain_engine import persist_explain_bundle, run_explain_query
 from .node_toolchain import detect_node_toolchain
@@ -29,6 +37,7 @@ from .validation_planner import plan_premerge_validation
 from .validation_policy_engine import evaluate_validation_policy
 from .validation_orchestrator import run_validation_orchestrator
 from .validation_rerun_pipeline import run_validation_and_certify_pipeline
+from .root_cause_analyzer import analyze_failure
 from .devfabeco_orchestrator import (
     ensure_graph_state_current,
     generate_graph_plan,
@@ -39,6 +48,7 @@ from .connector_transport import run_connector_transport
 from .profile import init_profile
 from .runwrap import doctor_toolchain, run_build
 from .workspace_integrity import run_workspace_integrity_check
+from .project_health import collect_project_health, format_project_health_console
 from .graph_state_manager import ensure_graph_state_fresh
 from .smart_terminal import detect_shell, resolve_smart_terminal_enabled, run_shell, run_shell_direct
 
@@ -57,6 +67,69 @@ class StageResult:
 
 def _print_result(message: str) -> None:
     print(message)
+
+
+def _print_project_health_hint(project_root: Path) -> None:
+    _print_result("----------------------------------------")
+    _print_result("HINT:")
+    _print_result("Run project-health for full system status:")
+    _print_result(f"  python -m ngksdevfabric.ngk_fabric.main project-health --project {project_root}")
+    _print_result("----------------------------------------")
+
+
+def _print_certification_mode_header(
+    *,
+    mode: str,
+    classification: str,
+    assurance_level: str,
+    replay_validation: str,
+    ci_usage: str,
+) -> None:
+    _print_result("----------------------------------------")
+    _print_result(f"CERTIFICATION MODE: {mode}")
+    _print_result(f"COMMAND CLASSIFICATION: {classification}")
+    _print_result(f"ASSURANCE LEVEL: {assurance_level}")
+    _print_result(f"REPLAY VALIDATION: {replay_validation}")
+    _print_result(f"CI USAGE: {ci_usage}")
+    _print_result("----------------------------------------")
+
+
+def _run_root_cause_analysis(
+    *,
+    project_root: Path,
+    pf: Path,
+    command_name: str,
+    stage_hint: str,
+    failure_reason: str,
+    exit_code: int,
+    source_layer_hint: str,
+    stderr_text: str = "",
+    stdout_text: str = "",
+    buildcore_reached: bool | None = None,
+    failed_before_validation_gate: bool | None = None,
+    failed_after_validation_gate: bool | None = None,
+) -> None:
+    try:
+        result = analyze_failure(
+            project_root=project_root,
+            pf=pf,
+            command_name=command_name,
+            stage_hint=stage_hint,
+            failure_reason=failure_reason,
+            exit_code=int(exit_code),
+            source_layer_hint=source_layer_hint,
+            stderr_text=stderr_text,
+            stdout_text=stdout_text,
+            buildcore_reached=buildcore_reached,
+            failed_before_validation_gate=failed_before_validation_gate,
+            failed_after_validation_gate=failed_after_validation_gate,
+        )
+        _print_result(f"root_cause_stage={result.get('failure_stage', 'UNKNOWN_FAILURE')}")
+        _print_result(f"root_cause_code={result.get('root_cause_code', 'NO_RULE')}")
+        _print_result(f"root_cause_confidence={result.get('confidence_score', 0.0)}")
+        _print_result(f"root_cause_artifact=41_failure_stage_classification.json")
+    except Exception as exc:
+        _print_result(f"root_cause_analysis_error={exc}")
 
 
 def _enforce_workspace_integrity(*, pf: Path | None, scope: str) -> bool:
@@ -450,6 +523,10 @@ def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _write_json(path: Path, payload: dict[str, object]) -> None:
+    _write_text(path, json.dumps(payload, indent=2))
+
+
 def _copy_required_file(src: Path, dst: Path) -> None:
     if not src.exists():
         raise ValueError(f"expected_output_missing: {src}")
@@ -789,6 +866,237 @@ def _ensure_ngks_operating_rules(project_root: Path) -> None:
     )
 
 
+def _certification_bootstrap_trigger_state(project_root: Path) -> dict[str, object]:
+    contract_candidates = [
+        project_root / "certification_target.json",
+        project_root / "certification" / "certification_target.json",
+    ]
+    contract_exists = any(path.is_file() for path in contract_candidates)
+
+    baseline_root = project_root / "certification" / "baseline_v1"
+    required_baseline_files = [
+        baseline_root / "baseline_manifest.json",
+        baseline_root / "baseline_matrix.json",
+        baseline_root / "diagnostic_metrics.json",
+        project_root / "certification" / "scenario_index.json",
+    ]
+    missing_required = [str(path) for path in required_baseline_files if not path.is_file()]
+    existing_required = [str(path) for path in required_baseline_files if path.is_file()]
+    existing_contract_paths = [str(path) for path in contract_candidates if path.is_file()]
+    baseline_ready = not missing_required
+
+    should_bootstrap = (not contract_exists) or (not baseline_ready)
+    if not contract_exists:
+        trigger_reason = "missing_certification_target"
+    elif not baseline_ready:
+        trigger_reason = "missing_certification_baseline_structure"
+    else:
+        trigger_reason = "assets_present_no_bootstrap"
+
+    return {
+        "should_bootstrap": should_bootstrap,
+        "trigger_reason": trigger_reason,
+        "contract_exists": contract_exists,
+        "baseline_ready": baseline_ready,
+        "missing_required_assets": missing_required,
+        "existing_required_assets": existing_required,
+        "existing_contract_paths": existing_contract_paths,
+        "checked_contract_paths": [str(path) for path in contract_candidates],
+    }
+
+
+def _classify_bootstrap_assets(assets: object) -> dict[str, list[str]]:
+    created: list[str] = []
+    preserved: list[str] = []
+    skipped: list[str] = []
+    overwritten: list[str] = []
+
+    if not isinstance(assets, list):
+        return {
+            "created": created,
+            "preserved": preserved,
+            "skipped": skipped,
+            "overwritten": overwritten,
+        }
+
+    for row in assets:
+        if not isinstance(row, dict):
+            continue
+        action = str(row.get("action", "")).strip().lower()
+        path = str(row.get("path", "")).strip()
+        if not path:
+            continue
+        if action == "created":
+            created.append(path)
+        elif action == "preserved":
+            preserved.append(path)
+        elif action == "skipped":
+            skipped.append(path)
+        elif action == "overwritten":
+            overwritten.append(path)
+
+    return {
+        "created": sorted(set(created)),
+        "preserved": sorted(set(preserved)),
+        "skipped": sorted(set(skipped)),
+        "overwritten": sorted(set(overwritten)),
+    }
+
+
+def _emit_bootstrap_visibility_console_report(report: dict[str, object]) -> None:
+    created_assets = int(report.get("created_assets", 0) or 0)
+    preserved_assets = int(report.get("preserved_assets", 0) or 0)
+    skipped_assets = int(report.get("skipped_assets", 0) or 0)
+    structural_state = str(report.get("structural_state", "UNKNOWN"))
+    trigger_reason = str(report.get("trigger_reason", ""))
+    bootstrap_mode = str(report.get("bootstrap_mode", "skipped"))
+
+    _print_result("[certification-bootstrap]")
+    _print_result(f"mode={bootstrap_mode}")
+    _print_result(f"reason={trigger_reason}")
+    _print_result(f"created_assets={created_assets}")
+    _print_result(f"preserved_assets={preserved_assets}")
+    _print_result(f"skipped_assets={skipped_assets}")
+    _print_result(f"structural_state={structural_state}")
+
+    created_asset_paths = report.get("created_asset_paths", [])
+    preserved_asset_paths = report.get("preserved_asset_paths", [])
+    if isinstance(created_asset_paths, list) and created_asset_paths:
+        _print_result(f"created_asset_paths={';'.join(str(v) for v in created_asset_paths)}")
+    if isinstance(preserved_asset_paths, list) and preserved_asset_paths:
+        _print_result(f"preserved_asset_paths={';'.join(str(v) for v in preserved_asset_paths)}")
+
+
+def _build_bootstrap_execution_report(
+    *,
+    project_root: Path,
+    trigger_state: dict[str, object],
+    executed: bool,
+    bootstrap_result: dict[str, object] | None,
+) -> dict[str, object]:
+    summary = bootstrap_result.get("summary", {}) if isinstance(bootstrap_result, dict) else {}
+    assets = bootstrap_result.get("assets", []) if isinstance(bootstrap_result, dict) else []
+    by_action = _classify_bootstrap_assets(assets)
+
+    if executed:
+        created_assets = int(summary.get("created_count", len(by_action["created"])) or 0)
+        preserved_assets = int(summary.get("preserved_count", len(by_action["preserved"])) or 0)
+        skipped_assets = int(summary.get("skipped_count", len(by_action["skipped"])) or 0)
+        structural_state = str(summary.get("structural_state", "UNKNOWN"))
+        generator_version = str(summary.get("generator_version", ""))
+        bootstrap_mode = str(summary.get("mode", "init"))
+        trigger_reason = str(trigger_state.get("trigger_reason", "missing_assets"))
+    else:
+        preserved_paths = sorted(
+            set(
+                [
+                    *[str(v) for v in (trigger_state.get("existing_contract_paths", []) or [])],
+                    *[str(v) for v in (trigger_state.get("existing_required_assets", []) or [])],
+                ]
+            )
+        )
+        by_action["preserved"] = preserved_paths
+        created_assets = 0
+        preserved_assets = len(preserved_paths)
+        skipped_assets = 0
+        structural_state = "CERTIFICATION_READY_WITH_WARNINGS"
+        generator_version = ""
+        bootstrap_mode = "skipped"
+        trigger_reason = "existing certification assets detected"
+
+    report_payload: dict[str, object] = {
+        "bootstrap_triggered": executed,
+        "trigger_reason": trigger_reason,
+        "bootstrap_mode": bootstrap_mode,
+        "created_assets": created_assets,
+        "preserved_assets": preserved_assets,
+        "skipped_assets": skipped_assets,
+        "structural_state": structural_state,
+        "generator_version": generator_version,
+        "timestamp": _iso_now(),
+        "project_root": str(project_root),
+        "created_asset_paths": by_action["created"],
+        "preserved_asset_paths": by_action["preserved"],
+        "skipped_asset_paths": by_action["skipped"],
+    }
+    return report_payload
+
+
+def _auto_bootstrap_certification_for_project_init(
+    *,
+    project_root: Path,
+    pf: Path,
+    trigger: str,
+) -> dict[str, object]:
+    pf = pf.resolve()
+    pf.mkdir(parents=True, exist_ok=True)
+
+    trigger_state = _certification_bootstrap_trigger_state(project_root)
+    should_bootstrap = bool(trigger_state.get("should_bootstrap", False))
+
+    result_payload: dict[str, object] = {
+        "timestamp_utc": _iso_now(),
+        "trigger": trigger,
+        "mode": "init",
+        "project_root": str(project_root),
+        "trigger_state": trigger_state,
+        "executed": False,
+        "status": "skipped",
+        "reason": "assets_already_present",
+    }
+
+    bootstrap_result: dict[str, object] | None = None
+
+    if should_bootstrap:
+        bootstrap_pf = pf / "certification_bootstrap_init"
+        bootstrap_result = run_certification_bootstrap(
+            project_root=project_root,
+            component="project_init_auto_bootstrap",
+            pf=bootstrap_pf,
+            mode="init",
+        )
+        summary = bootstrap_result.get("summary", {}) if isinstance(bootstrap_result, dict) else {}
+        errors = bootstrap_result.get("errors", []) if isinstance(bootstrap_result, dict) else []
+
+        structural_state = str(summary.get("structural_state", "UNKNOWN"))
+        structural_ready = bool(summary.get("structural_ready", False))
+        status = "executed_pass" if structural_ready and not errors else "executed_fail"
+
+        result_payload.update(
+            {
+                "executed": True,
+                "status": status,
+                "reason": str(trigger_state.get("trigger_reason", "missing_assets")),
+                "bootstrap_summary": summary,
+                "bootstrap_warnings": bootstrap_result.get("warnings", []) if isinstance(bootstrap_result, dict) else [],
+                "bootstrap_errors": errors,
+                "generator_version": summary.get("generator_version", ""),
+                "template_version": summary.get("template_version", ""),
+                "structural_state": structural_state,
+                "structural_ready": structural_ready,
+                "bootstrap_pf": str(bootstrap_pf),
+            }
+        )
+
+    _write_text(
+        pf / "certification_bootstrap_integration.json",
+        json.dumps(result_payload, indent=2),
+    )
+
+    execution_report = _build_bootstrap_execution_report(
+        project_root=project_root,
+        trigger_state=trigger_state,
+        executed=should_bootstrap,
+        bootstrap_result=bootstrap_result,
+    )
+    _write_json(project_root / "_proof" / "bootstrap_execution_report.json", execution_report)
+    _write_json(pf / "bootstrap_execution_report.json", execution_report)
+    _emit_bootstrap_visibility_console_report(execution_report)
+
+    result_payload["bootstrap_execution_report"] = execution_report
+    return result_payload
+
+
 def _missing_required_tool(build_system: str) -> str | None:
     tool_map = {
         "flutter": "flutter",
@@ -1035,6 +1343,18 @@ def cmd_build(args: argparse.Namespace) -> int:
     pf = _resolve_pf(args, project, "build")
 
     if not _enforce_workspace_integrity(pf=pf, scope="cli_ngks_build"):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks build",
+            stage_hint="WORKSPACE_INTEGRITY_FAILURE",
+            failure_reason="workspace_integrity_check_failed",
+            exit_code=2,
+            source_layer_hint="WorkspaceIntegrity",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"project_root={project}")
         _print_result(f"proof_dir={pf}")
@@ -1048,6 +1368,18 @@ def cmd_build(args: argparse.Namespace) -> int:
         active_profile=str(getattr(args, "profile", "debug") or "debug"),
         active_target=str(getattr(args, "target", "build") or "build"),
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks build",
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason="graph_state_automation_failed",
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"project_root={project}")
         _print_result(f"proof_dir={pf}")
@@ -1061,6 +1393,18 @@ def cmd_build(args: argparse.Namespace) -> int:
         profile=str(getattr(args, "profile", "debug") or "debug"),
         target=str(getattr(args, "target", "build") or "build"),
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks build",
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason="validation_policy_block",
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"project_root={project}")
         _print_result(f"proof_dir={pf}")
@@ -1126,6 +1470,21 @@ def cmd_build(args: argparse.Namespace) -> int:
             code = int(gate_code)
 
     _print_result(f"build_run_dir={pf / 'pipeline_build_run'}")
+    if code != 0:
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks build",
+            stage_hint="BUILDCORE_EXECUTION_FAILURE",
+            failure_reason="pipeline_failed",
+            exit_code=int(code),
+            source_layer_hint="Orchestrator",
+            stderr_text=(pf / "pipeline_build_run" / "build_stderr.txt").read_text(encoding="utf-8", errors="replace") if (pf / "pipeline_build_run" / "build_stderr.txt").exists() else "",
+            stdout_text=(pf / "pipeline_build_run" / "build_stdout.txt").read_text(encoding="utf-8", errors="replace") if (pf / "pipeline_build_run" / "build_stdout.txt").exists() else "",
+            buildcore_reached=True,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=True,
+        )
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _register_bundle_safely(pf)
@@ -1140,9 +1499,22 @@ def cmd_ngks_doctor(args: argparse.Namespace) -> int:
     project = _resolve_project_root(getattr(args, "project", None))
     pf = _resolve_pf(args, project, "ngks_doctor")
     if not _enforce_workspace_integrity(pf=pf, scope="cli_ngks_doctor"):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks doctor",
+            stage_hint="WORKSPACE_INTEGRITY_FAILURE",
+            failure_reason="workspace_integrity_check_failed",
+            exit_code=2,
+            source_layer_hint="WorkspaceIntegrity",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
+        _print_project_health_hint(project)
         return 2
     if not _enforce_graph_state_automation(
         project_root=project,
@@ -1151,9 +1523,22 @@ def cmd_ngks_doctor(args: argparse.Namespace) -> int:
         active_profile="debug",
         active_target="doctor",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks doctor",
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason="graph_state_automation_failed",
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
+        _print_project_health_hint(project)
         return 2
     if not _enforce_validation_policy(
         project_root=project,
@@ -1162,9 +1547,22 @@ def cmd_ngks_doctor(args: argparse.Namespace) -> int:
         profile="debug",
         target="doctor",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks doctor",
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason="validation_policy_block",
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
+        _print_project_health_hint(project)
         return 2
     state = ensure_graph_state_current(project_root=project, pf=pf)
     _print_result(f"project_root={project}")
@@ -1180,6 +1578,18 @@ def cmd_ngks_plan(args: argparse.Namespace) -> int:
     project = _resolve_project_root(getattr(args, "project", None))
     pf = _resolve_pf(args, project, "ngks_plan")
     if not _enforce_workspace_integrity(pf=pf, scope="cli_ngks_plan"):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks plan",
+            stage_hint="WORKSPACE_INTEGRITY_FAILURE",
+            failure_reason="workspace_integrity_check_failed",
+            exit_code=2,
+            source_layer_hint="WorkspaceIntegrity",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1191,6 +1601,18 @@ def cmd_ngks_plan(args: argparse.Namespace) -> int:
         active_profile="debug",
         active_target="plan",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks plan",
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason="graph_state_automation_failed",
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1202,6 +1624,18 @@ def cmd_ngks_plan(args: argparse.Namespace) -> int:
         profile="debug",
         target="plan",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks plan",
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason="validation_policy_block",
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1226,6 +1660,18 @@ def cmd_ngks_test(args: argparse.Namespace) -> int:
         active_profile="debug",
         active_target="test",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks test",
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason="graph_state_automation_failed",
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1237,6 +1683,18 @@ def cmd_ngks_test(args: argparse.Namespace) -> int:
         profile="debug",
         target="test",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks test",
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason="validation_policy_block",
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1260,6 +1718,21 @@ def cmd_ngks_test(args: argparse.Namespace) -> int:
         _print_result(proc.stderr)
     _print_result(f"PF={pf.resolve()}")
     _print_result(f"GATE={'PASS' if int(proc.returncode) == 0 else 'FAIL'}")
+    if int(proc.returncode) != 0:
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks test",
+            stage_hint="BUILDCORE_EXECUTION_FAILURE",
+            failure_reason="pytest_nonzero_exit",
+            exit_code=int(proc.returncode),
+            source_layer_hint="CLI",
+            stdout_text=proc.stdout or "",
+            stderr_text=proc.stderr or "",
+            buildcore_reached=True,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=True,
+        )
     _register_bundle_safely(pf)
     return int(proc.returncode)
 
@@ -1274,6 +1747,18 @@ def cmd_ngks_ship(args: argparse.Namespace) -> int:
         active_profile="release",
         active_target="ship",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks ship",
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason="graph_state_automation_failed",
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1285,6 +1770,18 @@ def cmd_ngks_ship(args: argparse.Namespace) -> int:
         profile="release",
         target="ship",
     ):
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks ship",
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason="validation_policy_block",
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
+        )
         _register_bundle_safely(pf)
         _print_result(f"PF={pf.resolve()}")
         _print_result("GATE=FAIL")
@@ -1292,10 +1789,71 @@ def cmd_ngks_ship(args: argparse.Namespace) -> int:
     script_path = (project / "tools" / "make_release_bundle.ps1").resolve()
     if not script_path.exists():
         _print_result(f"error=missing_release_script:{script_path}")
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks ship",
+            stage_hint="PACKAGING_FAILURE",
+            failure_reason="missing_release_script",
+            exit_code=2,
+            source_layer_hint="CLI",
+            stderr_text=f"missing_release_script:{script_path}",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=True,
+        )
         return 2
     command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)]
     proc = subprocess.run(command, cwd=str(project), check=False)
+    if int(proc.returncode) != 0:
+        _run_root_cause_analysis(
+            project_root=project,
+            pf=pf,
+            command_name="ngks ship",
+            stage_hint="PACKAGING_FAILURE",
+            failure_reason="release_bundle_script_nonzero_exit",
+            exit_code=int(proc.returncode),
+            source_layer_hint="CLI",
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=True,
+        )
     return int(proc.returncode)
+
+
+def cmd_analyze_failure(args: argparse.Namespace) -> int:
+    project = _resolve_project_root(getattr(args, "project", None))
+    pf = Path(str(getattr(args, "pf", "")).strip()).resolve()
+    if not pf.exists() or not pf.is_dir():
+        _print_result(f"error=missing_proof_folder:{pf}")
+        return 2
+
+    exit_code_value = getattr(args, "exit_code", 1)
+    try:
+        parsed_exit_code = int(exit_code_value)
+    except Exception:
+        parsed_exit_code = 1
+
+    result = analyze_failure(
+        project_root=project,
+        pf=pf,
+        command_name=str(getattr(args, "command_name", "ngks analyze-failure") or "ngks analyze-failure"),
+        stage_hint=str(getattr(args, "stage_hint", "UNKNOWN_FAILURE") or "UNKNOWN_FAILURE"),
+        failure_reason=str(getattr(args, "failure_reason", "manual_analysis") or "manual_analysis"),
+        exit_code=parsed_exit_code,
+        source_layer_hint="ManualAnalyzer",
+        stderr_text=str(getattr(args, "stderr", "") or ""),
+        stdout_text=str(getattr(args, "stdout", "") or ""),
+        buildcore_reached=None,
+        failed_before_validation_gate=None,
+        failed_after_validation_gate=None,
+    )
+    _print_result(f"PF={pf}")
+    _print_result(f"root_cause_stage={result.get('failure_stage', 'UNKNOWN_FAILURE')}")
+    _print_result(f"root_cause_code={result.get('root_cause_code', 'NO_RULE')}")
+    _print_result(f"root_cause_confidence={result.get('confidence_score', 0.0)}")
+    _print_result("root_cause_summary_artifact=45_failure_summary.md")
+    return 0
 
 
 def cmd_ngks_build(args: argparse.Namespace) -> int:
@@ -1339,7 +1897,65 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     _print_result(f"proof_dir={pf}")
     _print_result(f"toolchain_report={pf / 'toolchain_report.json'}")
     _print_result(f"exit_code={code}")
+    if int(code) == 0:
+        _print_project_health_hint(project)
     return int(code)
+
+
+def cmd_certification_status(args: argparse.Namespace) -> int:
+    """Read-only certification readiness inspector.
+
+    Never modifies files. Never triggers bootstrap or certification runs.
+    """
+    project_root = _resolve_project_root(getattr(args, "project", None))
+    json_output = bool(getattr(args, "json_output", False))
+    pf_arg = getattr(args, "pf", None)
+
+    result = inspect_certification_status(project_root)
+
+    if json_output:
+        import json as _json
+        print(_json.dumps(result.to_dict(), indent=2))
+    else:
+        _print_result("[certification-status]")
+        _print_result(f"project={result.project}")
+        _print_result(f"state={result.state}")
+        _print_result(f"structure_ok={str(result.structure_ok).lower()}")
+        _print_result(f"bootstrap_managed_assets={result.bootstrap_managed_assets}")
+        _print_result(f"real_evidence_assets={result.real_evidence_assets}")
+        _print_result(f"missing_assets={result.missing_assets}")
+        _print_result(f"drift_detected={str(result.drift_detected).lower()}")
+
+    if pf_arg:
+        pf = Path(str(pf_arg)).resolve()
+        pf.mkdir(parents=True, exist_ok=True)
+        _write_json(pf / "certification_status_result.json", result.to_dict())
+
+    gate = "PASS" if result.state not in ("MISSING_CERTIFICATION_STRUCTURE",) else "FAIL"
+    if not json_output:
+        _print_result(f"GATE={gate}")
+        if result.state != "CERTIFICATION_EVIDENCE_PRESENT":
+            _print_project_health_hint(project_root)
+
+    return 0 if gate == "PASS" else 1
+
+
+def cmd_project_health(args: argparse.Namespace) -> int:
+    """Unified read-only project health surface.
+
+    Inspection/reporting only: this command never mutates project state.
+    """
+    project_root = _resolve_project_root(getattr(args, "project", None))
+    json_output = bool(getattr(args, "json_output", False))
+    report = collect_project_health(project_root)
+
+    if json_output:
+        print(json.dumps(report, indent=2))
+        return 0
+
+    for line in format_project_health_console(report):
+        _print_result(line)
+    return 0
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -1356,6 +1972,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     for path in (run_dir, env_dir, graph_dir, buildcore_dir, library_dir):
         path.mkdir(parents=True, exist_ok=True)
 
+    bootstrap_log = _auto_bootstrap_certification_for_project_init(
+        project_root=project_root,
+        pf=run_dir,
+        trigger="cmd_run_project_intake",
+    )
+
     _write_text(
         run_dir / "00_run_header.txt",
         "\n".join(
@@ -1366,6 +1988,9 @@ def cmd_run(args: argparse.Namespace) -> int:
                 f"profile={args.profile or ''}",
                 f"target={args.target or ''}",
                 f"mode={args.mode}",
+                f"cert_bootstrap_executed={str(bool(bootstrap_log.get('executed', False))).lower()}",
+                f"cert_bootstrap_status={bootstrap_log.get('status', '')}",
+                f"cert_bootstrap_reason={bootstrap_log.get('reason', '')}",
                 "",
             ]
         ),
@@ -2503,6 +3128,124 @@ def _resolve_baseline_arg(project_root: Path, baseline: str, compare: str, fallb
     raise ValueError("baseline_required: provide --baseline <path> or --compare <baseline_name_or_path>")
 
 
+def _enforce_structural_certification_integrity(*, project_root: Path, pf: Path, command_name: str) -> tuple[bool, str]:
+    """Fail-closed structural certification checks for deterministic integrity states."""
+    status = inspect_certification_status(project_root)
+    policy_decision = evaluate_structural_certification_state(status.state)
+    payload = status.to_dict()
+    payload["command_name"] = command_name
+    payload["policy_rule_id"] = policy_decision.rule_id
+    payload["policy_reason_code"] = policy_decision.reason_code
+    _write_json(pf / "16_structural_certification_state.json", payload)
+
+    _print_result(f"structural_certification_state={status.state}")
+    _print_result(f"structural_certification_drift_detected={str(status.drift_detected).lower()}")
+
+    if not policy_decision.allow:
+        _print_result(f"structural_integrity_rule_id={policy_decision.rule_id}")
+        _print_result(f"structural_integrity_reason={policy_decision.reason_code}")
+        return False, policy_decision.reason_code
+
+    return True, ""
+
+
+def _resolve_replay_proof_root(project_root: Path, explicit_root: str) -> Path:
+    explicit = str(explicit_root or "").strip()
+    if explicit:
+        return Path(explicit).resolve()
+
+    default_root = (project_root / "_proof").resolve()
+    if not default_root.is_dir():
+        return default_root
+
+    chain_files = sorted(
+        default_root.rglob("58_decision_envelope_chain.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    for chain_file in chain_files:
+        control_plane_dir = chain_file.parent
+        proof_root = control_plane_dir.parent
+        if control_plane_dir.name == "control_plane":
+            return proof_root
+    return default_root
+
+
+def _enforce_replay_integrity(*, project_root: Path, pf: Path, replay_proof_root: str) -> tuple[bool, str]:
+    resolved_root = _resolve_replay_proof_root(project_root, replay_proof_root)
+    replay_result = validate_decision_chain_from_proof(proof_root=resolved_root)
+    replay_result_payload = dict(replay_result)
+    replay_result_payload["proof_root"] = str(resolved_root)
+    _write_json(pf / "17_replay_validation_result.json", replay_result_payload)
+
+    status = str(replay_result.get("status", "FAIL")).upper()
+    reason_codes = list(replay_result.get("invalid_chain_reason_codes", []))
+    replay_reasons = list(replay_result.get("replay_reason_codes", []))
+
+    _print_result(f"replay_proof_root={resolved_root}")
+    _print_result(f"replay_chain_path={replay_result.get('chain_path', '')}")
+    _print_result(f"replay_validation_status={status}")
+    _print_result(f"replay_invalid_chain_reason_codes={','.join(str(code) for code in reason_codes)}")
+    _print_result(f"replay_reason_codes={','.join(str(code) for code in replay_reasons)}")
+    policy_decision = evaluate_replay_validation_status(status)
+    _print_result(f"replay_policy_rule_id={policy_decision.rule_id}")
+
+    if not policy_decision.allow:
+        return False, policy_decision.reason_code
+    return True, ""
+
+
+def cmd_bootstrap_certification(args: argparse.Namespace) -> int:
+    project_root = _resolve_project_root(getattr(args, "project", None))
+    repo_root = DEVFABRIC_ROOT.parent.resolve()
+
+    if getattr(args, "pf", None):
+        pf = _canonical_pf(repo_root, Path(str(args.pf)))
+    else:
+        pf = _default_pf(repo_root, "certification_bootstrap")
+
+    component = str(getattr(args, "component", "") or "").strip() or project_root.name
+    mode = str(getattr(args, "mode", "init") or "init").strip()
+
+    try:
+        result = run_certification_bootstrap(
+            project_root=project_root,
+            component=component,
+            pf=pf,
+            mode=mode,
+        )
+    except ValueError as exc:
+        _print_result(f"error={exc}")
+        _print_result("GATE=FAIL")
+        return 1
+
+    summary = result.get("summary", {})
+    structural_state = summary.get("structural_state", "UNKNOWN")
+    structural_ready = bool(summary.get("structural_ready", False))
+    created_count = int(summary.get("created_count", 0))
+    preserved_count = int(summary.get("preserved_count", 0))
+    overwritten_count = int(summary.get("overwritten_count", 0))
+    errors = result.get("errors", [])
+    gate = "PASS" if structural_ready and not errors else "FAIL"
+
+    _register_bundle_safely(pf)
+    _print_result(f"project_root={project_root}")
+    _print_result(f"component={component}")
+    _print_result(f"mode={mode}")
+    _print_result(f"structural_state={structural_state}")
+    _print_result(f"structural_ready={str(structural_ready).lower()}")
+    _print_result(f"created_count={created_count}")
+    _print_result(f"preserved_count={preserved_count}")
+    _print_result(f"overwritten_count={overwritten_count}")
+    _print_result(f"error_count={len(errors)}")
+    _print_result(f"PF={pf.resolve()}")
+    _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+    _print_result(f"GATE={gate}")
+    if gate == "PASS":
+        _print_project_health_hint(project_root)
+    return 0 if gate == "PASS" else 1
+
+
 def cmd_certify_target_check(args: argparse.Namespace) -> int:
     target_project_root = _resolve_project_root(getattr(args, "project", None))
     repo_root = DEVFABRIC_ROOT.parent.resolve()
@@ -2532,14 +3275,24 @@ def cmd_certify_target_check(args: argparse.Namespace) -> int:
     _print_result(f"subtarget_count={len(target_result.subtargets)}")
     _print_result(f"PF={pf.resolve()}")
     _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
-    _print_result(f"GATE={'PASS' if target_result.state != 'CERTIFICATION_NOT_READY' else 'FAIL'}")
-    return 0 if target_result.state != "CERTIFICATION_NOT_READY" else 1
+    target_policy = evaluate_target_capability_state(target_result.state)
+    _print_result(f"target_policy_rule_id={target_policy.rule_id}")
+    _print_result(f"GATE={'PASS' if target_policy.allow else 'FAIL'}")
+    return 0 if target_policy.allow else 1
 
 
 def cmd_certify(args: argparse.Namespace) -> int:
     target_project_root = _resolve_project_root(getattr(args, "project", None))
     repo_root = DEVFABRIC_ROOT.parent.resolve()
     expected_proof_root = (repo_root / "_proof").resolve()
+
+    _print_certification_mode_header(
+        mode="CERTIFY",
+        classification="[CERTIFICATION]",
+        assurance_level="BASELINE",
+        replay_validation="NOT INCLUDED",
+        ci_usage="SUITABLE FOR FAST OPERATOR CHECKS; USE CERTIFY-GATE FOR CI GATING",
+    )
 
     if getattr(args, "pf", None):
         pf = _canonical_pf(repo_root, Path(str(args.pf)))
@@ -2557,13 +3310,34 @@ def cmd_certify(args: argparse.Namespace) -> int:
         require_contract=require_contract,
     )
 
-    if target_result.state == "CERTIFICATION_NOT_READY":
+    target_policy = evaluate_target_capability_state(target_result.state)
+    if not target_policy.allow:
         _register_bundle_safely(pf)
         _print_result(f"project_root={target_project_root}")
         _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"target_policy_rule_id={target_policy.rule_id}")
+        _print_result(f"enforcement_reason={target_policy.reason_code}")
         _print_result(f"PF={pf.resolve()}")
         _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
         _print_result("GATE=FAIL")
+        if target_result.state == "CERTIFICATION_NOT_READY":
+            _print_project_health_hint(target_project_root)
+        return 1
+
+    structural_ok, structural_reason = _enforce_structural_certification_integrity(
+        project_root=target_project_root,
+        pf=pf,
+        command_name="certify",
+    )
+    if not structural_ok:
+        _register_bundle_safely(pf)
+        _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"enforcement_reason={structural_reason}")
+        _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+        _print_result("GATE=FAIL")
+        if structural_reason in ("structural_placeholder_only_blocked", "structural_certification_drift_blocked"):
+            _print_project_health_hint(target_project_root)
         return 1
 
     baseline_path = Path("")
@@ -2666,6 +3440,9 @@ def cmd_certify(args: argparse.Namespace) -> int:
     _print_result(f"target_capability_state={target_result.state}")
     _print_result(f"overall_classification={result.get('classification', '')}")
     _print_result(f"compatibility_state={result.get('compatibility_state', '')}")
+    if not compatibility_ok:
+        _print_result("enforcement_reason=compatibility_incompatible_fail_closed")
+        _print_result("enforcement_rule_id=CERT_POL_005")
     _print_result(f"strongest_improvement={result.get('strongest_improvement', {}).get('metric', 'none')}")
     _print_result(f"worst_regression={result.get('worst_regression', {}).get('metric', 'none')}")
     _print_result(f"PF={actual_pf}")
@@ -2677,8 +3454,19 @@ def cmd_certify(args: argparse.Namespace) -> int:
 def cmd_certify_validate(args: argparse.Namespace) -> int:
     target_project_root = _resolve_project_root(getattr(args, "project", None))
 
+    _print_certification_mode_header(
+        mode="CERTIFY-VALIDATE",
+        classification="[CERTIFICATION + VALIDATION]",
+        assurance_level="FULL",
+        replay_validation="ENABLED",
+        ci_usage="USE WHEN REPLAY-VALIDATED CERTIFICATION EVIDENCE IS REQUIRED",
+    )
+
     repo_root = DEVFABRIC_ROOT.parent.resolve()
-    pf = _default_pf(repo_root, "certification_validate")
+    if getattr(args, "pf", None):
+        pf = _canonical_pf(repo_root, Path(str(args.pf)))
+    else:
+        pf = _default_pf(repo_root, "certification_validate")
     contract_path_raw = str(getattr(args, "target_contract", "") or "").strip()
     contract_path = Path(contract_path_raw).resolve() if contract_path_raw else None
     require_contract = str(getattr(args, "require_contract", "on") or "on").lower() != "off"
@@ -2688,11 +3476,43 @@ def cmd_certify_validate(args: argparse.Namespace) -> int:
         explicit_contract_path=contract_path,
         require_contract=require_contract,
     )
-    if target_result.state == "CERTIFICATION_NOT_READY":
+    target_policy = evaluate_target_capability_state(target_result.state)
+    if not target_policy.allow:
         _register_bundle_safely(pf)
         _print_result(f"project_root={target_project_root}")
         _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"target_policy_rule_id={target_policy.rule_id}")
+        _print_result(f"enforcement_reason={target_policy.reason_code}")
         _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+        _print_result("GATE=FAIL")
+        return 1
+
+    structural_ok, structural_reason = _enforce_structural_certification_integrity(
+        project_root=target_project_root,
+        pf=pf,
+        command_name="certify-validate",
+    )
+    if not structural_ok:
+        _register_bundle_safely(pf)
+        _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"enforcement_reason={structural_reason}")
+        _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+        _print_result("GATE=FAIL")
+        return 1
+
+    replay_ok, replay_reason = _enforce_replay_integrity(
+        project_root=target_project_root,
+        pf=pf,
+        replay_proof_root=str(getattr(args, "replay_proof_root", "") or ""),
+    )
+    if not replay_ok:
+        _register_bundle_safely(pf)
+        _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"enforcement_reason={replay_reason}")
+        _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
         _print_result("GATE=FAIL")
         return 1
 
@@ -2727,6 +3547,14 @@ def cmd_certify_gate(args: argparse.Namespace) -> int:
     target_project_root = _resolve_project_root(getattr(args, "project", None))
     repo_root = DEVFABRIC_ROOT.parent.resolve()
 
+    _print_certification_mode_header(
+        mode="CERTIFY-GATE",
+        classification="[CERTIFICATION + GATE]",
+        assurance_level="ENFORCED GATE",
+        replay_validation="NOT INCLUDED",
+        ci_usage="CI-SAFE GATE FOR CERTIFICATION DECISIONS; USE CERTIFY-VALIDATE FOR REPLAY VALIDATION",
+    )
+
     if getattr(args, "pf", None):
         pf = _canonical_pf(repo_root, Path(str(args.pf)))
     else:
@@ -2742,10 +3570,27 @@ def cmd_certify_gate(args: argparse.Namespace) -> int:
         require_contract=require_contract,
     )
 
-    if target_result.state == "CERTIFICATION_NOT_READY":
+    target_policy = evaluate_target_capability_state(target_result.state)
+    if not target_policy.allow:
         _register_bundle_safely(pf)
         _print_result(f"project_root={target_project_root}")
         _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"target_policy_rule_id={target_policy.rule_id}")
+        _print_result(f"enforcement_reason={target_policy.reason_code}")
+        _print_result(f"PF={pf.resolve()}")
+        _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
+        _print_result("GATE=FAIL")
+        return 1
+
+    structural_ok, structural_reason = _enforce_structural_certification_integrity(
+        project_root=target_project_root,
+        pf=pf,
+        command_name="certify-gate",
+    )
+    if not structural_ok:
+        _register_bundle_safely(pf)
+        _print_result(f"target_capability_state={target_result.state}")
+        _print_result(f"enforcement_reason={structural_reason}")
         _print_result(f"PF={pf.resolve()}")
         _print_result(f"ZIP={pf.with_suffix('.zip').resolve()}")
         _print_result("GATE=FAIL")
@@ -3116,7 +3961,17 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser_.add_argument("--doc-gate", action="store_true")
     build_parser_.set_defaults(func=cmd_build)
 
-    doctor_parser = sub.add_parser("doctor")
+    doctor_parser = sub.add_parser(
+        "doctor",
+        help="Check host toolchain prerequisites (Python/Git/VS toolchain) for build readiness.",
+        description=(
+            "Doctor (host toolchain domain)\n"
+            "- Verifies local toolchain prerequisites and writes toolchain_report.json.\n"
+            "- Use this when diagnosing environment/setup issues on the machine.\n"
+            "- This is separate from 'ngks doctor', which checks repository workspace/graph policy gates."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     doctor_parser.add_argument("project_path", nargs="?", default=".")
     doctor_parser.add_argument("--pf", required=False)
     doctor_parser.add_argument(
@@ -3134,10 +3989,39 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--mode", choices=["ecosystem"], default="ecosystem")
     run_parser.set_defaults(func=cmd_run)
 
+    cert_status_parser = sub.add_parser(
+        "certification-status",
+        help="Inspect and report project certification readiness state (read-only).",
+    )
+    cert_status_parser.add_argument("--project", required=False, default=".")
+    cert_status_parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        default=False,
+        help="Emit result as JSON.",
+    )
+    cert_status_parser.add_argument(
+        "--pf",
+        required=False,
+        help="Optional proof folder; if supplied an audit JSON is written there.",
+    )
+    cert_status_parser.set_defaults(func=cmd_certification_status)
+
     ngks_parser = sub.add_parser("ngks")
     ngks_sub = ngks_parser.add_subparsers(dest="ngks_cmd", required=True)
 
-    ngks_doctor = ngks_sub.add_parser("doctor")
+    ngks_doctor = ngks_sub.add_parser(
+        "doctor",
+        help="Check NGKs workspace/graph/policy readiness gates for this repository.",
+        description=(
+            "NGKS Doctor (repository readiness domain)\n"
+            "- Enforces workspace integrity, graph-state automation, and validation-policy gates.\n"
+            "- Use this when diagnosing repository readiness before NGKs workflows.\n"
+            "- This is separate from top-level 'doctor', which checks host toolchain prerequisites."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     ngks_doctor.add_argument("--project", required=False, default=".")
     ngks_doctor.add_argument("--pf", required=False)
     ngks_doctor.set_defaults(func=cmd_ngks_doctor)
@@ -3166,6 +4050,17 @@ def build_parser() -> argparse.ArgumentParser:
     ngks_ship.add_argument("--project", required=False, default=".")
     ngks_ship.set_defaults(func=cmd_ngks_ship)
 
+    ngks_analyze_failure = ngks_sub.add_parser("analyze-failure")
+    ngks_analyze_failure.add_argument("--project", required=False, default=".")
+    ngks_analyze_failure.add_argument("--pf", required=True)
+    ngks_analyze_failure.add_argument("--command-name", required=False, default="ngks analyze-failure")
+    ngks_analyze_failure.add_argument("--stage-hint", required=False, default="UNKNOWN_FAILURE")
+    ngks_analyze_failure.add_argument("--failure-reason", required=False, default="manual_analysis")
+    ngks_analyze_failure.add_argument("--exit-code", required=False, type=int, default=1)
+    ngks_analyze_failure.add_argument("--stderr", required=False, default="")
+    ngks_analyze_failure.add_argument("--stdout", required=False, default="")
+    ngks_analyze_failure.set_defaults(func=cmd_analyze_failure)
+
     ngks_monitor = ngks_sub.add_parser("graph-monitor")
     ngks_monitor.add_argument("--project", required=False, default=".")
     ngks_monitor.add_argument("--pf", required=False)
@@ -3175,7 +4070,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     eco_parser = sub.add_parser("eco")
     eco_sub = eco_parser.add_subparsers(dest="eco_cmd", required=True)
-    eco_doctor = eco_sub.add_parser("doctor")
+    eco_doctor = eco_sub.add_parser(
+        "doctor",
+        help="Check NGKS ecosystem package version alignment in the active Python environment.",
+        description=(
+            "ECO Doctor (ecosystem/package domain)\n"
+            "- Reports installed NGKS package versions and module locations.\n"
+            "- Flags version mismatches across ngksdevfabric/ngksgraph/ngksbuildcore/ngksenvcapsule/ngkslibrary.\n"
+            "- Intentionally separate from project-health and repository gate checks."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     eco_doctor.set_defaults(func=cmd_eco_doctor)
 
     term_parser = sub.add_parser("term")
@@ -3222,40 +4127,91 @@ def build_parser() -> argparse.ArgumentParser:
     explain_dependency.add_argument("component")
     explain_dependency.set_defaults(func=cmd_explain)
 
-    certify_parser = sub.add_parser("certify")
-    certify_parser.add_argument("--project", required=False, default=".")
-    certify_parser.add_argument("--baseline", required=False, default="")
-    certify_parser.add_argument("--compare", required=False, default="")
-    certify_parser.add_argument("--current-run", required=False, default="")
-    certify_parser.add_argument("--target-contract", required=False, default="")
-    certify_parser.add_argument("--require-contract", choices=["on", "off"], default="on")
-    certify_parser.add_argument("--pf", required=False)
-    certify_parser.add_argument("--tolerance", type=float, default=0.02)
-    certify_parser.add_argument("--improvement-threshold", type=float, default=0.03)
-    certify_parser.add_argument("--severe-drop-threshold", type=float, default=0.15)
+    certify_parser = sub.add_parser(
+        "certify",
+        help="[CERTIFICATION] baseline certification compare; replay validation not included",
+        description=(
+            "[CERTIFICATION]\n"
+            "Run baseline certification comparison for operator use.\n\n"
+            "Guarantees:\n"
+            "- target readiness enforcement (CERT_POL_001)\n"
+            "- structural certification enforcement (CERT_POL_002/CERT_POL_003)\n"
+            "- compatibility fail-closed handling in the final certification outcome\n\n"
+            "Does not guarantee:\n"
+            "- replay validation of the decision envelope chain (CERT_POL_004 is not included)\n"
+            "- CI-oriented enforced gate mapping; use certify-gate for that\n\n"
+            "Use when: you want a fast certification comparison result for operator review."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    certify_parser.add_argument("--project", required=False, default=".", help="Target project root.")
+    certify_parser.add_argument("--baseline", required=False, default="", help="Explicit baseline path.")
+    certify_parser.add_argument("--compare", required=False, default="", help="Named or direct baseline selector.")
+    certify_parser.add_argument("--current-run", required=False, default="", help="Current run path; defaults to --project.")
+    certify_parser.add_argument("--target-contract", required=False, default="", help="Optional certification target contract path.")
+    certify_parser.add_argument("--require-contract", choices=["on", "off"], default="on", help="Require certification target contract validation before compare.")
+    certify_parser.add_argument("--pf", required=False, help="Proof folder output root.")
+    certify_parser.add_argument("--tolerance", type=float, default=0.02, help="Diagnostic score tolerance for stable classification.")
+    certify_parser.add_argument("--improvement-threshold", type=float, default=0.03, help="Improvement threshold for CERTIFIED_IMPROVEMENT.")
+    certify_parser.add_argument("--severe-drop-threshold", type=float, default=0.15, help="Severe regression threshold used by comparison policy.")
     certify_parser.set_defaults(func=cmd_certify)
 
-    certify_validate_parser = sub.add_parser("certify-validate")
-    certify_validate_parser.add_argument("--project", required=False, default=".")
-    certify_validate_parser.add_argument("--baseline", required=False, default="")
-    certify_validate_parser.add_argument("--compare", required=False, default="")
-    certify_validate_parser.add_argument("--current-run", required=False, default="")
-    certify_validate_parser.add_argument("--target-contract", required=False, default="")
-    certify_validate_parser.add_argument("--require-contract", choices=["on", "off"], default="on")
+    certify_validate_parser = sub.add_parser(
+        "certify-validate",
+        help="[CERTIFICATION + VALIDATION] strict certification validation; replay validation included",
+        description=(
+            "[CERTIFICATION + VALIDATION]\n"
+            "Run certification validation with replay validation enabled.\n\n"
+            "Additional guarantees beyond certify:\n"
+            "- replay validation enforcement (CERT_POL_004)\n"
+            "- decision-validation suite execution after policy checks\n"
+            "- strict proof-root replay check bounded to proof artifacts only\n\n"
+            "Use when:\n"
+            "- replay-valid certification evidence is required\n"
+            "- you need the highest available assurance level\n"
+            "- CI or audit workflows must verify proof-chain integrity\n"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    certify_validate_parser.add_argument("--project", required=False, default=".", help="Target project root.")
+    certify_validate_parser.add_argument("--baseline", required=False, default="", help="Explicit baseline path.")
+    certify_validate_parser.add_argument("--compare", required=False, default="", help="Named or direct baseline selector.")
+    certify_validate_parser.add_argument("--current-run", required=False, default="", help="Current run path; defaults to --project.")
+    certify_validate_parser.add_argument("--target-contract", required=False, default="", help="Optional certification target contract path.")
+    certify_validate_parser.add_argument("--require-contract", choices=["on", "off"], default="on", help="Require certification target contract validation before validation run.")
+    certify_validate_parser.add_argument("--replay-proof-root", required=False, default="", help="Proof root used for replay validation; defaults to the latest detectable proof root.")
+    certify_validate_parser.add_argument("--pf", required=False, help="Proof folder output root.")
     certify_validate_parser.set_defaults(func=cmd_certify_validate)
 
-    certify_gate_parser = sub.add_parser("certify-gate")
-    certify_gate_parser.add_argument("--project", required=False, default=".")
-    certify_gate_parser.add_argument("--baseline", required=False, default="")
-    certify_gate_parser.add_argument("--compare", required=False, default="")
-    certify_gate_parser.add_argument("--current-run", required=False, default="")
-    certify_gate_parser.add_argument("--target-contract", required=False, default="")
-    certify_gate_parser.add_argument("--require-contract", choices=["on", "off"], default="on")
-    certify_gate_parser.add_argument("--pf", required=False)
-    certify_gate_parser.add_argument("--tolerance", type=float, default=0.02)
-    certify_gate_parser.add_argument("--improvement-threshold", type=float, default=0.03)
-    certify_gate_parser.add_argument("--severe-drop-threshold", type=float, default=0.15)
-    certify_gate_parser.add_argument("--strict-mode", choices=["on", "off"], default="on")
+    certify_gate_parser = sub.add_parser(
+        "certify-gate",
+        help="[CERTIFICATION + GATE] CI-oriented enforced certification gate; replay validation not included",
+        description=(
+            "[CERTIFICATION + GATE]\n"
+            "Run the enforced certification gate intended for CI and release decisions.\n\n"
+            "Guarantees:\n"
+            "- target readiness enforcement (CERT_POL_001)\n"
+            "- structural certification enforcement (CERT_POL_002/CERT_POL_003)\n"
+            "- enforced gate + exit code mapping via GateEnforcementPolicy\n"
+            "- CI-safe PASS/FAIL contract for certification decisions\n\n"
+            "Does not guarantee:\n"
+            "- replay validation of the decision envelope chain (CERT_POL_004 is not included)\n"
+            "- decision-validation sweep; use certify-validate for that\n\n"
+            "Use when: CI or automation needs an enforced certification gate and stable exit-code semantics."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    certify_gate_parser.add_argument("--project", required=False, default=".", help="Target project root.")
+    certify_gate_parser.add_argument("--baseline", required=False, default="", help="Explicit baseline path.")
+    certify_gate_parser.add_argument("--compare", required=False, default="", help="Named or direct baseline selector.")
+    certify_gate_parser.add_argument("--current-run", required=False, default="", help="Current run path; defaults to --project.")
+    certify_gate_parser.add_argument("--target-contract", required=False, default="", help="Optional certification target contract path.")
+    certify_gate_parser.add_argument("--require-contract", choices=["on", "off"], default="on", help="Require certification target contract validation before gate evaluation.")
+    certify_gate_parser.add_argument("--pf", required=False, help="Proof folder output root.")
+    certify_gate_parser.add_argument("--tolerance", type=float, default=0.02, help="Diagnostic score tolerance for stable classification.")
+    certify_gate_parser.add_argument("--improvement-threshold", type=float, default=0.03, help="Improvement threshold for CERTIFIED_IMPROVEMENT.")
+    certify_gate_parser.add_argument("--severe-drop-threshold", type=float, default=0.15, help="Severe regression threshold used by comparison policy.")
+    certify_gate_parser.add_argument("--strict-mode", choices=["on", "off"], default="on", help="Apply strict gate enforcement policy mappings to certification decisions.")
     certify_gate_parser.set_defaults(func=cmd_certify_gate)
 
     certify_target_check_parser = sub.add_parser("certify-target-check")
@@ -3264,6 +4220,45 @@ def build_parser() -> argparse.ArgumentParser:
     certify_target_check_parser.add_argument("--require-contract", choices=["on", "off"], default="on")
     certify_target_check_parser.add_argument("--pf", required=False)
     certify_target_check_parser.set_defaults(func=cmd_certify_target_check)
+
+    project_health_parser = sub.add_parser(
+        "project-health",
+        help="Unified read-only health status across workspace, certification, control-plane, replay, graph, and capability lanes.",
+        description=(
+            "Read-only project health report across major readiness and integrity lanes.\n"
+            "This command does not bootstrap, build, certify, or mutate project state.\n"
+            "\n"
+            "Overall health states:\n"
+            "  HEALTHY                All lanes pass with no outstanding issues.\n"
+            "  HEALTHY_WITH_WARNINGS  All gates pass; advisory signals warrant attention.\n"
+            "  ACTION_REQUIRED        No blockers; actionable findings must be resolved before workflows proceed.\n"
+            "  BLOCKED                Hard prerequisites missing or invalid; certification/build must not run.\n"
+            "  UNKNOWN                Core lanes could not be evaluated; health is indeterminate.\n"
+            "\n"
+            "Finding severity bands:\n"
+            "  BLOCKING           Hard prerequisite — prevents certification and build workflows.\n"
+            "  ACTIONABLE_WARNING  Requires operator action; drives ACTION_REQUIRED state.\n"
+            "  WARNING            Advisory only; does not block but should be reviewed.\n"
+            "\n"
+            "Use --json for machine-readable output including full finding details and semantics."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    project_health_parser.add_argument("--project", required=False, default=".")
+    project_health_parser.add_argument("--json", dest="json_output", action="store_true")
+    project_health_parser.set_defaults(func=cmd_project_health)
+
+    bootstrap_cert_parser = sub.add_parser("bootstrap-certification")
+    bootstrap_cert_parser.add_argument("--project", required=False, default=".")
+    bootstrap_cert_parser.add_argument("--component", required=False, default="")
+    bootstrap_cert_parser.add_argument("--pf", required=False)
+    bootstrap_cert_parser.add_argument(
+        "--mode",
+        choices=["init", "safe-upgrade", "overwrite"],
+        default="init",
+        help="init: create missing only | safe-upgrade: same as init | overwrite: replace bootstrap-managed files",
+    )
+    bootstrap_cert_parser.set_defaults(func=cmd_bootstrap_certification)
 
     predict_risk_parser = sub.add_parser("predict-risk")
     predict_risk_parser.add_argument("--project", required=False, default=".")
@@ -3322,12 +4317,49 @@ def main(argv: list[str] | None = None) -> int:
         return policy_code
 
     if not _enforce_workspace_integrity(pf=None, scope="cli_startup"):
+        project_root = _resolve_project_root(_project_path_from_argv(effective_argv))
+        pf = _default_pf(project_root, "startup_integrity_failure")
+        _run_root_cause_analysis(
+            project_root=project_root,
+            pf=pf,
+            command_name=" ".join(["ngksdevfabric", *effective_argv]).strip(),
+            stage_hint="WORKSPACE_INTEGRITY_FAILURE",
+            failure_reason="workspace_integrity_check_failed",
+            exit_code=2,
+            source_layer_hint="WorkspaceIntegrity",
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
+        _register_bundle_safely(pf)
+        _print_result(f"startup_failure_pf={pf}")
         return 2
 
     parser = build_parser()
     try:
         args = parser.parse_args(effective_argv)
         return int(args.func(args))
+    except SystemExit as exc:
+        code = int(exc.code) if isinstance(exc.code, int) else 2
+        if code != 0:
+            project_root = _resolve_project_root(_project_path_from_argv(effective_argv))
+            pf = _default_pf(project_root, "dispatch_failure")
+            _run_root_cause_analysis(
+                project_root=project_root,
+                pf=pf,
+                command_name=" ".join(["ngksdevfabric", *effective_argv]).strip(),
+                stage_hint="COMMAND_DISPATCH_FAILURE",
+                failure_reason="argparse_command_dispatch_error",
+                exit_code=code,
+                source_layer_hint="CLI",
+                stderr_text="argparse_command_dispatch_error",
+                buildcore_reached=False,
+                failed_before_validation_gate=True,
+                failed_after_validation_gate=False,
+            )
+            _register_bundle_safely(pf)
+            _print_result(f"dispatch_failure_pf={pf}")
+        return code
     except ValueError as exc:
         _print_result(f"error={exc}")
         return 2

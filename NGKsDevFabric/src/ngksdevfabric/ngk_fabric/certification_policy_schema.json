@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ngksdevfabric/certification_policy_schema.json",
+  "title": "NGKs DevFabric Certification Policy Surface",
+  "type": "object",
+  "required": [
+    "policy_surface",
+    "schema",
+    "rules"
+  ],
+  "properties": {
+    "policy_surface": {
+      "type": "string",
+      "const": "certification_structural_enforcement"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "rule_id",
+          "condition",
+          "reason_code",
+          "action"
+        ],
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "pattern": "^CERT_POL_[0-9]{3}$"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "reason_code": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ALLOW",
+              "BLOCK",
+              "FAIL_CLOSED"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

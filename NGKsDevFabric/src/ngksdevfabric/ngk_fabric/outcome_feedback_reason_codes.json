@@ -1,0 +1,16 @@
+{
+  "schema": "ngks.outcome_feedback.reason_codes.v1",
+  "version": "1.0.0",
+  "codes": [
+    {"code": "ACTION_PROPOSED_FROM_ROOT_CAUSE", "description": "Action proposed from root cause recommendations."},
+    {"code": "ACTION_PROPOSED_FROM_REMEDIATION_GUIDANCE", "description": "Action proposed from remediation guidance artifacts."},
+    {"code": "ACTION_PROPOSED_FROM_WORKFLOW_RECOMMENDATION", "description": "Action proposed from workflow recommendation artifacts."},
+    {"code": "ACTION_EXECUTED_SYSTEM", "description": "System executed action in pipeline."},
+    {"code": "ACTION_EXECUTED_OPERATOR", "description": "Operator executed action outside automation."},
+    {"code": "ACTION_NOT_EXECUTED", "description": "Action remained proposed and was not executed."},
+    {"code": "RERUN_CYCLE_COMPLETED", "description": "Rerun cycle completed and produced certification summary."},
+    {"code": "BUILD_OUTCOME_CHANGED_AFTER_REMEDIATION", "description": "Build outcome changed after remediation actions were proposed/executed."},
+    {"code": "BUILD_OUTCOME_UNCHANGED", "description": "Build outcome unchanged after remediation attempts."},
+    {"code": "CALIBRATION_METRICS_RECORDED", "description": "Predictive calibration metric deltas recorded only (no model mutation)."}
+  ]
+}

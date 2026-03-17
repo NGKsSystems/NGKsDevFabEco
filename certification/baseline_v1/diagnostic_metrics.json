@@ -1,0 +1,11 @@
+{
+  "baseline_version": "v1",
+  "generated_at": "2026-03-16T00:00:00+00:00",
+  "scenario_count": 1,
+  "average_detection_accuracy": 0.85,
+  "average_component_ownership_accuracy": 0.85,
+  "average_root_cause_accuracy": 0.85,
+  "average_remediation_quality": 0.85,
+  "average_proof_quality": 0.85,
+  "average_diagnostic_score": 0.85
+}

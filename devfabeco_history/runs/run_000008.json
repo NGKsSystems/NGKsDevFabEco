@@ -1,0 +1,11 @@
+{
+  "history_run_id": "run_000008",
+  "run_id": "improvement_fixture",
+  "timestamp": "2026-03-16T19:02:16.656753+00:00",
+  "project_name": "NGKsDevFabEco",
+  "execution_profile": "STANDARD",
+  "certification_decision": "CERTIFIED_IMPROVEMENT",
+  "gate_result": "PASS",
+  "subtarget_count": 1,
+  "regression_count": 0
+}

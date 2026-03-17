@@ -4,9 +4,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .certification_policy_surface import evaluate_structural_certification_state, evaluate_target_capability_state
+from .certification_status import inspect_certification_status
 from .certification_target import run_target_validation_precheck
+from .certification_control_plane_adapter import emit_certification_control_plane_summary
 from .certify_compare import ComparisonPolicy
 from .certify_gate import GateEnforcementPolicy, run_certification_gate
+from .operations_control_plane_adapter import emit_operational_control_plane_summary
 from .validation_plugin_registry import execute_validation_plugins
 from .validation_orchestrator import run_validation_orchestrator
 from .workflow_recommendation import recommend_post_rerun_workflow
@@ -138,12 +142,14 @@ def run_validation_and_certify_pipeline(
         target_result = run_target_validation_precheck(project_root=project_root, pf=pf)
         rerun_summary["target_capability_state"] = target_result.state
 
-        if target_result.state == "CERTIFICATION_NOT_READY":
+        target_policy = evaluate_target_capability_state(target_result.state)
+        if not target_policy.allow:
             final_state = "EXECUTION_CHAIN_INCONCLUSIVE"
             rerun_summary.update(
                 {
-                    "rerun_decision": "TARGET_NOT_READY",
-                    "rerun_reason": "target_validation_not_ready",
+                    "rerun_decision": "BLOCKED_POLICY",
+                    "rerun_reason": target_policy.reason_code,
+                    "target_policy_rule_id": target_policy.rule_id,
                     "certification_decision": "CERTIFICATION_INCONCLUSIVE",
                     "compatibility_state": "INCOMPATIBLE",
                     "enforced_gate": "FAIL",
@@ -151,32 +157,48 @@ def run_validation_and_certify_pipeline(
                 }
             )
         else:
-            baseline_path = target_result.baseline_root.resolve()
-            gate_result = run_certification_gate(
-                repo_root=repo_root,
-                baseline_path=baseline_path,
-                current_path=project_root.resolve(),
-                pf=rerun_pf,
-                comparison_policy=ComparisonPolicy(),
-                enforcement_policy=GateEnforcementPolicy(strict_mode=True),
-                supported_baseline_versions=target_result.supported_baseline_versions,
-                profile_project_root=project_root.resolve(),
-            )
+            structural_status = inspect_certification_status(project_root)
+            structural_policy = evaluate_structural_certification_state(structural_status.state)
+            if not structural_policy.allow:
+                final_state = "EXECUTION_CHAIN_INCONCLUSIVE"
+                rerun_summary.update(
+                    {
+                        "rerun_decision": "BLOCKED_POLICY",
+                        "rerun_reason": structural_policy.reason_code,
+                        "structural_policy_rule_id": structural_policy.rule_id,
+                        "certification_decision": "CERTIFICATION_INCONCLUSIVE",
+                        "compatibility_state": "UNKNOWN",
+                        "enforced_gate": "FAIL",
+                        "exit_code": 1,
+                    }
+                )
+            else:
+                baseline_path = target_result.baseline_root.resolve()
+                gate_result = run_certification_gate(
+                    repo_root=repo_root,
+                    baseline_path=baseline_path,
+                    current_path=project_root.resolve(),
+                    pf=rerun_pf,
+                    comparison_policy=ComparisonPolicy(),
+                    enforcement_policy=GateEnforcementPolicy(strict_mode=True),
+                    supported_baseline_versions=target_result.supported_baseline_versions,
+                    profile_project_root=project_root.resolve(),
+                )
 
-            decision = str(gate_result.get("decision", "CERTIFICATION_INCONCLUSIVE"))
-            final_state = _combined_state_from_rerun(decision)
-            rerun_summary.update(
-                {
-                    "rerun_decision": "RERUN_COMPLETED",
-                    "rerun_reason": "certification_gate_completed",
-                    "certification_decision": decision,
-                    "compatibility_state": str(gate_result.get("compatibility_state", "")),
-                    "enforced_gate": str(gate_result.get("enforced_gate", "FAIL")),
-                    "exit_code": _safe_int(gate_result.get("exit_code", 1)),
-                    "rerun_pf": str(gate_result.get("pf", "")),
-                    "rerun_zip": str(gate_result.get("zip", "")),
-                }
-            )
+                decision = str(gate_result.get("decision", "CERTIFICATION_INCONCLUSIVE"))
+                final_state = _combined_state_from_rerun(decision)
+                rerun_summary.update(
+                    {
+                        "rerun_decision": "RERUN_COMPLETED",
+                        "rerun_reason": "certification_gate_completed",
+                        "certification_decision": decision,
+                        "compatibility_state": str(gate_result.get("compatibility_state", "")),
+                        "enforced_gate": str(gate_result.get("enforced_gate", "FAIL")),
+                        "exit_code": _safe_int(gate_result.get("exit_code", 1)),
+                        "rerun_pf": str(gate_result.get("pf", "")),
+                        "rerun_zip": str(gate_result.get("zip", "")),
+                    }
+                )
     else:
         if rerun_decision.startswith("BLOCKED_STRICT"):
             final_state = "EXECUTION_CHAIN_INCONCLUSIVE"
@@ -276,6 +298,28 @@ def run_validation_and_certify_pipeline(
     ]
     _write_text(pipeline_dir / "144_pipeline_chain_summary.md", "\n".join(lines) + "\n")
 
+    certification_cp = emit_certification_control_plane_summary(
+        pf=pf,
+        execution_summary=execution_summary,
+        rerun_summary=rerun_summary,
+        chain_summary={
+            "final_combined_state": final_state,
+            "chain_gate": chain_gate,
+        },
+    )
+    operational_cp = emit_operational_control_plane_summary(
+        pf=pf,
+        source="validation_and_certify_pipeline",
+        source_summary={
+            "execution_policy": str(execution_summary.get("execution_policy", execution_policy)),
+            "executed_scenario_count": executed_count,
+            "final_combined_state": final_state,
+            "chain_gate": chain_gate,
+            "primary_workflow_action": str(workflow_summary.get("primary_action", "")),
+            "validation_plugin_status": str(plugin_summary.get("overall_status", "PASS")),
+        },
+    )
+
     return {
         "summary": {
             "final_combined_state": final_state,
@@ -292,6 +336,8 @@ def run_validation_and_certify_pipeline(
             ],
             "validation_plugin_status": str(plugin_summary.get("overall_status", "PASS")),
             "validation_plugin_fail_count": _safe_int(plugin_summary.get("fail_count", 0)),
+            "certification_control_plane_governance_state": str(certification_cp.get("governance_state", "")),
+            "operational_control_plane_governance_state": str(operational_cp.get("governance_state", "")),
         },
         "artifacts": [
             "pipeline/140_orchestrator_to_rerun_inputs.json",
@@ -299,6 +345,8 @@ def run_validation_and_certify_pipeline(
             "pipeline/142_certification_rerun_summary.json",
             "pipeline/143_pipeline_chain_decision.json",
             "pipeline/144_pipeline_chain_summary.md",
+            "control_plane/72_certification_control_plane_summary.json",
+            "control_plane/73_operational_control_plane_summary.json",
             *[str(item) for item in workflow_artifacts if str(item)],
             *[str(item) for item in plugin_artifacts if str(item)],
         ],

@@ -1,0 +1,96 @@
+{
+  "schema": "ngks.decision.reason_codes.v1",
+  "version": "1.0.0",
+  "codes": [
+    {
+      "code": "WORKSPACE_INTEGRITY_OK",
+      "severity": "info",
+      "blocking": false,
+      "description": "Workspace integrity preflight passed."
+    },
+    {
+      "code": "WORKSPACE_INTEGRITY_FAILED",
+      "severity": "error",
+      "blocking": true,
+      "description": "Workspace integrity preflight failed and pipeline was blocked."
+    },
+    {
+      "code": "GRAPH_STATE_FRESH",
+      "severity": "info",
+      "blocking": false,
+      "description": "Graph state was fresh or refreshed successfully."
+    },
+    {
+      "code": "GRAPH_REFRESH_FAILED",
+      "severity": "error",
+      "blocking": true,
+      "description": "Graph refresh step failed."
+    },
+    {
+      "code": "VALIDATION_POLICY_PASS",
+      "severity": "info",
+      "blocking": false,
+      "description": "Validation policy gate passed."
+    },
+    {
+      "code": "VALIDATION_POLICY_BLOCK",
+      "severity": "error",
+      "blocking": true,
+      "description": "Validation policy gate blocked downstream execution."
+    },
+    {
+      "code": "BUILD_EXECUTION_PASS",
+      "severity": "info",
+      "blocking": false,
+      "description": "Build execution completed successfully."
+    },
+    {
+      "code": "BUILD_EXECUTION_FAILED",
+      "severity": "error",
+      "blocking": true,
+      "description": "Build execution completed with failure."
+    },
+    {
+      "code": "STAGE_EXCEPTION",
+      "severity": "error",
+      "blocking": true,
+      "description": "Stage trapped an exception and was marked incomplete."
+    },
+    {
+      "code": "DIAGNOSTICS_PASS",
+      "severity": "info",
+      "blocking": false,
+      "description": "Post-build diagnostics returned PASS."
+    },
+    {
+      "code": "DIAGNOSTICS_WARN",
+      "severity": "warning",
+      "blocking": false,
+      "description": "Post-build diagnostics returned WARN/ADVISORY semantics."
+    },
+    {
+      "code": "DIAGNOSTICS_FAIL",
+      "severity": "error",
+      "blocking": true,
+      "description": "Post-build diagnostics returned FAIL/BLOCK semantics."
+    },
+    {
+      "code": "CERTIFICATION_NOT_REQUESTED",
+      "severity": "info",
+      "blocking": false,
+      "description": "Certification stage was skipped in Phase 1A pipeline path."
+    },
+    {
+      "code": "RERUN_NOT_REQUESTED",
+      "severity": "info",
+      "blocking": false,
+      "description": "Rerun/remediation stage was skipped in Phase 1A pipeline path."
+    },
+    {
+      "code": "PRIOR_UNCLOSED_STAGE",
+      "severity": "warning",
+      "blocking": false,
+      "description": "Recovery entry indicating previous run had an unclosed stage."
+    }
+  ]
+}

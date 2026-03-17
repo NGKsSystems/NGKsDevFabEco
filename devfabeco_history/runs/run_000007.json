@@ -1,0 +1,11 @@
+{
+  "history_run_id": "run_000007",
+  "run_id": "inconclusive_missing_scenario",
+  "timestamp": "2026-03-16T19:02:15.456934+00:00",
+  "project_name": "NGKsDevFabEco",
+  "execution_profile": "STANDARD",
+  "certification_decision": "CERTIFICATION_INCONCLUSIVE",
+  "gate_result": "FAIL",
+  "subtarget_count": 1,
+  "regression_count": 0
+}

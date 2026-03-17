@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .operations_control_plane_adapter import emit_operational_control_plane_summary
+
 _PRIMARY_ACTIONS = {
     "NO_ACTION",
     "ASSIGN_IMMEDIATELY",
@@ -255,6 +257,18 @@ def recommend_post_rerun_workflow(*, project_root: Path, pf: Path) -> dict[str, 
         "- retain upstream certification/gate semantics unchanged",
     ]
     _write_text(workflow_dir / "154_workflow_summary.md", "\n".join(lines) + "\n")
+
+    emit_operational_control_plane_summary(
+        pf=pf,
+        source="workflow_recommendation",
+        source_summary={
+            "primary_action": primary_action,
+            "primary_reason": primary_reason,
+            "secondary_actions": secondary_actions,
+            "combined_state": combined_state,
+            "certification_decision": rerun_decision,
+        },
+    )
 
     return {
         "summary": {

@@ -1,0 +1,14 @@
+{
+  "rows": [
+    {
+      "fingerprint": "baseline_pass|ownership_accuracy|diagnostic scoring pipeline|HIGH",
+      "scenario_id": "baseline_pass",
+      "metric": "ownership_accuracy",
+      "component": "diagnostic scoring pipeline",
+      "severity_bucket": "HIGH",
+      "occurrences": 2,
+      "first_seen_run": "run_000009",
+      "last_seen_run": "run_000013"
+    }
+  ]
+}

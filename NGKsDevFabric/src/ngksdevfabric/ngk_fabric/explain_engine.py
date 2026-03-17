@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .operations_control_plane_adapter import emit_explain_control_plane_summary
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -586,9 +588,16 @@ def persist_explain_bundle(
     dot_lines.append("}")
     (pf / "explain_visualization.dot").write_text("\n".join(dot_lines) + "\n", encoding="utf-8")
 
+    explain_cp = emit_explain_control_plane_summary(
+        pf=pf,
+        explain_result=result,
+        explain_context=ctx,
+    )
+
     return {
         "queries_executed": len(queries),
         "final_gate": gate,
         "summary_path": str(pf / "07_explain_summary.md"),
         "results_path": str(results_path),
+        "control_plane_summary_path": str(explain_cp.get("summary_path", "")),
     }

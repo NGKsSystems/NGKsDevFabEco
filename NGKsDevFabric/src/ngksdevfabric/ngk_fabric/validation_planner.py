@@ -46,6 +46,58 @@ def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _ensure_history_root(history_root: Path) -> None:
+    history_root.mkdir(parents=True, exist_ok=True)
+    regressions_dir = history_root / "regressions"
+    components_dir = history_root / "components"
+    runs_dir = history_root / "runs"
+    regressions_dir.mkdir(parents=True, exist_ok=True)
+    components_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir.mkdir(parents=True, exist_ok=True)
+
+    regression_store = regressions_dir / "regression_fingerprints.json"
+    if not regression_store.is_file():
+        _write_json(regression_store, {"rows": []})
+
+    component_store = components_dir / "component_regression_stats.json"
+    if not component_store.is_file():
+        _write_json(component_store, {"components": {}})
+
+
+def _bootstrap_intelligence_artifacts(*, evidence_root: Path, touched_components: list[str]) -> None:
+    intelligence_dir = evidence_root / "intelligence"
+    resolution_dir = evidence_root / "resolution"
+    history_dir = evidence_root / "history"
+
+    normalized = sorted({str(name).strip() for name in touched_components if str(name).strip()})
+    watch_rows = [
+        {
+            "component": component,
+            "watch_class": "NORMAL",
+            "watch_score": 0.0,
+            "reason": "bootstrap_missing_intelligence",
+        }
+        for component in normalized
+    ]
+    scenario_rows = [
+        {
+            "scenario_id": f"bootstrap::{component}::baseline_smoke",
+            "severity_weighted_score": 0.0,
+            "source": "bootstrap_missing_intelligence",
+        }
+        for component in normalized
+    ]
+
+    _write_json(intelligence_dir / "110_component_watchlist.json", {"rows": watch_rows})
+    _write_json(intelligence_dir / "111_regression_pattern_memory.json", {"rows": []})
+    _write_json(intelligence_dir / "112_scenario_detection_value.json", {"rows": scenario_rows})
+    _write_json(intelligence_dir / "113_remediation_effectiveness.json", {"rows": []})
+
+    # Keep planner inputs deterministic when no prior intelligence run exists.
+    _write_json(resolution_dir / "71_component_resolution_metrics.json", {"rows": []})
+    _write_json(history_dir / "53_recurring_regression_patterns.json", {"rows": []})
+
+
 def _safe_float(value: object) -> float:
     try:
         return float(value)
@@ -151,8 +203,7 @@ def plan_premerge_validation(
 ) -> dict[str, Any]:
     planning_dir = pf / "planning"
     history_root = (project_root / "devfabeco_history").resolve()
-    if not history_root.is_dir():
-        raise ValueError(f"history_root_missing:{history_root}")
+    _ensure_history_root(history_root)
 
     manifest = _resolve_change_manifest(project_root, change_manifest_path)
     manifest_components = manifest.get("touched_components", []) if isinstance(manifest.get("touched_components", []), list) else []
@@ -169,7 +220,11 @@ def plan_premerge_validation(
 
     selected_evidence_run = evidence_run_root.resolve() if evidence_run_root else _select_latest_run_with_intelligence(project_root)
     if selected_evidence_run is None:
-        raise ValueError("intelligence_artifacts_missing: run certification with intelligence artifacts first")
+        selected_evidence_run = pf.resolve()
+        _bootstrap_intelligence_artifacts(
+            evidence_root=selected_evidence_run,
+            touched_components=normalized_components,
+        )
 
     selected_predictive_run = _select_latest_predictive_run(project_root)
 

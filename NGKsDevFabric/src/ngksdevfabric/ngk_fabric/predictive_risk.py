@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .operations_control_plane_adapter import emit_operational_control_plane_summary
 from .predictive_resolution_refinement import apply_resolution_refinement
 
 _SEVERITY_WEIGHTS: dict[str, float] = {
@@ -37,6 +38,24 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 def _write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def _ensure_history_root(history_root: Path) -> None:
+    history_root.mkdir(parents=True, exist_ok=True)
+    regressions_dir = history_root / "regressions"
+    components_dir = history_root / "components"
+    runs_dir = history_root / "runs"
+    regressions_dir.mkdir(parents=True, exist_ok=True)
+    components_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir.mkdir(parents=True, exist_ok=True)
+
+    regression_store = regressions_dir / "regression_fingerprints.json"
+    if not regression_store.is_file():
+        _write_json(regression_store, {"rows": []})
+
+    component_store = components_dir / "component_regression_stats.json"
+    if not component_store.is_file():
+        _write_json(component_store, {"components": {}})
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -191,8 +210,7 @@ def analyze_premerge_regression_risk(
     trend_root: Path | None = None,
 ) -> dict[str, Any]:
     history_root = (project_root / "devfabeco_history").resolve()
-    if not history_root.is_dir():
-        raise ValueError(f"history_root_missing:{history_root}")
+    _ensure_history_root(history_root)
 
     manifest = _resolve_change_manifest(project_root, change_manifest_path)
     manifest_components = manifest.get("touched_components", []) if isinstance(manifest.get("touched_components", []), list) else []
@@ -478,6 +496,18 @@ def analyze_premerge_regression_risk(
         summary_lines.append("- none")
 
     _write_text(predictive_dir / "65_prediction_summary.md", "\n".join(summary_lines) + "\n")
+
+    emit_operational_control_plane_summary(
+        pf=pf,
+        source="predictive_risk",
+        source_summary={
+            "change_id": prediction_payload["change_id"],
+            "overall_risk_score": prediction_payload["overall_risk_score"],
+            "overall_risk_class": prediction_payload["overall_risk_class"],
+            "highest_risk_component": prediction_payload["highest_risk_component"],
+            "resolution_adjusted_risk_score": prediction_payload["resolution_adjusted_risk_score"],
+        },
+    )
 
     return {
         "prediction": prediction_payload,

@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NGKs Replay Validation Report",
+  "type": "object",
+  "required": [
+    "strict_mode",
+    "strict_replay_input_boundary",
+    "decision_replay",
+    "feedback_replay",
+    "cross_chain_link_validation",
+    "overall_gate"
+  ],
+  "properties": {
+    "strict_mode": { "type": "boolean" },
+    "strict_replay_input_boundary": {
+      "type": "string",
+      "enum": ["proof_artifacts_only"]
+    },
+    "decision_replay": {
+      "type": "object",
+      "required": ["status", "chain_path", "rows", "chain_order_stable", "invalid_chain_detected"],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "chain_path": { "type": "string" },
+        "rows": { "type": "array" },
+        "chain_order_stable": { "type": "boolean" },
+        "invalid_chain_detected": { "type": "boolean" },
+        "invalid_chain_reason_codes": { "type": "array", "items": { "type": "string" } },
+        "replay_reason_codes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "feedback_replay": {
+      "type": "object",
+      "required": ["status", "chain_path", "rows", "chain_order_stable", "linked_envelope_hashes"],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "chain_path": { "type": "string" },
+        "rows": { "type": "array" },
+        "chain_order_stable": { "type": "boolean" },
+        "linked_envelope_hashes": { "type": "array", "items": { "type": "string" } },
+        "replay_reason_codes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "cross_chain_link_validation": {
+      "type": "object",
+      "required": ["status", "decision_chain_path", "feedback_chain_path", "invalid_link_rows"],
+      "properties": {
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "decision_chain_path": { "type": "string" },
+        "feedback_chain_path": { "type": "string" },
+        "invalid_link_rows": { "type": "array" }
+      }
+    },
+    "validated_hash_exclusion_fields": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "overall_gate": { "type": "string", "enum": ["PASS", "FAIL"] }
+  }
+}

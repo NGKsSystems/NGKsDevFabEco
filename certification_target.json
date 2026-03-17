@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "project_name": "NGKsDevFabEco",
+  "target_type": "ngksdevfabric_diagnostic",
+  "target_root": ".",
+  "certification_root": "certification",
+  "baseline_root": "certification/baseline_v1",
+  "scenario_index_path": "certification/scenario_index.json",
+  "supported_baseline_versions": ["v1", "current_run"],
+  "required_artifacts": [
+    "baseline_manifest",
+    "baseline_matrix",
+    "diagnostic_metrics",
+    "scenario_index"
+  ],
+  "optional_artifacts": [
+    "compatibility_classification",
+    "compatibility_report"
+  ],
+  "execution_profile": "STANDARD"
+}

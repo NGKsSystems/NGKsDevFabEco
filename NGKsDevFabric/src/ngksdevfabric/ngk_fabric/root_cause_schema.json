@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ngkssystems.local/schema/root-cause-classification-v1",
+  "title": "DevFabEcoRootCauseClassification",
+  "type": "object",
+  "required": [
+    "failure_stage",
+    "root_cause_code",
+    "summary",
+    "evidence_refs",
+    "recommended_fix",
+    "confidence_score",
+    "blocking",
+    "source_layer"
+  ],
+  "properties": {
+    "failure_stage": {
+      "type": "string",
+      "enum": [
+        "WORKSPACE_INTEGRITY_FAILURE",
+        "GRAPH_STATE_FAILURE",
+        "GRAPH_REFRESH_FAILURE",
+        "TARGET_SPEC_FAILURE",
+        "CAPABILITY_RESOLUTION_FAILURE",
+        "VALIDATION_POLICY_BLOCK",
+        "VALIDATION_PLUGIN_FAILURE",
+        "COMMAND_DISPATCH_FAILURE",
+        "PROFILE_LOAD_FAILURE",
+        "BUILDCORE_EXECUTION_FAILURE",
+        "COMPILER_FAILURE",
+        "LINKER_FAILURE",
+        "PACKAGING_FAILURE",
+        "UNKNOWN_FAILURE"
+      ]
+    },
+    "root_cause_code": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "recommended_fix": {"type": "string", "minLength": 1},
+    "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "blocking": {"type": "boolean"},
+    "source_layer": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

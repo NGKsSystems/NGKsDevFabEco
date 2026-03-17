@@ -14,6 +14,9 @@ from typing import Any
 from .validation_policy_engine import evaluate_validation_policy
 from .workspace_integrity import run_workspace_integrity_check
 from .graph_state_manager import ensure_graph_state_fresh
+from .root_cause_analyzer import analyze_failure
+from .decision_envelope_manager import create_manager, make_finding
+from .outcome_feedback_manager import create_feedback_manager
 
 
 def _iso_now() -> str:
@@ -38,6 +41,59 @@ def _read_json(path: Path) -> dict[str, Any]:
     except (OSError, ValueError, TypeError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _read_text(path: Path) -> str:
+    if not path.exists() or not path.is_file():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
+def _pipeline_run_id(pf: Path) -> str:
+    return f"devfabric_run_{pf.name}"
+
+
+def _latest_envelope_hash(pf: Path) -> str:
+    payload = _read_json(pf / "control_plane" / "58_decision_envelope_chain.json")
+    entries = payload.get("entries", []) if isinstance(payload, dict) else []
+    if not isinstance(entries, list) or not entries:
+        return "UNAVAILABLE"
+    last = entries[-1] if isinstance(entries[-1], dict) else {}
+    return str(last.get("entry_hash", "UNAVAILABLE"))
+
+
+def _policy_findings(policy_result: dict[str, Any], *, stage_name: str) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    for reason in policy_result.get("blocking_failures", []):
+        findings.append(
+            make_finding(
+                source_component="DevFabric",
+                source_artifact="validation_plugins/221_plugin_results.json",
+                severity="error",
+                reason_code="VALIDATION_POLICY_BLOCK",
+                confidence_score=0.95,
+                blocking=True,
+                evidence_refs=["validation_plugins/220_plugin_execution_plan.json", "validation_plugins/221_plugin_results.json"],
+                stage_name=stage_name,
+            )
+        )
+    for reason in policy_result.get("advisory_failures", []):
+        findings.append(
+            make_finding(
+                source_component="DevFabric",
+                source_artifact="validation_plugins/221_plugin_results.json",
+                severity="warning",
+                reason_code="DIAGNOSTICS_WARN",
+                confidence_score=0.6,
+                blocking=False,
+                evidence_refs=["validation_plugins/221_plugin_results.json", str(reason)],
+                stage_name=stage_name,
+            )
+        )
+    return findings
 
 
 def _tracked_graph_inputs(project_root: Path) -> list[Path]:
@@ -328,12 +384,63 @@ def run_build_pipeline(
 ) -> dict[str, Any]:
     pf = pf.resolve()
     pf.mkdir(parents=True, exist_ok=True)
+    run_id = _pipeline_run_id(pf)
+    envelope = create_manager(pf=pf, run_id=run_id, trigger=trigger)
+    feedback = create_feedback_manager(pf=pf, run_id=run_id)
+
+    def _feedback_safe(**kwargs: Any) -> None:
+        try:
+            feedback.append_feedback(**kwargs)
+        except Exception as exc:
+            _write_text(pf / "control_plane" / "outcome_feedback_write_error.txt", str(exc) + "\n")
 
     integrity_result, integrity_artifacts = run_workspace_integrity_check(
         scope="orchestrator_preflight",
         artifact_dir=pf / "workspace_integrity",
     )
+    envelope.write_stage(
+        stage_name="preflight",
+        gate_decision="PASS" if integrity_result.ok else "FAIL",
+        reason_codes=["WORKSPACE_INTEGRITY_OK" if integrity_result.ok else "WORKSPACE_INTEGRITY_FAILED"],
+        evidence_refs=["workspace_integrity/02_workspace_integrity_report.json"],
+        missing_inputs=[] if integrity_result.ok else ["workspace_integrity_ok"],
+        normalized_findings=[]
+        if integrity_result.ok
+        else [
+            make_finding(
+                source_component="DevFabric",
+                source_artifact="workspace_integrity/02_workspace_integrity_report.json",
+                severity="error",
+                reason_code="WORKSPACE_INTEGRITY_FAILED",
+                confidence_score=1.0,
+                blocking=True,
+                evidence_refs=["workspace_integrity/02_workspace_integrity_report.json"],
+                stage_name="preflight",
+            )
+        ],
+    )
     if not integrity_result.ok:
+        _feedback_safe(
+            stage_id="preflight",
+            stage_name="preflight",
+            linked_envelope_hash=_latest_envelope_hash(pf),
+            action_id="workspace_integrity_failure_proposal",
+            action_proposed=True,
+            action_taken=False,
+            action_executor="system",
+            observed_result_code="ACTION_PROPOSED_FROM_ROOT_CAUSE",
+            observed_result_summary="Workspace integrity failure generated remediation proposal.",
+            observed_gate_change="FAIL",
+            confidence_adjustment_delta=0.0,
+            confidence_adjustment_reason="proposal_only",
+            recurrence_impact_category="unchanged",
+            recurrence_impact_delta=0.0,
+            predictive_calibration_delta=0.0,
+            predictive_calibration_reason="metrics_only_no_model_mutation",
+            certification_impact="none",
+            supporting_evidence_refs=["workspace_integrity/02_workspace_integrity_report.json", "43_fix_recommendations.json"],
+        )
+        envelope.finalize_missing_stages()
         _write_json(
             pf / "build_pipeline_execution.json",
             {
@@ -361,6 +468,19 @@ def run_build_pipeline(
                     "",
                 ]
             ),
+        )
+        analyze_failure(
+            project_root=project_root,
+            pf=pf,
+            command_name=trigger,
+            stage_hint="WORKSPACE_INTEGRITY_FAILURE",
+            failure_reason="workspace_integrity_check_failed",
+            exit_code=2,
+            source_layer_hint="WorkspaceIntegrity",
+            stderr_text="\n".join(integrity_result.violations),
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
         )
         return {
             "status": "FAIL",
@@ -395,7 +515,42 @@ def run_build_pipeline(
         graph_artifact_root=graph_artifact_root,
         refresh_callback=_refresh_graph_callback,
     )
+    envelope.write_stage(
+        stage_name="planning",
+        gate_decision="PASS" if bool(graph_state_outcome.get("ok", False)) else "FAIL",
+        reason_codes=["GRAPH_STATE_FRESH" if bool(graph_state_outcome.get("ok", False)) else "GRAPH_REFRESH_FAILED"],
+        evidence_refs=[
+            "20_graph_state_before.json",
+            "21_graph_fingerprint_current.json",
+            "22_graph_dirty_reasons.json",
+            "23_graph_refresh_action.json",
+            "24_graph_state_after.json",
+            "25_graph_state_summary.md",
+        ],
+        missing_inputs=[] if bool(graph_state_outcome.get("ok", False)) else ["graph_refresh_success"],
+    )
     if not bool(graph_state_outcome.get("ok", False)):
+        _feedback_safe(
+            stage_id="planning",
+            stage_name="planning",
+            linked_envelope_hash=_latest_envelope_hash(pf),
+            action_id="graph_refresh_failure_proposal",
+            action_proposed=True,
+            action_taken=False,
+            action_executor="system",
+            observed_result_code="ACTION_PROPOSED_FROM_ROOT_CAUSE",
+            observed_result_summary="Graph refresh failure generated remediation proposal.",
+            observed_gate_change="FAIL",
+            confidence_adjustment_delta=0.0,
+            confidence_adjustment_reason="proposal_only",
+            recurrence_impact_category="unchanged",
+            recurrence_impact_delta=0.0,
+            predictive_calibration_delta=0.0,
+            predictive_calibration_reason="metrics_only_no_model_mutation",
+            certification_impact="none",
+            supporting_evidence_refs=["23_graph_refresh_action.json", "43_fix_recommendations.json"],
+        )
+        envelope.finalize_missing_stages()
         refresh_action = graph_state_outcome.get("refresh_action", {})
         _write_json(
             pf / "build_pipeline_execution.json",
@@ -425,6 +580,19 @@ def run_build_pipeline(
                 ]
             ),
         )
+        analyze_failure(
+            project_root=project_root,
+            pf=pf,
+            command_name=trigger,
+            stage_hint="GRAPH_REFRESH_FAILURE",
+            failure_reason=str(refresh_action.get("reason", "graph_state_auto_refresh_failed")),
+            exit_code=2,
+            source_layer_hint="GraphStateManager",
+            stderr_text=str(refresh_action.get("reason", "")),
+            buildcore_reached=False,
+            failed_before_validation_gate=True,
+            failed_after_validation_gate=False,
+        )
         return {
             "status": "FAIL",
             "exit_code": 2,
@@ -448,7 +616,47 @@ def run_build_pipeline(
         profile=str(profile or "debug"),
         target=str(target or "build"),
     )
+    policy_pass = str(policy_result.get("gate_status", "PASS")).upper() == "PASS"
+    envelope.write_stage(
+        stage_name="pre-build",
+        gate_decision="PASS" if policy_pass else "BLOCK",
+        reason_codes=["VALIDATION_POLICY_PASS" if policy_pass else "VALIDATION_POLICY_BLOCK"],
+        evidence_refs=[
+            "30_policy_input_context.json",
+            "31_plugin_policy_matrix.json",
+            "32_selected_plugins.json",
+            "33_skipped_plugins.json",
+            "34_policy_gate_rules.json",
+            "35_policy_summary.md",
+            "validation_plugins/220_plugin_execution_plan.json",
+            "validation_plugins/221_plugin_results.json",
+            "validation_plugins/222_plugin_summary.md",
+        ],
+        missing_inputs=[] if policy_pass else ["policy_gate_pass"],
+        normalized_findings=_policy_findings(policy_result, stage_name="pre-build"),
+    )
     if str(policy_result.get("gate_status", "PASS")).upper() != "PASS":
+        _feedback_safe(
+            stage_id="pre-build",
+            stage_name="pre-build",
+            linked_envelope_hash=_latest_envelope_hash(pf),
+            action_id="validation_policy_block_proposal",
+            action_proposed=True,
+            action_taken=False,
+            action_executor="system",
+            observed_result_code="ACTION_PROPOSED_FROM_REMEDIATION_GUIDANCE",
+            observed_result_summary="Validation policy blocking failures captured as proposed remediation actions.",
+            observed_gate_change="BLOCK",
+            confidence_adjustment_delta=0.0,
+            confidence_adjustment_reason="proposal_only",
+            recurrence_impact_category="unchanged",
+            recurrence_impact_delta=0.0,
+            predictive_calibration_delta=0.0,
+            predictive_calibration_reason="metrics_only_no_model_mutation",
+            certification_impact="blocked",
+            supporting_evidence_refs=["34_policy_gate_rules.json", "validation_plugins/221_plugin_results.json", "43_fix_recommendations.json"],
+        )
+        envelope.finalize_missing_stages()
         _write_json(
             pf / "build_pipeline_execution.json",
             {
@@ -477,6 +685,19 @@ def run_build_pipeline(
                     "",
                 ]
             ),
+        )
+        analyze_failure(
+            project_root=project_root,
+            pf=pf,
+            command_name=trigger,
+            stage_hint="VALIDATION_POLICY_BLOCK",
+            failure_reason=str(policy_result.get("gate_reason", "blocking_plugin_failure")),
+            exit_code=2,
+            source_layer_hint="ValidationPolicyEngine",
+            stderr_text="\n".join(str(item) for item in policy_result.get("blocking_failures", [])),
+            buildcore_reached=False,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=False,
         )
         return {
             "status": "FAIL",
@@ -515,6 +736,27 @@ def run_build_pipeline(
             target=target,
             profile=profile,
         )
+        envelope.write_stage(
+            stage_name="execution",
+            gate_decision="PASS" if int(buildcore_outcome.exit_code) == 0 else "FAIL",
+            reason_codes=["BUILD_EXECUTION_PASS" if int(buildcore_outcome.exit_code) == 0 else "BUILD_EXECUTION_FAILED"],
+            evidence_refs=["buildcore_execution_report.json", "pipeline_build_run/build_stdout.txt", "pipeline_build_run/build_stderr.txt"],
+            missing_inputs=[] if int(buildcore_outcome.exit_code) == 0 else ["buildcore_success"],
+            normalized_findings=[]
+            if int(buildcore_outcome.exit_code) == 0
+            else [
+                make_finding(
+                    source_component="NGKsBuildCore",
+                    source_artifact="buildcore_execution_report.json",
+                    severity="error",
+                    reason_code="BUILD_EXECUTION_FAILED",
+                    confidence_score=0.98,
+                    blocking=True,
+                    evidence_refs=["buildcore_execution_report.json", "pipeline_build_run/build_stderr.txt"],
+                    stage_name="execution",
+                )
+            ],
+        )
         diagnostics = run_devfabric_diagnostics(
             project_root=project_root,
             pf=pf,
@@ -522,6 +764,68 @@ def run_build_pipeline(
             profile=str(profile or "debug"),
             target=str(target or "build"),
         )
+        diag_status = str(diagnostics.get("status", "PASS")).upper()
+        if diag_status == "PASS":
+            post_gate = "PASS"
+            post_reason = "DIAGNOSTICS_PASS"
+        elif diag_status in {"WARN", "ADVISORY"}:
+            post_gate = "WARN"
+            post_reason = "DIAGNOSTICS_WARN"
+        else:
+            post_gate = "FAIL"
+            post_reason = "DIAGNOSTICS_FAIL"
+        envelope.write_stage(
+            stage_name="post-build",
+            gate_decision=post_gate,
+            reason_codes=[post_reason],
+            evidence_refs=["devfabric_diagnostics_report.json", "validation_plugins/221_plugin_results.json"],
+            missing_inputs=[],
+        )
+        _feedback_safe(
+            stage_id="execution",
+            stage_name="execution",
+            linked_envelope_hash=_latest_envelope_hash(pf),
+            action_id="build_pipeline_execution_action",
+            action_proposed=True,
+            action_taken=True,
+            action_executor="system",
+            observed_result_code="ACTION_EXECUTED_SYSTEM",
+            observed_result_summary="Build pipeline execution action completed.",
+            observed_gate_change="PASS" if int(buildcore_outcome.exit_code) == 0 else "FAIL",
+            confidence_adjustment_delta=0.0,
+            confidence_adjustment_reason="execution_observation_only",
+            recurrence_impact_category="unchanged",
+            recurrence_impact_delta=0.0,
+            predictive_calibration_delta=0.0,
+            predictive_calibration_reason="metrics_only_no_model_mutation",
+            certification_impact="none",
+            supporting_evidence_refs=["buildcore_execution_report.json", "devfabric_diagnostics_report.json"],
+        )
+
+        rerun_summary_path = pf / "pipeline" / "142_certification_rerun_summary.json"
+        if rerun_summary_path.exists():
+            _feedback_safe(
+                stage_id="rerun-remediation",
+                stage_name="rerun-remediation",
+                linked_envelope_hash=_latest_envelope_hash(pf),
+                action_id="rerun_cycle_completed",
+                action_proposed=True,
+                action_taken=True,
+                action_executor="system",
+                observed_result_code="RERUN_CYCLE_COMPLETED",
+                observed_result_summary="Rerun cycle completion observed from pipeline artifacts.",
+                observed_gate_change=str(_read_json(rerun_summary_path).get("enforced_gate", "UNCHANGED")),
+                confidence_adjustment_delta=0.0,
+                confidence_adjustment_reason="rerun_observation_only",
+                recurrence_impact_category="unchanged",
+                recurrence_impact_delta=0.0,
+                predictive_calibration_delta=0.0,
+                predictive_calibration_reason="metrics_only_no_model_mutation",
+                certification_impact=str(_read_json(rerun_summary_path).get("certification_decision", "none")),
+                supporting_evidence_refs=["pipeline/142_certification_rerun_summary.json", "pipeline/143_pipeline_chain_decision.json"],
+            )
+
+        envelope.finalize_missing_stages()
 
         overall_status = "PASS" if buildcore_outcome.exit_code == 0 else "FAIL"
         if overall_status != "PASS":
@@ -534,6 +838,62 @@ def run_build_pipeline(
                 traceback_text="",
                 buildcore_exit_code=buildcore_outcome.exit_code,
             )
+            analyze_failure(
+                project_root=project_root,
+                pf=pf,
+                command_name=trigger,
+                stage_hint="BUILDCORE_EXECUTION_FAILURE",
+                failure_reason=failure_message,
+                exit_code=int(buildcore_outcome.exit_code),
+                source_layer_hint="BuildCore",
+                stderr_text=_read_text(pf / "pipeline_build_run" / "build_stderr.txt"),
+                stdout_text=_read_text(pf / "pipeline_build_run" / "build_stdout.txt"),
+                buildcore_reached=True,
+                failed_before_validation_gate=False,
+                failed_after_validation_gate=True,
+            )
+            _feedback_safe(
+                stage_id="post-build",
+                stage_name="post-build",
+                linked_envelope_hash=_latest_envelope_hash(pf),
+                action_id="post_build_failure_proposal",
+                action_proposed=True,
+                action_taken=False,
+                action_executor="system",
+                observed_result_code="BUILD_OUTCOME_UNCHANGED",
+                observed_result_summary="Build failure persisted after proposed remediation actions.",
+                observed_gate_change="FAIL",
+                confidence_adjustment_delta=0.0,
+                confidence_adjustment_reason="failure_persisted",
+                recurrence_impact_category="increased",
+                recurrence_impact_delta=1.0,
+                predictive_calibration_delta=0.0,
+                predictive_calibration_reason="metrics_only_no_model_mutation",
+                certification_impact="negative",
+                supporting_evidence_refs=["43_fix_recommendations.json", "build_pipeline_execution.json"],
+            )
+        else:
+            if (pf / "43_fix_recommendations.json").exists() or (pf / "fix_recommendations.json").exists():
+                _feedback_safe(
+                    stage_id="post-build",
+                    stage_name="post-build",
+                    linked_envelope_hash=_latest_envelope_hash(pf),
+                    action_id="post_remediation_outcome_change",
+                    action_proposed=True,
+                    action_taken=True,
+                    action_executor="system",
+                    observed_result_code="BUILD_OUTCOME_CHANGED_AFTER_REMEDIATION",
+                    observed_result_summary="Build reached PASS after remediation recommendations were recorded.",
+                    observed_gate_change="PASS",
+                    confidence_adjustment_delta=0.01,
+                    confidence_adjustment_reason="successful_outcome_after_remediation",
+                    recurrence_impact_category="reduced",
+                    recurrence_impact_delta=-1.0,
+                    predictive_calibration_delta=0.01,
+                    predictive_calibration_reason="CALIBRATION_METRICS_RECORDED",
+                    certification_impact="positive",
+                    supporting_evidence_refs=["43_fix_recommendations.json", "59_decision_envelope_summary.md"],
+                )
 
         ended_at = _iso_now()
         pipeline_payload = {
@@ -573,6 +933,19 @@ def run_build_pipeline(
                 ]
             ),
         )
+        analyze_failure(
+            project_root=project_root,
+            pf=pf,
+            command_name=trigger,
+            stage_hint="UNKNOWN_FAILURE",
+            failure_reason=failure_message,
+            exit_code=int(buildcore_outcome.exit_code) if buildcore_outcome is not None else 0,
+            source_layer_hint="Orchestrator",
+            stderr_text=traceback_text,
+            buildcore_reached=buildcore_outcome is not None,
+            failed_before_validation_gate=False,
+            failed_after_validation_gate=buildcore_outcome is not None,
+        )
         return {
             "status": overall_status,
             "exit_code": 0 if overall_status == "PASS" else int(buildcore_outcome.exit_code or 1),
@@ -591,6 +964,25 @@ def run_build_pipeline(
         failure_step = failure_step or "orchestrator_exception"
         failure_message = str(exc)
         traceback_text = traceback.format_exc()
+        envelope.write_stage(
+            stage_name="execution",
+            gate_decision="INCOMPLETE",
+            reason_codes=["STAGE_EXCEPTION"],
+            evidence_refs=["build_pipeline_execution.json"],
+            missing_inputs=["execution_completion"],
+            normalized_findings=[
+                make_finding(
+                    source_component="DevFabric",
+                    source_artifact="build_pipeline_execution.json",
+                    severity="error",
+                    reason_code="STAGE_EXCEPTION",
+                    confidence_score=1.0,
+                    blocking=True,
+                    evidence_refs=["failure_trace.json"],
+                    stage_name="execution",
+                )
+            ],
+        )
         diagnostics = run_devfabric_diagnostics(
             project_root=project_root,
             pf=pf,
@@ -598,6 +990,34 @@ def run_build_pipeline(
             profile=str(profile or "debug"),
             target=str(target or "build"),
         )
+        envelope.write_stage(
+            stage_name="post-build",
+            gate_decision="FAIL",
+            reason_codes=["DIAGNOSTICS_FAIL"],
+            evidence_refs=["devfabric_diagnostics_report.json"],
+            missing_inputs=[],
+        )
+        _feedback_safe(
+            stage_id="execution",
+            stage_name="execution",
+            linked_envelope_hash=_latest_envelope_hash(pf),
+            action_id="execution_incomplete_exception",
+            action_proposed=True,
+            action_taken=False,
+            action_executor="system",
+            observed_result_code="ACTION_PROPOSED_FROM_ROOT_CAUSE",
+            observed_result_summary="Execution exception trapped; remediation action proposed.",
+            observed_gate_change="INCOMPLETE",
+            confidence_adjustment_delta=0.0,
+            confidence_adjustment_reason="exception_observed",
+            recurrence_impact_category="increased",
+            recurrence_impact_delta=1.0,
+            predictive_calibration_delta=0.0,
+            predictive_calibration_reason="metrics_only_no_model_mutation",
+            certification_impact="negative",
+            supporting_evidence_refs=["failure_trace.json", "43_fix_recommendations.json"],
+        )
+        envelope.finalize_missing_stages()
         buildcore_code = int(buildcore_outcome.exit_code) if buildcore_outcome is not None else 2
         _write_failure_diagnostics(
             pf=pf,

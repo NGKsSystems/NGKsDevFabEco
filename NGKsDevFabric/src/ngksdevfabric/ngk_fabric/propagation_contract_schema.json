@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NGKs Propagation Contract",
+  "type": "object",
+  "required": [
+    "propagation_version",
+    "run_id",
+    "parent_run_id",
+    "rows",
+    "ruleset_version"
+  ],
+  "properties": {
+    "propagation_version": {"type": "string"},
+    "run_id": {"type": "string"},
+    "parent_run_id": {"type": ["string", "null"]},
+    "ruleset_version": {"type": "string"},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "propagation_version",
+          "run_id",
+          "parent_run_id",
+          "source_feedback_hash",
+          "source_feedback_action_id",
+          "propagation_stage",
+          "reason_code",
+          "input_confidence",
+          "delta_applied",
+          "output_confidence",
+          "recurrence_prior",
+          "recurrence_delta",
+          "recurrence_new",
+          "predictive_metric_prior",
+          "predictive_metric_delta",
+          "predictive_metric_new",
+          "certification_impact_prior",
+          "certification_impact_delta",
+          "certification_impact_new",
+          "supporting_evidence_refs",
+          "ruleset_version",
+          "timestamp_utc"
+        ],
+        "properties": {
+          "propagation_version": {"type": "string"},
+          "run_id": {"type": "string"},
+          "parent_run_id": {"type": ["string", "null"]},
+          "source_feedback_hash": {"type": "string", "minLength": 1},
+          "source_feedback_action_id": {"type": "string", "minLength": 1},
+          "propagation_stage": {"type": "string", "minLength": 1},
+          "reason_code": {"type": "string", "minLength": 1},
+          "input_confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "delta_applied": {"type": "number", "minimum": -0.05, "maximum": 0.05},
+          "output_confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "recurrence_prior": {"type": "number"},
+          "recurrence_delta": {"type": "number"},
+          "recurrence_new": {"type": "number"},
+          "predictive_metric_prior": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "predictive_metric_delta": {"type": "number"},
+          "predictive_metric_new": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "certification_impact_prior": {"type": "number"},
+          "certification_impact_delta": {"type": "number"},
+          "certification_impact_new": {"type": "number"},
+          "supporting_evidence_refs": {"type": "array", "items": {"type": "string"}},
+          "ruleset_version": {"type": "string"},
+          "timestamp_utc": {"type": "string"}
+        }
+      }
+    }
+  }
+}

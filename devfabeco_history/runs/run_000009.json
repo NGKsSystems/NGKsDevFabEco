@@ -1,0 +1,11 @@
+{
+  "history_run_id": "run_000009",
+  "run_id": "regression_fixture",
+  "timestamp": "2026-03-16T19:02:17.325429+00:00",
+  "project_name": "NGKsDevFabEco",
+  "execution_profile": "STANDARD",
+  "certification_decision": "CERTIFIED_REGRESSION",
+  "gate_result": "FAIL",
+  "subtarget_count": 1,
+  "regression_count": 1
+}

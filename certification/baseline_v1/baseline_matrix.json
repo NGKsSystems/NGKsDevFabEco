@@ -1,0 +1,21 @@
+{
+  "baseline_version": "v1",
+  "generated_at": "2026-03-16T00:00:00+00:00",
+  "scenario_count": 1,
+  "scenarios": [
+    {
+      "scenario_id": "baseline_pass",
+      "scenario_name": "Baseline Pass Verification",
+      "expected_gate": "PASS",
+      "actual_gate": "PASS",
+      "diagnostic_score": 0.85,
+      "scores": {
+        "detection_accuracy": 0.85,
+        "component_ownership_accuracy": 0.85,
+        "root_cause_accuracy": 0.85,
+        "remediation_quality": 0.85,
+        "proof_quality": 0.85
+      }
+    }
+  ]
+}

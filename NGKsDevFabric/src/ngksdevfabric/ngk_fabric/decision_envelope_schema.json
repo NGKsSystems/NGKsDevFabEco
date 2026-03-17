@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ngks.decision.envelope.v1",
+  "title": "NGKs Decision Envelope Entry",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "run_id",
+    "chain_index",
+    "stage_name",
+    "owner_component",
+    "gate_decision",
+    "reason_codes",
+    "missing_inputs",
+    "normalized_findings",
+    "evidence_refs",
+    "parent_hash",
+    "entry_hash",
+    "timestamp_utc"
+  ],
+  "properties": {
+    "schema": { "type": "string", "const": "ngks.decision.envelope.entry.v1" },
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "parent_run_id": { "type": ["string", "null"] },
+    "chain_index": { "type": "integer", "minimum": 1 },
+    "stage_name": {
+      "type": "string",
+      "enum": [
+        "preflight",
+        "planning",
+        "pre-build",
+        "execution",
+        "post-build",
+        "certification",
+        "rerun-remediation"
+      ]
+    },
+    "owner_component": { "type": "string", "minLength": 1 },
+    "gate_decision": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCK",
+        "WARN",
+        "ADVISORY",
+        "SKIP",
+        "INCOMPLETE",
+        "INVALID_CHAIN"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "missing_inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "normalized_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_component",
+          "source_artifact",
+          "severity",
+          "reason_code",
+          "confidence",
+          "blocking",
+          "evidence_refs",
+          "timestamp_utc",
+          "stage_name"
+        ],
+        "properties": {
+          "source_component": { "type": "string" },
+          "source_artifact": { "type": "string" },
+          "severity": { "type": "string" },
+          "reason_code": { "type": "string" },
+          "confidence": {
+            "type": "object",
+            "required": ["score", "band"],
+            "properties": {
+              "score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "band": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+            }
+          },
+          "blocking": { "type": "boolean" },
+          "evidence_refs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "timestamp_utc": { "type": "string" },
+          "stage_name": { "type": "string" }
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "action_records": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "parent_hash": { "type": "string" },
+    "entry_hash": { "type": "string" },
+    "timestamp_utc": { "type": "string" },
+    "writer_runtime_ms": { "type": "number" },
+    "local_path_variants": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "stage_extension": { "type": ["object", "null"] }
+  },
+  "additionalProperties": true
+}

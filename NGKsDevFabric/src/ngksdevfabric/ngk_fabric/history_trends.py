@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .operations_control_plane_adapter import emit_operational_control_plane_summary
+
 _RUN_FILE_RE = re.compile(r"^run_(\d{6})\.json$")
 _SEVERITY_WEIGHTS = {
     "TRACE": 0.10,
@@ -280,6 +282,18 @@ def analyze_historical_trends(*, history_root: Path, pf: Path) -> dict[str, Any]
         lines.append("- no component history available")
 
     _write_text(history_out / "54_history_trend_summary.md", "\n".join(lines) + "\n")
+
+    emit_operational_control_plane_summary(
+        pf=pf,
+        source="history_trends",
+        source_summary={
+            "run_count": len(runs),
+            "trend_classification": trend_classification,
+            "trend_reason": trend_reason,
+            "component_count": len(health_rows),
+            "recurring_pattern_count": len(recurring_patterns),
+        },
+    )
 
     return {
         "trend_analysis": trend_payload,

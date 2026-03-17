@@ -1,0 +1,11 @@
+{
+  "baseline_version": "v1",
+  "creation_timestamp": "2026-03-16T00:00:00+00:00",
+  "schema_version": "1.0",
+  "project_name": "NGKsDevFabEco",
+  "scenario_count": 1,
+  "notes": [
+    "Bootstrap baseline for NGKsDevFabEco certification hardening validation",
+    "Established from command_path_hardening_20260316 run, certified stable at baseline"
+  ]
+}

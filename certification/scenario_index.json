@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-03-16T00:00:00+00:00",
+  "project_name": "NGKsDevFabEco",
+  "scenarios": [
+    {
+      "scenario_id": "baseline_pass",
+      "scenario_name": "Baseline Pass Verification",
+      "expected_gate": "PASS",
+      "required": true,
+      "description": "Validates that the baseline diagnostic flow produces expected PASS outcomes for the NGKsDevFabEco certification pipeline"
+    }
+  ]
+}

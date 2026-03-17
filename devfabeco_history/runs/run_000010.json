@@ -1,0 +1,11 @@
+{
+  "history_run_id": "run_000010",
+  "run_id": "stable_real",
+  "timestamp": "2026-03-16T19:44:37.162885+00:00",
+  "project_name": "NGKsDevFabEco",
+  "execution_profile": "STANDARD",
+  "certification_decision": "CERTIFIED_STABLE",
+  "gate_result": "PASS",
+  "subtarget_count": 1,
+  "regression_count": 0
+}

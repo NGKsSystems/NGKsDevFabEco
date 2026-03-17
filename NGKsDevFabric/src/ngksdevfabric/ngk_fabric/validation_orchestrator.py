@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .validation_planner import plan_premerge_validation
+from .operations_control_plane_adapter import emit_operational_control_plane_summary
+
 _SUPPORTED_POLICIES = {"STRICT", "BALANCED", "FAST"}
 _BALANCED_CONFIDENCE_TARGET = 0.82
 
@@ -134,7 +137,13 @@ def run_validation_orchestrator(
 
     selected_plan_root = plan_run_root.resolve() if plan_run_root else _select_latest_plan_run(project_root)
     if selected_plan_root is None:
-        raise ValueError("validation_plan_artifacts_missing: run plan-validation first")
+        plan_premerge_validation(
+            project_root=project_root,
+            pf=pf,
+            change_manifest_path=change_manifest_path,
+            touched_components=touched_components,
+        )
+        selected_plan_root = pf.resolve()
     if not _has_planning_bundle(selected_plan_root):
         raise ValueError(f"validation_plan_bundle_incomplete:{selected_plan_root}")
 
@@ -375,6 +384,19 @@ def run_validation_orchestrator(
             )
 
     _write_text(execution_dir / "134_execution_summary.md", "\n".join(lines) + "\n")
+
+    emit_operational_control_plane_summary(
+        pf=pf,
+        source="validation_orchestrator",
+        source_summary={
+            "execution_policy": policy,
+            "plan_class": summary["plan_class"],
+            "completed_scenario_count": summary["completed_scenario_count"],
+            "critical_regression_count": summary["critical_regression_count"],
+            "detected_regressions_total": summary["detected_regressions_total"],
+            "early_stop_reason": summary["early_stop_reason"],
+        },
+    )
 
     return {
         "summary": summary,

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-03-15T08:49:42.211746+00:00",
+  "generated_at": "2026-03-16T04:29:35.315262+00:00",
   "project_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco",
-  "manifest_hash": "9c06d05f7fcab93ff7bc44bf99e7da22c235d190782c8cbadad500ca6c1a1a96",
-  "tracked_file_count": 1179,
+  "manifest_hash": "64dc05452b975cdc0d8cfd0e5dac56689c5cff9fa5e314260aba05f6d4793595",
+  "tracked_file_count": 1208,
   "changed_since_last": true,
   "rows": [
     {
@@ -13,9 +13,9 @@
     },
     {
       "path": ".graph_state/graph_state.json",
-      "size": 647,
-      "mtime_ns": 1773564560774316400,
-      "sha256": "b742e61c95e5a60289765add12fb372574b4b7dd8d03ff4b320550f8884ad98f"
+      "size": 663,
+      "mtime_ns": 1773635348085927300,
+      "sha256": "cbadbf4d942c751a86a900bd369bee26beb5b4d39edc0a6f27783b41ecb00471"
     },
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/ngksbuildcore-0.1.4.dist-info/top_level.txt",
@@ -3516,6 +3516,12 @@
       "sha256": "eb8ce20f580877d300c4fed60a7f36daa18715d35c50bb3596d6995d023b4ffe"
     },
     {
+      "path": "Canonical_Decision_Envelope_Spec_Lock_Answers.md",
+      "size": 11130,
+      "mtime_ns": 1773580911566949400,
+      "sha256": "895aa6828fc2cfe496e1e55c0c6b04d08afebeaf5a63e3369f44cd8b19c107cb"
+    },
+    {
       "path": "certification_gate_policy.json",
       "size": 821,
       "mtime_ns": 1773377913118040000,
@@ -3546,28 +3552,40 @@
       "sha256": "28a24ffd30251f1d662148d1efee783b4de9c59e6627319ce317ea947bbabe1c"
     },
     {
+      "path": "devfabeco_history/components/component_regression_stats.json",
+      "size": 24,
+      "mtime_ns": 1773601328944498300,
+      "sha256": "91b16931ce87574ecdb1b2b7d2765a244177ee30858b97ef2c1493382992aca4"
+    },
+    {
+      "path": "devfabeco_history/regressions/regression_fingerprints.json",
+      "size": 18,
+      "mtime_ns": 1773601328943498000,
+      "sha256": "bc4e79720219f061278c91f7e2782d951eede5e508fc5f833fffa946341c6327"
+    },
+    {
       "path": "env_capsule.hash.txt",
       "size": 65,
-      "mtime_ns": 1773562834992630200,
-      "sha256": "cd25e09911e752c1af11043d7f2500d0767abf4cc32b6d892cee48ec01e8019e"
+      "mtime_ns": 1773629805405047100,
+      "sha256": "f5d8fbb232b9e9c78cf71f946f9f23c3be5c8dbe39f9aea8e48583203dcba3f0"
     },
     {
       "path": "env_capsule.lock.json",
-      "size": 496,
-      "mtime_ns": 1773562834990630200,
-      "sha256": "e61172e1bb44a0aa6e290d8a81b751d301320f50806d1ced4e2fbc96db7ff532"
+      "size": 485,
+      "mtime_ns": 1773629805402160600,
+      "sha256": "c969f377c730f02cfedbc35a71cc247e4917ec9645910c62f7c747a9a2d7269b"
     },
     {
       "path": "env_capsule.resolved.hash.txt",
       "size": 65,
-      "mtime_ns": 1773562834755796500,
-      "sha256": "cd25e09911e752c1af11043d7f2500d0767abf4cc32b6d892cee48ec01e8019e"
+      "mtime_ns": 1773629805202532100,
+      "sha256": "f5d8fbb232b9e9c78cf71f946f9f23c3be5c8dbe39f9aea8e48583203dcba3f0"
     },
     {
       "path": "env_capsule.resolved.json",
-      "size": 496,
-      "mtime_ns": 1773562834740992800,
-      "sha256": "e61172e1bb44a0aa6e290d8a81b751d301320f50806d1ced4e2fbc96db7ff532"
+      "size": 485,
+      "mtime_ns": 1773629805188530900,
+      "sha256": "c969f377c730f02cfedbc35a71cc247e4917ec9645910c62f7c747a9a2d7269b"
     },
     {
       "path": "external_status_sync.json",
@@ -3786,6 +3804,12 @@
       "sha256": "c3b5790dd1ca633d723868bed21af511c1f646dcb394f34a53480afdc02f8b15"
     },
     {
+      "path": "NGKsDevFabEco_Live_Code_Capabilities.md",
+      "size": 101592,
+      "mtime_ns": 1773567036780784500,
+      "sha256": "1968b1b2ab930dd3eb512e3e5033be2abfb370ffe49bd4afdfffeaf50d593614"
+    },
+    {
       "path": "NGKsDevFabric/.ngk/profile.json",
       "size": 499,
       "mtime_ns": 1772369515580540000,
@@ -3960,10 +3984,22 @@
       "sha256": "66631868da60b3bb29e4965932581c58df0b3a614b267b21846973e1178a9ffc"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/calibration_propagation_engine.py",
+      "size": 4343,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "369d958f526c41f21f5d2f61e8bd04f41149e69993c141aeb8a174e0d1c11a49"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_compatibility.py",
       "size": 13991,
       "mtime_ns": 1773381450824087100,
       "sha256": "15792bf84d78e35618fab16e814122e6b09435d50c087e236de3d72a93960df1"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_control_plane_adapter.py",
+      "size": 2870,
+      "mtime_ns": 1773599153003793200,
+      "sha256": "48f51a72bb6f8960e1f09c0bf69536df15fd17878e85f7500472d70a472f84ee"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_rollup.py",
@@ -3996,10 +4032,46 @@
       "sha256": "707d0657286a6bf984603090c54532f705fa51d4f826b69d81f7ff171a7db0a9"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/confidence_propagation_engine.py",
+      "size": 10244,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "9172dc7b685dbead36a1a620212571a4c87cd5b0a01d344a0363327510594760"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/connector_transport.py",
       "size": 27425,
       "mtime_ns": 1773466961261662100,
       "sha256": "95ac6474ddd54c5c40419583ddb7f92a979b0782a64d7c38c9a8aa26956ea0e3"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/control_plane_integration.py",
+      "size": 8020,
+      "mtime_ns": 1773599153003793200,
+      "sha256": "5f721207f6d9442f0a7c63dd7cb4ffab3804c8deae98a26b8b8b01a132eedf55"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/decision_envelope_manager.py",
+      "size": 11396,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "c7b25c106c08a2a6647e7c742f5c7defc6babe32c9846f01e9f88a18eeae9639"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/decision_envelope_schema.json",
+      "size": 3336,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "dcf933c0bfea1887bb20bb99fe49657cac7110fd9af101e27387cfb8c6786d35"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/decision_reason_codes.json",
+      "size": 2793,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "f613e8487edaed67744de39387a5d72edc09bdbb1cd8aa3d10a8943814366302"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/decision_replay_validator.py",
+      "size": 3096,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "3dac6bcc8f50f576061d5226309533b3b76a0f0708ffbfde75e4edeb08d4c6c0"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/decision_validation.py",
@@ -4021,9 +4093,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/devfabeco_orchestrator.py",
-      "size": 23852,
-      "mtime_ns": 1773564050333970600,
-      "sha256": "af20cccae62bbebc3b0153e31c5e6c3347a6c5f0aeb29cb6015fa03698f1827a"
+      "size": 44234,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "7fecaf62346070d773d7c40f2b38f096b74c45fbadf1451320ffc6fb6ab15c93"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/devfabeco_validation_plugins.py",
@@ -4039,9 +4111,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/explain_engine.py",
-      "size": 25797,
-      "mtime_ns": 1773322233217295300,
-      "sha256": "2aa7f05f9787d63e1c9e06b297dcb8e6b9165587048c12343323e418294015b5"
+      "size": 26102,
+      "mtime_ns": 1773599152998274200,
+      "sha256": "a6bf7d0ce0c91347bd83616c7243cca6b9d13efdbb99844d23016987603182af"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/export_adapters.py",
@@ -4054,6 +4126,12 @@
       "size": 20011,
       "mtime_ns": 1773466632532493600,
       "sha256": "8f777755cd64f5e42a8df8ef656cf912380e85362c5b1df22f62d164fe29f90f"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/feedback_replay_validator.py",
+      "size": 4687,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "363bf124623b3306fa4895a1ecb4a31aa6ea01321dfbb0f143b20b2b48aa3916"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/graph_state_manager.py",
@@ -4075,9 +4153,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/history_trends.py",
-      "size": 11448,
-      "mtime_ns": 1773413026081825600,
-      "sha256": "6c798d34dbc6049342bbd2870ef20f487a3e34c2626ad4435d968a2196379674"
+      "size": 11932,
+      "mtime_ns": 1773599152998274200,
+      "sha256": "3687ada66128359bbeea41bfe28010acc821af8b770117a044871ab45bb962ba"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/init.py",
@@ -4099,9 +4177,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/main.py",
-      "size": 136936,
-      "mtime_ns": 1773564050335968600,
-      "sha256": "e35f89ad263e25d465ca74687c87bf7c977a8cd55373f8aab1d7e514165ec479"
+      "size": 151161,
+      "mtime_ns": 1773566904263778700,
+      "sha256": "a5a8ad41657c172723d2f8d28372f0446ecd192b6e4450552c4316578c938682"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/memory_usage_validation.py",
@@ -4114,6 +4192,30 @@
       "size": 4373,
       "mtime_ns": 1773249757427520800,
       "sha256": "1586568cf11ea11fb0817479537591758632761fcafd2824cfad63b32300159a"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/operations_control_plane_adapter.py",
+      "size": 5059,
+      "mtime_ns": 1773599153006124600,
+      "sha256": "1f4538b95f1e756db5ce0b0d3f23f0e818eb4d7aaaa4929fdda26d32c79d4d46"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/outcome_feedback_manager.py",
+      "size": 12446,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "5107f5bfb25c1ac7e33c82b67e764d1ce0306d38f74d1933fcbfd1eddd90ab4b"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/outcome_feedback_reason_codes.json",
+      "size": 1303,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "350e9e83f8408a142eadb34de88c49fc3a5f38e6bac2d36f9056eb5bec48e4f0"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/outcome_feedback_schema.json",
+      "size": 2820,
+      "mtime_ns": 1773585383172858200,
+      "sha256": "2d3396755f6d44fea13feebd6079a76ceac35e146bed51549c074f16a6fe6643"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/ownership_confidence.py",
@@ -4135,9 +4237,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/predictive_risk.py",
-      "size": 22271,
-      "mtime_ns": 1773422814759155500,
-      "sha256": "28b0d67567ba4802002e6a53123af7fc215eb3fb1edefb8e33a5015ea4cdb606"
+      "size": 23591,
+      "mtime_ns": 1773601692737734300,
+      "sha256": "91b9b4c1b9048acd0bb3eac9f6fae3867bcc99dedf636fcc0de1bfbb3e32b9d8"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/probe.py",
@@ -4164,6 +4266,18 @@
       "sha256": "6202fb3ac1993eb9dd0f24090df441805078adf743e14a16a741a5313dd0745c"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/propagation_contract_schema.json",
+      "size": 2782,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "0d79e6f39162f514ca3bfc3647a116bad882a7eb1ddeea6ebc89beff6fb1badf"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/propagation_reason_codes.json",
+      "size": 694,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "f33e6dba8ed67cce5ee398703688ef030b65464d0c1022e31ad05d97b0c8ea6c"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/receipts.py",
       "size": 5066,
       "mtime_ns": 1772477517945591000,
@@ -4188,6 +4302,18 @@
       "sha256": "7b9cc9cdeab4f98f68f22a49d9055c3dda2335bb60f6cc1eda04936488d53794"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/replay_hash_utils.py",
+      "size": 2904,
+      "mtime_ns": 1773594922274775700,
+      "sha256": "39fec374211a2d9f7774f6a6a17bc359d9058b3f0d682a8eb5ef31f8816f0864"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/replay_validation_schema.json",
+      "size": 2291,
+      "mtime_ns": 1773594922272274300,
+      "sha256": "5e195650f0370b1cbc26e77834671d3c9dab337dca36d1dfd67df6009c7c3c7c"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/resolution_tracking.py",
       "size": 15678,
       "mtime_ns": 1773421726038846900,
@@ -4198,6 +4324,30 @@
       "size": 2928,
       "mtime_ns": 1772441292934254900,
       "sha256": "12511c448b65bfff0a184595a003b2326c244cc2def598ca87cf1cafa7587edd"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/root_cause_analyzer.py",
+      "size": 11416,
+      "mtime_ns": 1773566904269776800,
+      "sha256": "00c3eac1c0b99820782741d469e8357321b0d7ec5bec3ff20aaeccb875415c03"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/root_cause_rules.py",
+      "size": 12326,
+      "mtime_ns": 1773566904267779100,
+      "sha256": "75e788c46d8f8ab28136fbc7ac7a19013b2cb27f47a3fe0ff574f5e2ad74ca3e"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/root_cause_schema.json",
+      "size": 1469,
+      "mtime_ns": 1773566904267779100,
+      "sha256": "b3e74da7f256c9e45f7b46f67d7a03cb372e8666404bc7c12e7d4ee8d75688ae"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/root_cause_types.py",
+      "size": 1176,
+      "mtime_ns": 1773566904266778600,
+      "sha256": "01c5f574b375bc35df555622d9c489b042545ba5539b056e1aa3f6b0897b7c9c"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/runwrap.py",
@@ -4237,15 +4387,15 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_orchestrator.py",
-      "size": 16812,
-      "mtime_ns": 1773473970119565500,
-      "sha256": "bc79f3f0e71e74cc7ae5c75ad15e04f7438236030474bfe52ea1490608503467"
+      "size": 17671,
+      "mtime_ns": 1773635256603706700,
+      "sha256": "a767f7a0d42aa33482e88ea11667862b82c09f8308a55262e2ebb18d1a5a3e84"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_planner.py",
-      "size": 20489,
-      "mtime_ns": 1773470564242541800,
-      "sha256": "521e954b3247ba40d5e2c571ace265302c52ed1583b9128e14f2aa0f6c4f65a8"
+      "size": 22767,
+      "mtime_ns": 1773635247613669900,
+      "sha256": "b0dd610962c9ef1a9bc260766e33a6ba9352b58d9191391c6d3200afd4d61073"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_plugin_policy.json",
@@ -4285,15 +4435,15 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_rerun_pipeline.py",
-      "size": 13280,
-      "mtime_ns": 1773486508424110300,
-      "sha256": "47738c9bdf3455f4f82e773e81627795612eb997dd588ae88b15c4192cde2396"
+      "size": 14723,
+      "mtime_ns": 1773599153001275400,
+      "sha256": "381c22cf66e9b73ebcbdff4cfd62edbd4959091199d9b80f6c19985eec4a3946"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/workflow_recommendation.py",
-      "size": 11738,
-      "mtime_ns": 1773481568447865600,
-      "sha256": "15e7d4febc0be47b5bc3e11b968b6ba001e5fe44085025a061a25d4e08988ab1"
+      "size": 12226,
+      "mtime_ns": 1773599153002785000,
+      "sha256": "5783f1dc1756ce0dd6b64c553be6617b58a539fc8e75a7911200e561eae04f53"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/workspace_integrity.py",
@@ -7032,16 +7182,40 @@
       "sha256": "9a50284a1835fb40e872eb9fd0cef877dff3f56b0c6c9e2e4bb68adde9f5361b"
     },
     {
+      "path": "tools/_tmp_control_plane_validate.ps1",
+      "size": 9986,
+      "mtime_ns": 1773599480815676900,
+      "sha256": "3e02307559fa13227b77e677b453c36137c8c7debc99351f228f1c2cf4a76ef2"
+    },
+    {
+      "path": "tools/compose_repair_packet.ps1",
+      "size": 9045,
+      "mtime_ns": 1773630002929858000,
+      "sha256": "18cdd946aaff39adab60eebb119b9e00a0e742f7f82ef3f41912d5b4dafc9274"
+    },
+    {
       "path": "tools/make_release_bundle.ps1",
       "size": 2582,
       "mtime_ns": 1772802782486731300,
       "sha256": "d5bcb49164f9b99a96694982f3add8184bf7c3dc886aad1f0def53db3e1f3b6c"
     },
     {
+      "path": "tools/normalize_final_contract_reports.ps1",
+      "size": 1334,
+      "mtime_ns": 1773599153003793200,
+      "sha256": "ea22934c5d42b21272a7388a0413233b520ea47978edf31b210ce82eb34ff0d3"
+    },
+    {
       "path": "tools/prepare_pypi_release.ps1",
       "size": 1448,
       "mtime_ns": 1773058790272813700,
       "sha256": "9ead24a6d84b69d49eaff7990b7b2fdc96bcfddba9bacb30b46ac1d7aed881b7"
+    },
+    {
+      "path": "tools/run_control_plane_repair.ps1",
+      "size": 12669,
+      "mtime_ns": 1773601692737734300,
+      "sha256": "c3dd68e3552dfaf5a59232ad825e920b95b3f144908299a9743c34254faf2c70"
     },
     {
       "path": "tools/run_decision_validation.py",
