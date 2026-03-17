@@ -14,3 +14,7 @@ This list is intentionally deferred to prevent scope drift while preserving foll
 ## Next Recommended Engineering Milestone
 
 - Implement actual transport/send layer on top of existing export and delivery adapters.
+
+## Notes
+
+- v1.2.1 hotfix: NGKsGraph forensics CLI (`why`, `rebuild-cause`, `trace`, `freeze`) now supports `--profile` and propagates it through internal configure calls.

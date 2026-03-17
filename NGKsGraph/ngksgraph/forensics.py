@@ -97,10 +97,35 @@ def _target_index(config: Config, target_name: str) -> int:
     return -1
 
 
-def _current_payload(repo_root: Path, config_path: Path, target: str | None = None) -> tuple[dict[str, Any], Config, str, Path]:
+def _resolve_target_selector(config: Config, selector: str | None) -> str:
+    if not selector:
+        return config.default_target_name()
+
+    names = [target.name for target in config.targets]
+    if selector in names:
+        return selector
+
+    selector_path = Path(selector)
+    candidates = [selector_path.name, selector_path.stem]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        for target_name in names:
+            if target_name.casefold() == candidate.casefold():
+                return target_name
+
+    return selector
+
+
+def _current_payload(
+    repo_root: Path,
+    config_path: Path,
+    target: str | None = None,
+    profile: str | None = None,
+) -> tuple[dict[str, Any], Config, str, Path]:
     config = load_config(config_path)
     config.normalize()
-    selected_target = target or config.default_target_name()
+    selected_target = _resolve_target_selector(config, target)
     out_dir = repo_root / config.out_dir
 
     snapshots = list_snapshots(_snapshot_root(out_dir))
@@ -108,7 +133,7 @@ def _current_payload(repo_root: Path, config_path: Path, target: str | None = No
         latest = _load_snapshot_payload(snapshots[-1])
         return latest, config, selected_target, out_dir
 
-    configured = configure_project(repo_root, config_path, target=selected_target)
+    configured = configure_project(repo_root, config_path, target=selected_target, profile=profile)
     payload = {
         "graph": configured["graph_payload"],
         "compdb": configured["compdb"],
@@ -245,9 +270,15 @@ def why_target(
     target_name: str,
     from_snapshot: str | None = None,
     from_capsule: Path | None = None,
+    profile: str | None = None,
 ) -> dict[str, Any]:
-    current, config, selected_target, out_dir = _current_payload(repo_root, config_path, target=target_name)
-    selected = target_name or selected_target
+    current, config, selected_target, out_dir = _current_payload(
+        repo_root,
+        config_path,
+        target=target_name,
+        profile=profile,
+    )
+    selected = selected_target
 
     if from_capsule is not None:
         current = _load_capsule_payload(from_capsule)
@@ -384,9 +415,15 @@ def rebuild_cause_target(
     target_name: str,
     from_snapshot: str | None = None,
     from_capsule: Path | None = None,
+    profile: str | None = None,
 ) -> dict[str, Any]:
-    current, _, selected_target, out_dir = _current_payload(repo_root, config_path, target=target_name)
-    selected = target_name or selected_target
+    current, _, selected_target, out_dir = _current_payload(
+        repo_root,
+        config_path,
+        target=target_name,
+        profile=profile,
+    )
+    selected = selected_target
 
     snapshot_root = _snapshot_root(out_dir)
     baseline_previous_payload: dict[str, Any] | None = None

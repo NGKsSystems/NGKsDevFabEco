@@ -1109,6 +1109,7 @@ def cmd_freeze(args: argparse.Namespace) -> int:
         out=Path(args.out) if args.out else None,
         msvc_auto=args.msvc_auto,
         verify=args.verify,
+        profile=args.profile,
     )
     print(f"Capsule: {frozen['capsule_path']}")
     return 0
@@ -1144,6 +1145,7 @@ def cmd_why(args: argparse.Namespace) -> int:
         target_name=args.target,
         from_snapshot=args.from_snapshot,
         from_capsule=Path(args.from_capsule) if args.from_capsule else None,
+        profile=args.profile,
     )
     if args.json:
         if args.pretty:
@@ -1164,6 +1166,7 @@ def cmd_rebuild_cause(args: argparse.Namespace) -> int:
         target_name=args.target,
         from_snapshot=args.from_snapshot,
         from_capsule=Path(args.from_capsule) if args.from_capsule else None,
+        profile=args.profile,
     )
     if args.json:
         if args.pretty:
@@ -1441,7 +1444,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_trace.add_argument("path", nargs="?")
     p_trace.add_argument("--json", action="store_true", default=False)
     p_trace.add_argument("--pretty", action="store_true", default=True)
-    p_trace.add_argument("--profile", default=None)
+    p_trace.add_argument("--profile", choices=["debug", "release"], default=None)
     p_trace.add_argument("--timing", action="store_true", default=False)
     p_trace.set_defaults(func=cmd_trace)
 
@@ -1449,6 +1452,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_freeze.add_argument("--target", default=None)
     p_freeze.add_argument("--from-snapshot", default=None)
     p_freeze.add_argument("--out", default=None)
+    p_freeze.add_argument("--profile", choices=["debug", "release"], default=None)
     p_freeze.add_argument("--msvc-auto", action="store_true", default=False)
     p_freeze.add_argument("--verify", action="store_true", default=True)
     p_freeze.add_argument("--no-verify", dest="verify", action="store_false")
@@ -1472,6 +1476,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_why.add_argument("--pretty", action="store_true", default=True)
     p_why.add_argument("--from-snapshot", default=None)
     p_why.add_argument("--from-capsule", default=None)
+    p_why.add_argument("--profile", choices=["debug", "release"], default=None)
     p_why.set_defaults(func=cmd_why)
 
     p_rc = sub.add_parser("rebuild-cause", help="Explain why target rebuilds")
@@ -1480,6 +1485,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rc.add_argument("--pretty", action="store_true", default=True)
     p_rc.add_argument("--from-snapshot", default=None)
     p_rc.add_argument("--from-capsule", default=None)
+    p_rc.add_argument("--profile", choices=["debug", "release"], default=None)
     p_rc.set_defaults(func=cmd_rebuild_cause)
 
     p_selftest = sub.add_parser("selftest", help="Run curated deterministic torture selftest")

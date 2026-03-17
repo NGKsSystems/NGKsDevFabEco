@@ -624,7 +624,8 @@ def configure_project(
     load_started = perf_counter()
     config = load_config(config_path)
     durations["load_config_ms"] = int((perf_counter() - load_started) * 1000)
-    selected_profile = config.apply_profile(profile)
+    selected_profile_arg = profile if profile is not None else config.get_default_profile()
+    selected_profile = config.apply_profile(selected_profile_arg)
 
     if clear_cache:
         clear_profile_cache(repo_root, selected_profile)

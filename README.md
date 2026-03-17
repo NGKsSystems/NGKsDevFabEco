@@ -88,17 +88,18 @@ PowerShell# 1. Initialize a project
 ngksgraph init
 
 # 2. Scan & configure (auto-detects MSVC, Qt, languages, requirements)
-ngksgraph configure
+ngksgraph configure --profile debug
 
 # 3. Build with full determinism
-ngksgraph build --msvc-auto
+ngksgraph build --profile debug --msvc-auto
 
 # 4. Forensic analysis
-ngksgraph why MyApp.exe
-ngksgraph rebuild-cause
+ngksgraph why build\debug\bin\app.exe --profile debug
+ngksgraph rebuild-cause build\debug\bin\app.exe --profile debug
+ngksgraph trace src\main.cpp --profile debug
 
 # 5. Create reproducible capsule
-ngksgraph freeze
+ngksgraph freeze --profile debug
 Environment commands
 PowerShellngksenvcapsule doctor
 ngksenvcapsule lock

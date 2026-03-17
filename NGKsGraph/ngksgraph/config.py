@@ -233,6 +233,16 @@ class Config:
     def profile_names(self) -> list[str]:
         return sorted(self.profiles.keys())
 
+    def get_default_profile(self) -> str:
+        names = self.profile_names()
+        if not names:
+            return "default"
+        if "debug" in names:
+            return "debug"
+        if "release" in names:
+            return "release"
+        return names[0]
+
     def apply_profile(self, profile: str | None) -> str:
         self.normalize()
         if not self.profiles:
