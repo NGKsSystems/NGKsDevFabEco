@@ -75,6 +75,8 @@ cd NGKsDevFabEco
 
 # Run the official installer (creates .venv by default, full proof logging)
 .\install_ngksdevfabeco.ps1
+If you run `-UserInstall` outside a venv, the installer now prompts:
+`You are not in a virtual environment. Create and activate .venv now? [Y/N]`
 After installation:
 
 Activate: .\.venv\Scripts\Activate.ps1

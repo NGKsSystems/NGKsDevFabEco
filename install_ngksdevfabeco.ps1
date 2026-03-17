@@ -2,7 +2,7 @@ param(
     [string]$WheelhousePath,
     [switch]$ForceRecreateVenv,
     [switch]$UserInstall,
-    [string]$Version = '1.2.0',
+    [string]$Version = '1.2.4',
     [switch]$CleanupInvalidUserDistributions,
     [switch]$PersistUserScriptsPath,
     [ValidateSet('auto', 'wheelhouse', 'pypi')]
@@ -116,6 +116,38 @@ function Resolve-InstallerPython {
     throw 'PYTHON_NOT_FOUND: cannot locate py or python in PATH'
 }
 
+function Test-InVirtualEnvironment {
+    return -not [string]::IsNullOrWhiteSpace($env:VIRTUAL_ENV)
+}
+
+function Resolve-ComponentVersions {
+    param([string]$EcoVersion)
+
+    switch ($EcoVersion) {
+        '1.2.4' {
+            return @{
+                devfabric  = '1.2.4'
+                graph      = '0.1.13'
+                buildcore  = '0.1.8'
+                envcapsule = '0.1.6'
+                library    = '0.1.6'
+            }
+        }
+        '1.2.3' {
+            return @{
+                devfabric  = '1.2.3'
+                graph      = '0.1.12'
+                buildcore  = '0.1.7'
+                envcapsule = '0.1.5'
+                library    = '0.1.5'
+            }
+        }
+        default {
+            throw "UNSUPPORTED_VERSION_MAPPING: add component version map for ngksdevfabeco==$EcoVersion"
+        }
+    }
+}
+
 function Invoke-Pip {
     param(
         [string]$PythonExe,
@@ -143,6 +175,47 @@ if ($UserInstall) {
     $installerPython = Resolve-InstallerPython
     Write-Log "install_mode=user"
     Write-Log "python_executable=$installerPython"
+
+    $venvPrompt = $false
+    if (-not (Test-InVirtualEnvironment)) {
+        if ([Environment]::UserInteractive) {
+            $venvPrompt = $true
+        }
+    }
+
+    if ($venvPrompt) {
+        $answer = (Read-Host "You are not in a virtual environment. Create and activate .venv now? [Y/N]").Trim().ToUpperInvariant()
+        if ($answer -eq 'Y') {
+            $venvDir = Join-Path $repoRoot '.venv'
+            if (-not (Test-Path $venvDir)) {
+                Invoke-Logged -Executable $installerPython -Arguments @('-m', 'venv', $venvDir)
+            }
+            $venvPython = Join-Path $venvDir 'Scripts\python.exe'
+            if (-not (Test-Path $venvPython)) {
+                throw "VENV_PYTHON_MISSING: $venvPython"
+            }
+
+            Invoke-Pip -PythonExe $venvPython -PipArgs @('install', '--upgrade', 'pip', 'setuptools', 'wheel')
+            Invoke-Pip -PythonExe $venvPython -PipArgs @('install', '--upgrade', ("ngksdevfabeco==" + $Version))
+            Invoke-Pip -PythonExe $venvPython -PipArgs @('show', 'ngksdevfabeco', 'ngksdevfabric')
+            Invoke-Pip -PythonExe $venvPython -PipArgs @('check')
+
+            Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', '--help')
+            Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', 'predict-risk', '--help')
+
+            @(
+                "repo_root=$repoRoot",
+                "install_mode=venv_prompted",
+                "venv=$venvDir",
+                "version=$Version",
+                "status=PASS"
+            ) | Set-Content -Encoding UTF8 (Join-Path $proofDir 'result.txt')
+
+            Write-Host "INSTALL_OK mode=venv version=$Version proof=$proofDir"
+            return
+        }
+        Write-Log 'venv_prompt_response=N continuing with user install'
+    }
 
     if ($CleanupInvalidUserDistributions) {
         Remove-InvalidUserDistributions
@@ -214,13 +287,14 @@ if (-not (Test-Path $venvPython)) {
 
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'pip')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'setuptools', 'wheel')
+$componentVersions = Resolve-ComponentVersions -EcoVersion $Version
 $packages = @(
     ("ngksdevfabeco==" + $Version),
-    ("ngksdevfabric==" + $Version),
-    'ngksgraph==0.1.9',
-    'ngksbuildcore==0.1.4',
-    'ngksenvcapsule==0.1.2',
-    'ngkslibrary==0.1.2'
+    ("ngksdevfabric==" + $componentVersions['devfabric']),
+    ("ngksgraph==" + $componentVersions['graph']),
+    ("ngksbuildcore==" + $componentVersions['buildcore']),
+    ("ngksenvcapsule==" + $componentVersions['envcapsule']),
+    ("ngkslibrary==" + $componentVersions['library'])
 )
 $packageNames = @('ngksdevfabeco', 'ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
 
