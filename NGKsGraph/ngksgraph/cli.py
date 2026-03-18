@@ -43,7 +43,18 @@ from ngksgraph.mode import get_mode, is_ecosystem
 from ngksgraph.toolchain import doctor_report, doctor_toolchain_report
 from ngksgraph.plan_cache import CACHE_SCHEMA_VERSION
 from ngksgraph.msvc import bootstrap_msvc, resolve_msvc_toolchain_paths
-from ngksgraph.proof import TeeTextIO, gather_git_metadata, new_proof_run, write_summary, zip_run, resolve_repo_root
+from ngksgraph.proof import (
+    TeeTextIO,
+    activate_proof_run,
+    clear_active_proof_run,
+    current_proof_run_dir,
+    gather_git_metadata,
+    new_proof_run,
+    resolve_proof_work_root,
+    resolve_repo_root,
+    write_summary,
+    zip_run,
+)
 from ngksgraph.repo_classifier import classify_repo, synthesize_init_toml
 from ngksgraph.scan_pipeline import run_scan
 from ngksgraph.targetspec import load_or_derive_target_spec
@@ -134,15 +145,20 @@ def _default_selftest_out(repo_root: Path) -> Path:
 
 
 def _new_component_proof_dir(repo_root: Path, explicit_pf: str | None = None) -> Path:
+    active_run_dir = current_proof_run_dir()
+    if active_run_dir is not None:
+        proof_dir = (active_run_dir / "graph_ecosystem").resolve()
+        proof_dir.mkdir(parents=True, exist_ok=True)
+        return proof_dir
     if explicit_pf:
         proof_dir = Path(explicit_pf).resolve()
         proof_dir.mkdir(parents=True, exist_ok=True)
         return proof_dir
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    proof_dir = (repo_root / "_proof" / f"graph_ecosystem_{stamp}").resolve()
+    proof_dir = (resolve_proof_work_root(repo_root) / f"graph_ecosystem_{stamp}").resolve()
     suffix = 1
     while proof_dir.exists():
-        proof_dir = (repo_root / "_proof" / f"graph_ecosystem_{stamp}_{suffix:02d}").resolve()
+        proof_dir = (resolve_proof_work_root(repo_root) / f"graph_ecosystem_{stamp}_{suffix:02d}").resolve()
         suffix += 1
     proof_dir.mkdir(parents=True, exist_ok=False)
     return proof_dir
@@ -401,7 +417,6 @@ def cmd_build(args: argparse.Namespace) -> int:
             )
             print(f"Plan file: {plan_path}")
             print(f"Plan hash: {plan_hash_path}")
-            print(f"Proof dir: {proof_dir}")
             return 0
         except KeyError as exc:
             missing = str(exc).strip("'\"")
@@ -1508,6 +1523,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    cli_invocation = argv is None
     args_list = list(argv) if argv is not None else list(sys.argv[1:])
     repo_root = resolve_repo_root()
     proof = new_proof_run(repo_root)
@@ -1525,31 +1541,35 @@ def main(argv: list[str] | None = None) -> int:
     exit_code = 1
     pending_exception: BaseException | None = None
     parser = build_parser()
+    activate_proof_run(proof.run_dir)
 
-    with stdout_log.open("w", encoding="utf-8") as stdout_file, stderr_log.open("w", encoding="utf-8") as stderr_file:
-        original_stdout = sys.stdout
-        original_stderr = sys.stderr
-        sys.stdout = TeeTextIO(original_stdout, stdout_file)
-        sys.stderr = TeeTextIO(original_stderr, stderr_file)
-        try:
-            args = parser.parse_args(args_list)
-            exit_code = int(args.func(args))
-        except BaseException as exc:
-            pending_exception = exc
-            if isinstance(exc, SystemExit):
-                if isinstance(exc.code, int):
-                    exit_code = int(exc.code)
-                elif exc.code is None:
-                    exit_code = 0
+    try:
+        with stdout_log.open("w", encoding="utf-8") as stdout_file, stderr_log.open("w", encoding="utf-8") as stderr_file:
+            original_stdout = sys.stdout
+            original_stderr = sys.stderr
+            sys.stdout = TeeTextIO(original_stdout, stdout_file)
+            sys.stderr = TeeTextIO(original_stderr, stderr_file)
+            try:
+                args = parser.parse_args(args_list)
+                exit_code = int(args.func(args))
+            except BaseException as exc:
+                pending_exception = exc
+                if isinstance(exc, SystemExit):
+                    if isinstance(exc.code, int):
+                        exit_code = int(exc.code)
+                    elif exc.code is None:
+                        exit_code = 0
+                    else:
+                        exit_code = 1
                 else:
                     exit_code = 1
-            else:
-                exit_code = 1
-        finally:
-            sys.stdout.flush()
-            sys.stderr.flush()
-            sys.stdout = original_stdout
-            sys.stderr = original_stderr
+            finally:
+                sys.stdout.flush()
+                sys.stderr.flush()
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+    finally:
+        clear_active_proof_run()
 
     git_commit, _ = gather_git_metadata(repo_root, proof.run_dir)
     finished = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1566,6 +1586,9 @@ def main(argv: list[str] | None = None) -> int:
     zip_run(proof.run_dir, proof.zip_path)
     print(f"PROOF_ZIP={proof.zip_path}", file=sys.stderr)
     if pending_exception is not None:
+        if cli_invocation and isinstance(pending_exception, ValueError):
+            print(f"CONFIG_ERROR: {pending_exception}", file=sys.stderr)
+            return exit_code
         raise pending_exception
     return exit_code
 

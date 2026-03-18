@@ -10,6 +10,9 @@ import subprocess
 import zipfile
 
 
+_ACTIVE_PROOF_RUN_DIR: Path | None = None
+
+
 class TeeTextIO(io.TextIOBase):
     def __init__(self, primary: io.TextIOBase, mirror: io.TextIOBase):
         self._primary = primary
@@ -34,55 +37,93 @@ class ProofRun:
     zip_path: Path
 
 
+def _is_within(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
 def resolve_repo_root() -> Path:
-    return Path(__file__).resolve().parent.parent
+    cwd = Path.cwd().resolve()
+    for candidate in [cwd] + list(cwd.parents):
+        if (candidate / "ngksgraph.toml").exists():
+            return candidate
+    return cwd
 
 
 def resolve_proof_root(repo_root: Path) -> Path:
+    repo_root = repo_root.resolve()
     proof_root = (repo_root / "_proof").resolve()
-    if not str(proof_root).startswith(str(repo_root.resolve())):
+    if not _is_within(proof_root, repo_root):
         raise RuntimeError("INVALID_PROOF_PATH")
     return proof_root
 
 
-def _resolve_easy_access_root(repo_root: Path) -> Path:
-    easy_root = (repo_root / "proofs").resolve()
-    easy_root.mkdir(parents=True, exist_ok=True)
-    return easy_root
+def resolve_proof_work_root(repo_root: Path) -> Path:
+    repo_root = repo_root.resolve()
+    work_root = (repo_root / ".ngksgraph_proof_tmp").resolve()
+    if not _is_within(work_root, repo_root):
+        raise RuntimeError("INVALID_PROOF_PATH")
+    return work_root
 
 
-def _mirror_easy_access(run_dir: Path, zip_path: Path) -> None:
+def activate_proof_run(run_dir: Path) -> None:
+    global _ACTIVE_PROOF_RUN_DIR
+    _ACTIVE_PROOF_RUN_DIR = run_dir.resolve()
+
+
+def clear_active_proof_run() -> None:
+    global _ACTIVE_PROOF_RUN_DIR
+    _ACTIVE_PROOF_RUN_DIR = None
+
+
+def current_proof_run_dir() -> Path | None:
+    return _ACTIVE_PROOF_RUN_DIR
+
+
+def _reserve_proof_paths(proof_root: Path, work_root: Path) -> tuple[Path, Path]:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    suffix = 0
+    while True:
+        name = f"run_{stamp}" if suffix == 0 else f"run_{stamp}_{suffix:02d}"
+        run_dir = (work_root / name).resolve()
+        zip_path = (proof_root / f"{name}.zip").resolve()
+        if not run_dir.exists() and not zip_path.exists():
+            return run_dir, zip_path
+        suffix += 1
+
+
+def _preserve_failed_temp(run_dir: Path) -> None:
+    if not run_dir.exists():
+        return
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    failed_dir = (run_dir.parent / f"_FAILED_TEMP_{stamp}").resolve()
+    suffix = 1
+    while failed_dir.exists():
+        failed_dir = (run_dir.parent / f"_FAILED_TEMP_{stamp}_{suffix:02d}").resolve()
+        suffix += 1
+
     try:
-        repo_root = run_dir.parent.parent.resolve()
-        easy_root = _resolve_easy_access_root(repo_root)
-        latest_run_dir = easy_root / "latest_ngksgraph_run"
-        if latest_run_dir.exists():
-            shutil.rmtree(latest_run_dir)
-        shutil.copytree(run_dir, latest_run_dir)
-        shutil.copy2(zip_path, easy_root / "latest_ngksgraph_run.zip")
-        (easy_root / "LATEST_NGKSGRAPH_PROOF_DIR.txt").write_text(str(run_dir) + "\n", encoding="utf-8")
-        (easy_root / "LATEST_NGKSGRAPH_PROOF_ZIP.txt").write_text(str(zip_path) + "\n", encoding="utf-8")
+        run_dir.rename(failed_dir)
     except Exception:
-        # Proof mirroring is best-effort and must never fail the primary run.
         pass
 
 
 def new_proof_run(repo_root: Path) -> ProofRun:
     proof_root = resolve_proof_root(repo_root)
     proof_root.mkdir(parents=True, exist_ok=True)
+    work_root = resolve_proof_work_root(repo_root)
+    work_root.mkdir(parents=True, exist_ok=True)
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    run_dir = (proof_root / f"run_{stamp}").resolve()
-    suffix = 1
-    while run_dir.exists():
-        run_dir = (proof_root / f"run_{stamp}_{suffix:02d}").resolve()
-        suffix += 1
+    run_dir, zip_path = _reserve_proof_paths(proof_root, work_root)
 
-    if not str(run_dir).startswith(str(proof_root)):
+    if not _is_within(run_dir, work_root):
         raise RuntimeError("INVALID_PROOF_PATH")
 
     run_dir.mkdir(parents=True, exist_ok=False)
-    zip_path = run_dir.with_suffix(".zip")
     return ProofRun(repo_root=repo_root.resolve(), run_dir=run_dir, zip_path=zip_path.resolve())
 
 
@@ -149,10 +190,29 @@ def write_summary(
 
 
 def zip_run(run_dir: Path, zip_path: Path) -> None:
+    run_dir = run_dir.resolve()
+    zip_path = zip_path.resolve()
+    tmp_zip = zip_path.with_name(zip_path.name + ".tmp")
+
+    if tmp_zip.exists():
+        tmp_zip.unlink()
     if zip_path.exists():
         zip_path.unlink()
-    with zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        for path in sorted(run_dir.rglob("*"), key=lambda p: p.as_posix()):
-            if path.is_file():
-                zf.write(path, arcname=path.relative_to(run_dir).as_posix())
-    _mirror_easy_access(run_dir, zip_path)
+
+    try:
+        zip_path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(tmp_zip, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+            for path in sorted(run_dir.rglob("*"), key=lambda p: p.as_posix()):
+                if path.is_file():
+                    zf.write(path, arcname=path.relative_to(run_dir).as_posix())
+        tmp_zip.replace(zip_path)
+        shutil.rmtree(run_dir)
+        try:
+            run_dir.parent.rmdir()
+        except OSError:
+            pass
+    except Exception:
+        if tmp_zip.exists():
+            tmp_zip.unlink()
+        _preserve_failed_temp(run_dir)
+        raise

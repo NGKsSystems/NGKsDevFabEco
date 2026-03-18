@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+import re
+import sys
 from typing import Any
 
 import tomllib
@@ -289,6 +291,38 @@ def _as_list(raw: Any) -> list[str]:
     return [str(v) for v in raw]
 
 
+def parse_qt_major_version(raw: Any) -> tuple[int, str | None]:
+    if raw is None:
+        return 6, None
+
+    if isinstance(raw, bool):
+        raise ValueError("qt.version must be an integer major version or semantic string like '6.9.9'.")
+
+    if isinstance(raw, int):
+        return raw, None
+
+    if isinstance(raw, str):
+        text = raw.strip()
+        if not text:
+            raise ValueError("qt.version must not be empty.")
+
+        match = re.fullmatch(r"(\d+)(?:\.\d+)*", text)
+        if not match:
+            raise ValueError(
+                f"qt.version='{raw}' is invalid. Use an integer major version (e.g. 6) or semantic version (e.g. '6.9.9')."
+            )
+
+        major = int(match.group(1))
+        if text != str(major):
+            note = f"NGKSGRAPH_CONFIG_NORMALIZATION: qt.version='{raw}' normalized_to_major={major}"
+            return major, note
+        return major, None
+
+    raise ValueError(
+        f"qt.version has unsupported type '{type(raw).__name__}'. Use integer or semantic string like '6.9.9'."
+    )
+
+
 def _target_from_raw(raw: dict[str, Any], defaults: dict[str, Any]) -> TargetConfig:
     return TargetConfig(
         name=str(raw.get("name", "")).strip(),
@@ -329,6 +363,10 @@ def load_config(path: Path) -> Config:
                 ldflags=_as_list(body.get("ldflags", [])),
             )
 
+    qt_version, qt_version_note = parse_qt_major_version(qt_raw.get("version", 6))
+    if qt_version_note:
+        print(qt_version_note, file=sys.stderr)
+
     cfg = Config(
         name=str(raw.get("name", "app")),
         out_dir=str(raw.get("out_dir", "build")),
@@ -355,7 +393,7 @@ def load_config(path: Path) -> Config:
             enabled=bool(qt_raw.get("enabled", False)),
             qt_root=str(qt_raw.get("qt_root", "")),
             prefix=str(qt_raw.get("prefix", "")),
-            version=int(qt_raw.get("version", 6)),
+            version=qt_version,
             modules=_as_list(qt_raw.get("modules", [])),
             moc_path=str(qt_raw.get("moc_path", "")),
             uic_path=str(qt_raw.get("uic_path", "")),
