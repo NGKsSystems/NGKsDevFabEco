@@ -27,6 +27,12 @@ def _entrypoints(sources: list[str]) -> list[str]:
     return sorted(normalized[:1])
 
 
+# Qt6EntryPoint is a Windows linker bootstrap library (link-only, no public include headers).
+# It must not generate a qt.entrypoint capability requirement — there is no include/QtEntrypoint
+# directory in any Qt installation, so the capability detector would always mark it missing.
+_LINK_ONLY_QT_LIBS: frozenset[str] = frozenset({"entrypoint"})
+
+
 def _required_capabilities(target: Target) -> list[str]:
     required = [
         "cxx.compiler",
@@ -41,7 +47,7 @@ def _required_capabilities(target: Target) -> list[str]:
             module_name = module_name[3:]
         if module_name.lower().endswith(".lib"):
             module_name = module_name[:-4]
-        if module_name:
+        if module_name and module_name.lower() not in _LINK_ONLY_QT_LIBS:
             required.append(f"qt.{module_name.lower()}")
     return sorted(set(required), key=lambda x: x)
 

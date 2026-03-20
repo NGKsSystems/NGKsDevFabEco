@@ -1,0 +1,3 @@
+## master...origin/master
+ M ../NGKsBuildCore/ngksbuildcore/runner.py
+ M ngksgraph/proof.py

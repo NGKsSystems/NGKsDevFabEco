@@ -1,0 +1,5 @@
+TARGET_RESOLUTION_WARNING: missing=1 conflicting=0 downgraded=0
+Resolution report: C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\build_graph\debug\resolution\14_resolution_report.json
+BuildCore plan: C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\build_graph\debug\ngksbuildcore_plan.json
+PROOF_ZIP=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\_proof\run_20260318_144218.zip
+

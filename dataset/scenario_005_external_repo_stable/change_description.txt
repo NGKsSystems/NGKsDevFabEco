@@ -1,0 +1,48 @@
+SCENARIO 005 — EXTERNAL REPO STABLE UNDER HARMLESS EDIT (NGKsPINirvana)
+
+Change Applied:
+File: C:/Users/suppo/Desktop/NGKsSystems/NGKsPINirvana/package.json
+Field: description (new field added)
+
+Before:
+  {
+    "dependencies": {
+      "cross-env": "^10.1.0"
+    }
+  }
+
+After (harmless edit):
+  {
+    "description": "NGKs PIN Nirvana secure entry manager",
+    "dependencies": {
+      "cross-env": "^10.1.0"
+    }
+  }
+
+Description:
+A non-functional metadata description field is added to the package.json of
+NGKsPINirvana, a TIER_2 ecosystem repository. TIER_2 repos are certified only
+at the probe and doctor stages — they do not have a configure or build baseline.
+
+The full ecosystem release gate is run with --no-build. The gate checks all
+10 repos, and since the description field does not affect probe or doctor
+outcomes for any repo, the result is PASS with zero regressions.
+
+This scenario demonstrates:
+1. The gate does not over-flag harmless changes to TIER_2 repos
+2. TIER_2 certification scope is correctly scoped to probe+doctor
+3. The --no-build flag correctly skips build stages ecosystem-wide
+4. No false positives are generated under real-world benign edits
+
+After the scenario was captured, the package.json was restored to its
+original 4-line form.
+
+Why This Matters:
+A release gate that flags false positives on trivial metadata edits would
+be unusable. This scenario validates the gate's tolerance for non-impacting
+changes in the ecosystem.
+
+Expected Gate Behavior: PASS (exit code 0)
+Actual Gate Behavior:   PASS (exit code 0) ✓ CORRECT
+False Positives: 0
+File Restored After Test: YES ✓

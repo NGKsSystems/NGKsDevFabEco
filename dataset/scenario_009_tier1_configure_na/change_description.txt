@@ -1,0 +1,27 @@
+Scenario 009 — Tier Contract Violation (TIER_1 with configure=N/A)
+
+## Change Description
+
+The baseline manifest at `.baseline_v1_20260318_194000/repo_manifest.json` was edited to
+set NGKsFileVisionary (a TIER_1 repo) with:
+
+    "configure": "N/A",
+    "build": "N/A"
+
+TIER_1 repos are required to have their `configure` field set to either "PASS" or "FAIL".
+Setting it to "N/A" violates the tier contract for TIER_1 classification.
+
+## Why This Is a Regression
+
+The certification framework enforces tier-specific baseline constraints:
+- TIER_1 repos: configure must be PASS or FAIL (indicates these repos go through full build testing)
+- TIER_2 repos: configure must be N/A (indicates these repos only have probe/doctor testing)
+
+When a TIER_1 repo has configure=N/A, it signals that the certification baseline is
+incorrectly configured or the repo was miscategorized. This is treated as a hard regression.
+
+Regression: `tier_contract_violation:TIER_1_requires_configure_PASS_but_baseline_is_NA`
+
+## Restoration
+
+The configure and build fields were restored to "PASS" after the scenario was recorded.

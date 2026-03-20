@@ -1,0 +1,20 @@
+REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime
+HAS_VENV=True
+HAS_GRAPH=True
+PROFILES=[profiles.debug]; [profiles.release]
+
+REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab
+HAS_VENV=True
+HAS_GRAPH=True
+PROFILES=<none detected>
+
+REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary
+HAS_VENV=True
+HAS_GRAPH=True
+PROFILES=[profiles.debug]; [profiles.release]
+
+REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsPlayerNative
+HAS_VENV=True
+HAS_GRAPH=True
+PROFILES=[profiles.debug]; [profiles.release]
+

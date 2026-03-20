@@ -1,0 +1,8 @@
+{
+  "repos_analyzed": 5,
+  "buildcore_failures": 3,
+  "source_match_failures": 2,
+  "ecosystem_issues": 1,
+  "repo_issues": 2,
+  "environment_issues": 1
+}

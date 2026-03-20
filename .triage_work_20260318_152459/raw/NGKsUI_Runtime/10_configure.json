@@ -1,0 +1,15 @@
+{
+  "args": [
+    "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+    "configure",
+    "--project",
+    "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+    "--profile",
+    "debug"
+  ],
+  "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+  "exit_code": 0,
+  "stdout": "Configured plan: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\build_graph\\debug\\ngksgraph_plan.json\n",
+  "stderr": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\run_20260318_123013.zip\n",
+  "combined": "Configured plan: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\build_graph\\debug\\ngksgraph_plan.json\n\nPROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\run_20260318_123013.zip"
+}

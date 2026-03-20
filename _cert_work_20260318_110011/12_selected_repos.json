@@ -1,0 +1,42 @@
+[
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+    "include_reason": "contains ngksgraph.toml; contains .git; contains package.json",
+    "ngksgraph_toml": true,
+    "git": true,
+    "appears_as": "other",
+    "score": 8
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+    "include_reason": "contains ngksgraph.toml; contains .git; contains pyproject.toml",
+    "ngksgraph_toml": true,
+    "git": true,
+    "appears_as": "python",
+    "score": 8
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab",
+    "include_reason": "contains ngksgraph.toml; contains .git; contains pyproject.toml",
+    "ngksgraph_toml": true,
+    "git": true,
+    "appears_as": "python",
+    "score": 8
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+    "include_reason": "contains ngksgraph.toml; contains .git; contains CMakeLists.txt",
+    "ngksgraph_toml": true,
+    "git": true,
+    "appears_as": "c++",
+    "score": 8
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+    "include_reason": "contains ngksgraph.toml; contains .git",
+    "ngksgraph_toml": true,
+    "git": true,
+    "appears_as": "other",
+    "score": 7
+  }
+]

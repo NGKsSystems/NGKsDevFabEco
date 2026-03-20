@@ -1,0 +1,13 @@
+{
+  "scenario_id": "scenario_011_repeatability",
+  "title": "Repeatability Check (3 Consecutive Runs)",
+  "description": "Run release-gate three consecutive times with no workspace changes and compare normalized outputs. This detects non-deterministic behavior in certification results.",
+  "category": "PASS",
+  "subcategory": "repeatability",
+  "controlled_condition": "no_change_between_runs",
+  "tool": "release-gate",
+  "mode": "no_build",
+  "runs": 3,
+  "expected_outcome": "identical_normalized_results",
+  "non_determinism_expected": false
+}

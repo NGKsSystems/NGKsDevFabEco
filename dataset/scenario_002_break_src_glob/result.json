@@ -1,0 +1,16 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "correct_behavior": true,
+  "run_id": "certify_baseline_20260319_093137",
+  "timestamp": "2026-03-19T06:31:37+00:00",
+  "repos_checked": 1,
+  "repos_pass": 0,
+  "repos_regression": 1,
+  "regressions_detected": [
+    "configure:PASS->FAIL(exit=2)",
+    "build:PASS->FAIL(exit=2)"
+  ],
+  "notes": "The broken src_glob caused both the configure stage (no sources resolved) and the build stage to fail. Gate correctly identified 2 regressions against the certified baseline and returned exit code 1."
+}

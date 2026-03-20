@@ -1,0 +1,288 @@
+[
+  {
+    "repo": "NGKsUI Runtime",
+    "path": "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+    "has_profiles": true,
+    "commands": {
+      "probe": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "probe",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\probe_20260318_142030\nprobe_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\probe_20260318_142030\\probe_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nprimary_path=unknown\nexit_code=0"
+      },
+      "doctor": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "doctor",
+          "--no-prompt",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\doctor_20260318_142030\ntoolchain_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\doctor_20260318_142030\\toolchain_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nexit_code=0\n----------------------------------------\nHINT:\nRun project-health for full system status:\n  python -m ngksdevfabric.ngk_fabric.main project-health --project C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\n----------------------------------------"
+      },
+      "configure_no_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime"
+        ],
+        "output": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112034.zip\nCONFIG_ERROR: Profiles are defined in config; --profile is required. Available profiles: debug, release"
+      },
+      "configure_with_profile": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+          "--profile",
+          "debug"
+        ],
+        "output": "Configured plan: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\build_graph\\debug\\ngksgraph_plan.json\n\nPROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112035.zip"
+      },
+      "build": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "build",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+          "--profile",
+          "debug"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\ngraph_state_scope=cli_ngks_build\ngraph_state_dirty_before=True\ngraph_state_refresh_action=auto_refresh\ngraph_state_refresh_status=success\ngraph_state_file=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\.graph_state\\graph_state.json\nGRAPH_STATE_AUTOMATION=PASS\nvalidation_policy_stage=build\nvalidation_policy_selected_plugins=api_contract_validation,architectural_complexity_validation,memory_usage_validation,performance_bottleneck_validation,security_misconfiguration_validation\nvalidation_policy_skipped_plugins=ui_layout_integrity\nvalidation_policy_blocking_failures=\nvalidation_policy_advisory_failures=\nvalidation_policy_gate=PASS\nbuild_run_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\build_20260318_142036\\pipeline_build_run\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\build_20260318_142036\nexit_code=0"
+      }
+    }
+  },
+  {
+    "repo": "NGKsMediaLab",
+    "path": "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab",
+    "has_profiles": false,
+    "commands": {
+      "probe": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "probe",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\probe_20260318_142047\nprobe_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\probe_20260318_142047\\probe_report.json\nprofile_contract=implicit_default_no_profiles\navailable_profiles=<none>\nprimary_path=npm\nexit_code=0"
+      },
+      "doctor": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "doctor",
+          "--no-prompt",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\doctor_20260318_142048\ntoolchain_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\doctor_20260318_142048\\toolchain_report.json\nprofile_contract=implicit_default_no_profiles\navailable_profiles=<none>\nexit_code=0\n----------------------------------------\nHINT:\nRun project-health for full system status:\n  python -m ngksdevfabric.ngk_fabric.main project-health --project C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\n----------------------------------------"
+      },
+      "configure_no_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+        ],
+        "output": "NGKSGRAPH_CONFIG_NORMALIZATION: qt.version='6.9.9' normalized_to_major=6\nPROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112051.zip\nCONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: app/cpp_host/src/main.cpp, app/cpp_host/src/mainwindow.cpp, app/win32_host/src/main.cpp)."
+      },
+      "configure_with_profile": {
+        "exit_code": null,
+        "args": [],
+        "output": "N/A (repo has no profiles)"
+      },
+      "build": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "build",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\ngraph_state_scope=cli_ngks_build\ngraph_state_dirty_before=True\ngraph_state_refresh_action=auto_refresh\ngraph_state_refresh_status=success\ngraph_state_file=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\.graph_state\\graph_state.json\nGRAPH_STATE_AUTOMATION=PASS\nvalidation_policy_stage=build\nvalidation_policy_selected_plugins=api_contract_validation,architectural_complexity_validation,memory_usage_validation,performance_bottleneck_validation,security_misconfiguration_validation\nvalidation_policy_skipped_plugins=ui_layout_integrity\nvalidation_policy_blocking_failures=\nvalidation_policy_advisory_failures=\nvalidation_policy_gate=PASS\nbuild_run_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\build_20260318_142053\\pipeline_build_run\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\build_20260318_142053\nexit_code=0"
+      }
+    }
+  },
+  {
+    "repo": "NGKsFileVisionary",
+    "path": "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+    "has_profiles": true,
+    "commands": {
+      "probe": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "probe",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\probe_20260318_142117\nprobe_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\probe_20260318_142117\\probe_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nprimary_path=npm\nexit_code=0"
+      },
+      "doctor": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "doctor",
+          "--no-prompt",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\doctor_20260318_142117\ntoolchain_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\doctor_20260318_142117\\toolchain_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nexit_code=0\n----------------------------------------\nHINT:\nRun project-health for full system status:\n  python -m ngksdevfabric.ngk_fabric.main project-health --project C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\n----------------------------------------"
+      },
+      "configure_no_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary"
+        ],
+        "output": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112120.zip\nCONFIG_ERROR: Profiles are defined in config; --profile is required. Available profiles: debug, release"
+      },
+      "configure_with_profile": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+          "--profile",
+          "debug"
+        ],
+        "output": "Configured plan: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\build_graph\\debug\\ngksgraph_plan.json\n\nPROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112120_01.zip"
+      },
+      "build": {
+        "exit_code": 2,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "build",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+          "--profile",
+          "debug"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\ngraph_state_scope=cli_ngks_build\ngraph_state_dirty_before=True\ngraph_state_refresh_action=auto_refresh\ngraph_state_refresh_status=success\ngraph_state_file=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\.graph_state\\graph_state.json\nGRAPH_STATE_AUTOMATION=PASS\nvalidation_policy_stage=build\nvalidation_policy_selected_plugins=api_contract_validation,architectural_complexity_validation,memory_usage_validation,performance_bottleneck_validation,security_misconfiguration_validation\nvalidation_policy_skipped_plugins=ui_layout_integrity\nvalidation_policy_blocking_failures=\nvalidation_policy_advisory_failures=\nvalidation_policy_gate=PASS\nbuild_run_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\build_20260318_142121\\pipeline_build_run\nroot_cause_stage=BUILDCORE_EXECUTION_FAILURE\nroot_cause_code=BUILDCORE_NONZERO_EXIT\nroot_cause_confidence=0.88\nroot_cause_artifact=41_failure_stage_classification.json\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\build_20260318_142121\nexit_code=2"
+      }
+    }
+  },
+  {
+    "repo": "NGKsPlayerNative",
+    "path": "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+    "has_profiles": true,
+    "commands": {
+      "probe": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "probe",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\probe_20260318_142238\nprobe_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\probe_20260318_142238\\probe_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nprimary_path=npm\nexit_code=0"
+      },
+      "doctor": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "doctor",
+          "--no-prompt",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\doctor_20260318_142239\ntoolchain_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\doctor_20260318_142239\\toolchain_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nexit_code=0\n----------------------------------------\nHINT:\nRun project-health for full system status:\n  python -m ngksdevfabric.ngk_fabric.main project-health --project C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\n----------------------------------------"
+      },
+      "configure_no_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative"
+        ],
+        "output": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112243.zip\nCONFIG_ERROR: Profiles are defined in config; --profile is required. Available profiles: debug, release"
+      },
+      "configure_with_profile": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+          "--profile",
+          "debug"
+        ],
+        "output": "Configured plan: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\build_graph\\debug\\ngksgraph_plan.json\n\nPROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112244.zip"
+      },
+      "build": {
+        "exit_code": 2,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "build",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+          "--profile",
+          "debug"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\ngraph_state_scope=cli_ngks_build\ngraph_state_dirty_before=True\ngraph_state_refresh_action=auto_refresh\ngraph_state_refresh_status=success\ngraph_state_file=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\.graph_state\\graph_state.json\nGRAPH_STATE_AUTOMATION=PASS\nvalidation_policy_stage=build\nvalidation_policy_selected_plugins=api_contract_validation,architectural_complexity_validation,memory_usage_validation,performance_bottleneck_validation,security_misconfiguration_validation,ui_layout_integrity\nvalidation_policy_skipped_plugins=\nvalidation_policy_blocking_failures=\nvalidation_policy_advisory_failures=\nvalidation_policy_gate=PASS\nbuild_run_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\build_20260318_142244\\pipeline_build_run\nroot_cause_stage=BUILDCORE_EXECUTION_FAILURE\nroot_cause_code=BUILDCORE_NONZERO_EXIT\nroot_cause_confidence=0.88\nroot_cause_artifact=41_failure_stage_classification.json\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\build_20260318_142244\nexit_code=2"
+      }
+    }
+  },
+  {
+    "repo": "NGKsGraph",
+    "path": "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+    "has_profiles": true,
+    "commands": {
+      "probe": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "probe",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\probe_20260318_142313\nprobe_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\probe_20260318_142313\\probe_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nprimary_path=python\nexit_code=0"
+      },
+      "doctor": {
+        "exit_code": 0,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "doctor",
+          "--no-prompt",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\doctor_20260318_142314\ntoolchain_report=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\doctor_20260318_142314\\toolchain_report.json\nprofile_contract=explicit_profile_required\navailable_profiles=debug, release\nexit_code=0\n----------------------------------------\nHINT:\nRun project-health for full system status:\n  python -m ngksdevfabric.ngk_fabric.main project-health --project C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\n----------------------------------------"
+      },
+      "configure_no_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph"
+        ],
+        "output": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112316.zip\nCONFIG_ERROR: Profiles are defined in config; --profile is required. Available profiles: debug, release"
+      },
+      "configure_with_profile": {
+        "exit_code": 1,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+          "configure",
+          "--project",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+          "--profile",
+          "debug"
+        ],
+        "output": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\run_20260318_112317.zip\nCONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: examples/hello_msvc/src/main.cpp, examples/multi_target_msvc/src/app/main.cpp, examples/multi_target_msvc/src/core/core.cpp, examples/qt_msvc_real/build/debug/qt/moc_core_message.cpp, examples/qt_msvc_real/build/debug/qt/moc_main_window.cpp, examples/qt_msvc_real/build/debug/qt/qrc_app.cpp, examples/qt_msvc_real/build/release/qt/moc_core_message.cpp, examples/qt_msvc_real/build/release/qt/moc_main_window.cpp, examples/qt_msvc_real/build/release/qt/qrc_app.cpp, examples/qt_msvc_real/src/app/main.cpp)."
+      },
+      "build": {
+        "exit_code": 2,
+        "args": [
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+          "build",
+          "c:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+          "--profile",
+          "debug"
+        ],
+        "output": "Documentation will be located at C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\nSet --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.\ngraph_state_scope=cli_ngks_build\ngraph_state_dirty_before=True\ngraph_state_refresh_action=auto_refresh\ngraph_state_refresh_status=success\ngraph_state_file=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\.graph_state\\graph_state.json\nGRAPH_STATE_AUTOMATION=PASS\nvalidation_policy_stage=build\nvalidation_policy_selected_plugins=api_contract_validation,architectural_complexity_validation,memory_usage_validation,performance_bottleneck_validation,security_misconfiguration_validation,ui_layout_integrity\nvalidation_policy_skipped_plugins=\nvalidation_policy_blocking_failures=\nvalidation_policy_advisory_failures=\nvalidation_policy_gate=PASS\nbuild_run_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\build_20260318_142319\\pipeline_build_run\nroot_cause_stage=BUILDCORE_EXECUTION_FAILURE\nroot_cause_code=BUILDCORE_NONZERO_EXIT\nroot_cause_confidence=0.88\nroot_cause_artifact=41_failure_stage_classification.json\nproject_root=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\nbackup_root=disabled\nproof_dir=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\build_20260318_142319\nexit_code=2"
+      }
+    }
+  }
+]

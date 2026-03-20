@@ -1,0 +1,25 @@
+----------------------------------------
+RELEASE-GATE
+eco_root=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco
+strict=false
+no_build=true
+build_mode=release
+----------------------------------------
+{
+  "verdict": "PASS",
+  "baseline_name": "Certification_Baseline_v1",
+  "baseline_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.baseline_v1_20260318_194000\\repo_manifest.json",
+  "git_head": "b88df252f23f8d2f94da145018536ac64d0617a8",
+  "timestamp": "2026-03-19T14:29:22.350897+00:00",
+  "strict": false,
+  "no_build": true,
+  "build_mode": "release",
+  "repos_checked": 10,
+  "repos_pass": 10,
+  "regression_count": 0,
+  "improvement_count": 0,
+  "tier_1_count": 6,
+  "tier_2_count": 4,
+  "certify_baseline_run_id": "certify_baseline_20260319_172812"
+}
+

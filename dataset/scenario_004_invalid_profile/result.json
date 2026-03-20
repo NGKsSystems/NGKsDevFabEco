@@ -1,0 +1,12 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "profile_missing",
+  "correct_behavior": true,
+  "run_id": "certify_baseline_20260319_131322",
+  "regressions_detected": [
+    "unknown_profile_error:Unknown profile requested from ngksgraph.toml"
+  ],
+  "notes": "Classification normalized: S04 represents a true profile failure. The scenario modifies ngksgraph.toml so a required profile is missing/renamed, and certification reports an Unknown profile regression. This is explicitly not a repo path failure."
+}

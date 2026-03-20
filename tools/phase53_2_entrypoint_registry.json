@@ -1,0 +1,177 @@
+{
+  "registry_version": "1.0",
+  "created": "2026-03-20T00:00:00Z",
+  "validation_target": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+  "validation_target_description": "NGKsUI Runtime - Primary runtime environment subject to Phase 53.2 enforcement",
+  "seal_enforcer": "tools/phase53_2_runtime_seal_enforcer.ps1",
+  "seal_enforcer_location": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco",
+  "enforcement_decision": "MANDATORY_PRE_BUILD_GATE",
+  "entrypoints": [
+    {
+      "id": "native_widget_sandbox",
+      "type": "native_executable",
+      "source_file": "apps/widget_sandbox/main.cpp",
+      "output_path": "build/debug/widget_sandbox.exe",
+      "build_target": "widget_sandbox",
+      "validation_method": "compile_and_link",
+      "guard_binding": "PHASE53_2_PRE_BUILD",
+      "guard_requirement": "DEV_FABECO_PRE_BUILD",
+      "bypass_allowed": false,
+      "notes": "Primary UI runtime entrypoint; must pass Phase 53.2 before compilation"
+    },
+    {
+      "id": "native_sandbox_app",
+      "type": "native_executable",
+      "source_file": "apps/sandbox_app/main.cpp",
+      "output_path": "build/debug/sandbox_app.exe",
+      "build_target": "sandbox_app",
+      "validation_method": "compile_and_link",
+      "guard_binding": "PHASE53_2_PRE_BUILD",
+      "guard_requirement": "DEV_FABECO_PRE_BUILD",
+      "bypass_allowed": false,
+      "notes": "Sandbox runtime entrypoint; must pass Phase 53.2 before compilation"
+    },
+    {
+      "id": "native_loop_tests",
+      "type": "native_executable",
+      "source_file": "apps/loop_tests/main.cpp",
+      "output_path": "build/debug/loop_tests.exe",
+      "build_target": "loop_tests",
+      "validation_method": "compile_and_link",
+      "guard_binding": "PHASE53_2_PRE_BUILD",
+      "guard_requirement": "DEV_FABECO_PRE_BUILD",
+      "bypass_allowed": false,
+      "notes": "Test loop runtime entrypoint; must pass Phase 53.2 before compilation"
+    },
+    {
+      "id": "native_win32_sandbox",
+      "type": "native_executable",
+      "source_file": "apps/win32_sandbox/main.cpp",
+      "output_path": "build/debug/win32_sandbox.exe",
+      "build_target": "win32_sandbox",
+      "validation_method": "compile_and_link",
+      "guard_binding": "PHASE53_2_PRE_BUILD",
+      "guard_requirement": "DEV_FABECO_PRE_BUILD",
+      "bypass_allowed": false,
+      "notes": "Win32 sandbox runtime entrypoint; must pass Phase 53.2 before compilation"
+    },
+    {
+      "id": "script_run_widget_sandbox",
+      "type": "powershell_launcher",
+      "source_file": "tools/run_widget_sandbox.ps1",
+      "runtime_target": "widget_sandbox",
+      "launch_method": "powershell_invoke",
+      "guard_binding": "PHASE53_2_PRE_LAUNCH",
+      "guard_requirement": "RUNTIME_SIDE_PRE_LAUNCH",
+      "bypass_allowed": false,
+      "notes": "PowerShell launcher for widget_sandbox; runtime-side guard required before exe invocation"
+    },
+    {
+      "id": "script_widget_sandbox_launch_common",
+      "type": "powershell_launcher",
+      "source_file": "tools/widget_sandbox_launch_common.ps1",
+      "runtime_target": "widget_sandbox",
+      "launch_method": "powershell_invoke",
+      "guard_binding": "PHASE53_2_PRE_LAUNCH",
+      "guard_requirement": "RUNTIME_SIDE_PRE_LAUNCH",
+      "bypass_allowed": false,
+      "notes": "Common launcher shared by multiple entrypoints; runtime-side guard required"
+    }
+  ],
+  "enforcement_artifacts": [
+    {
+      "artifact_id": "70",
+      "name": "guard_fingerprint_trust_chain",
+      "path": "control_plane/70_guard_fingerprint_trust_chain.json",
+      "description": "Trust chain ledger containing all historical guard verifications",
+      "required": true,
+      "validation": "Must exist before Phase 53.2 gate execution"
+    },
+    {
+      "artifact_id": "110",
+      "name": "trust_chain_ledger_baseline_enforcement_coverage_fingerprint",
+      "path": "control_plane/110_trust_chain_ledger_baseline_enforcement_surface_fingerprint_trust_chain_baseline_enforcement_coverage_fingerprint_regression_anchor.json",
+      "description": "Coverage fingerprint baseline for entrypoint inventory",
+      "required": true,
+      "validation": "Must exist and match 112.coverage_fingerprint_hash"
+    },
+    {
+      "artifact_id": "111",
+      "name": "baseline_snapshot",
+      "path": "control_plane/111_trust_chain_ledger_baseline_enforcement_surface_fingerprint_regression_anchor_trust_chain_baseline.json",
+      "description": "Frozen baseline snapshot of runtime state at seal creation",
+      "required": true,
+      "validation": "Hash must match 112.baseline_snapshot_hash; semantic fields must not change"
+    },
+    {
+      "artifact_id": "112",
+      "name": "integrity_record",
+      "path": "control_plane/112_trust_chain_ledger_baseline_enforcement_surface_fingerprint_regression_anchor_trust_chain_baseline_integrity.json",
+      "description": "Integrity record containing baseline hashes and ledger head reference",
+      "required": true,
+      "validation": "Contains baseline_snapshot_hash, coverage_fingerprint_hash, ledger_head_hash"
+    }
+  ],
+  "gate_definition": {
+    "name": "Phase 53.2 Trust Chain Ledger Baseline Enforcement",
+    "gate_count": 7,
+    "gates": [
+      {"id": 1, "name": "Artifact 111 Existence", "block_on_fail": true},
+      {"id": 2, "name": "Artifact 112 Existence", "block_on_fail": true},
+      {"id": 3, "name": "Snapshot Hash Match", "block_on_fail": true},
+      {"id": 4, "name": "Trust Chain Integrity", "block_on_fail": true},
+      {"id": 5, "name": "Ledger Head Match", "block_on_fail": true},
+      {"id": 6, "name": "Coverage Fingerprint Match", "block_on_fail": true},
+      {"id": 7, "name": "Semantic Fields Protected", "block_on_fail": true}
+    ],
+    "decision_logic": "ALL gates must PASS for runtime to proceed; ANY gate FAIL blocks entire pipeline"
+  },
+  "integration_points": [
+    {
+      "integration_id": "DEV_FABECO_CERTIFY_BASELINE",
+      "location": "NGKsDevFabEco",
+      "purpose": "Pre-build enforcement check",
+      "invocation": "phase53_2_runtime_seal_enforcer.ps1 --ValidationTargetRoot <NGKsUI_Runtime_Path> --ProofDirectory <proof_output>",
+      "exit_code_mapping": {
+        "0": "Gate PASS - build allowed",
+        "1": "Gate FAIL - build blocked"
+      },
+      "fallback": "NONE - fail-closed only"
+    },
+    {
+      "integration_id": "RUNTIME_PRE_LAUNCH",
+      "location": "NGKsUI Runtime (runtime-side)",
+      "purpose": "Pre-execution enforcement check before event loop/renderer init",
+      "invocation": "phase53_2 gate runner called before main() initialization",
+      "exit_code_mapping": {
+        "0": "Gate PASS - runtime allowed",
+        "1": "Gate FAIL - runtime blocked"
+      },
+      "fallback": "NONE - fail-closed only"
+    }
+  ],
+  "seal_status": {
+    "current_verdict": "IMPLEMENTING",
+    "coverage": "100% of native mains and PS1 launchers targeted",
+    "enforcement_type": "MANDATORY",
+    "bypass_possible": false,
+    "regeneration_allowed": false
+  },
+  "proof_tracking": {
+    "proof_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\phase53_2_runtime_seal_*",
+    "required_files": [
+      "01_status.txt",
+      "02_head.txt",
+      "10_entrypoint_inventory.txt",
+      "11_guard_binding_plan.txt",
+      "12_files_touched.txt",
+      "13_build_output.txt",
+      "14_validation_results.txt",
+      "15_behavior_summary.txt",
+      "16_runtime_guard_record.txt",
+      "17_block_evidence.txt",
+      "18_sealed_entrypoints.txt",
+      "98_gate_phase53_runtime_seal.txt"
+    ]
+  }
+}

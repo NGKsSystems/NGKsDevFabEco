@@ -1,0 +1,13 @@
+[certification-bootstrap]
+mode=skipped
+reason=existing certification assets detected
+created_assets=0
+preserved_assets=5
+skipped_assets=0
+structural_state=CERTIFICATION_READY_WITH_WARNINGS
+preserved_asset_paths=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\certification\baseline_v1\baseline_manifest.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\certification\baseline_v1\baseline_matrix.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\certification\baseline_v1\diagnostic_metrics.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\certification\scenario_index.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\certification_target.json
+failure_summary: Build failed in Graph (class=precondition_failed, reason=missing_required_outputs). Action: check prior stage outputs and rerun. Details: C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\_proof\runs\devfabric_run_run_20260319_173414\30_errors.txt. Hint: raise FileNotFoundError(f"Qt tools missing: {', '.join(missing)}")
+run_id=run_20260319_173414
+proof_dir=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\_proof\runs\devfabric_run_run_20260319_173414
+exit_code=2
+

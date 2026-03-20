@@ -1,0 +1,18 @@
+SCENARIO 015 — NON-DETERMINISTIC GUARD
+
+Controlled change:
+Only LastWriteTimeUtc of NGKsPINirvana/package.json was modified.
+File content remained unchanged.
+
+Execution:
+release-gate --eco-root . --no-build --json
+
+Observed behavior:
+- verdict: PASS
+- regression_count: 0
+
+Interpretation:
+Cache/timestamp-sensitive metadata alone did not trigger a false regression.
+
+Restoration:
+Original timestamp restored in finally block.

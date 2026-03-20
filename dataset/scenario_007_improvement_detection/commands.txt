@@ -1,0 +1,24 @@
+# Scenario 007 — Improvement Detection (NGKsUI_Runtime probe/doctor FAIL→PASS)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the change: downgrade NGKsUI_Runtime baseline to probe=FAIL, doctor=FAIL
+$manifest = ".baseline_v1_20260318_194000\repo_manifest.json"
+$m = Get-Content $manifest | ConvertFrom-Json
+$uiRepo = $m.certified_repos | Where-Object { $_.name -eq "NGKsUI_Runtime" }
+$uiRepo.probe = "FAIL"
+$uiRepo.doctor = "FAIL"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8
+
+# Run certify-baseline for NGKsUI_Runtime only (no-build mode)
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsUI_Runtime --no-build --json
+# Expected exit code: 0 (PASS — improvements don't block the gate)
+# Expected improvements: ["probe:FAIL->PASS", "doctor:FAIL->PASS"]
+# Actual exit code: 0  ✓
+
+# Restore the manifest to original PASS values
+$uiRepo.probe = "PASS"
+$uiRepo.doctor = "PASS"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8

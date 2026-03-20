@@ -1,0 +1,26 @@
+Scenario 006 — Repo Path Unavailable (NGKsUI_Runtime Missing)
+
+## Change Description
+
+The baseline manifest at `.baseline_v1_20260318_194000/repo_manifest.json` was edited to
+change the `path` field for the `NGKsUI_Runtime` entry from:
+
+    "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime"
+
+to a nonexistent location:
+
+    "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI_Runtime_DELETED"
+
+This simulates a repository being deleted, renamed, or moved from its certified location.
+
+## Why This Causes a Regression
+
+The `certify-baseline` probe stage calls `ngksdevfabric probe <path>` for each repo. When
+the directory no longer exists, the probe immediately returns a `repo_path_not_found` error
+(exit 2), which classifies as a REGRESSION because the baseline recorded `probe: PASS`.
+
+The regression is:\n  probe:PASS→FAIL (repo_path_not_found)
+
+## Restoration
+
+The `path` field was restored to the original value after the scenario was recorded.

@@ -1,0 +1,11 @@
+{
+  "scenario_id": "scenario_014_partial_dependency",
+  "title": "Partial Dependency Availability",
+  "description": "Disable one required Qt capability (moc path) while leaving other config intact, then run project execution to verify targeted dependency failure behavior.",
+  "category": "REGRESSION",
+  "subcategory": "partial_dependency",
+  "affected_repo": "NGKsFileVisionary",
+  "affected_file": "NGKsFileVisionary/ngksgraph.toml",
+  "controlled_change": "moc_path_only_invalid",
+  "expected_failure": "targeted_qt_tool_missing"
+}

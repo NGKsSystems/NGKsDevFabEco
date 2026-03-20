@@ -1,0 +1,15 @@
+{
+  "id": "scenario_003_missing_qt_capability",
+  "description": "NGKsFileVisionary moc_path is changed to a path that does not exist, disabling the Qt Meta-Object Compiler. This breaks the configure and build stages, triggering a regression.",
+  "repo": "NGKsFileVisionary",
+  "change": "moc_path changed from valid Qt bin path to 'C:/Qt/DOES_NOT_EXIST/bin/moc.exe'",
+  "change_type": "config_corruption",
+  "change_file": "C:/Users/suppo/Desktop/NGKsSystems/NGKsFileVisionary/ngksgraph.toml",
+  "change_field": "qt.moc_path",
+  "original_value": "C:/Qt/6.10.2/msvc2022_64/bin/moc.exe",
+  "broken_value": "C:/Qt/DOES_NOT_EXIST/bin/moc.exe",
+  "expected_outcome": "REGRESSION",
+  "gate_command": "certify-baseline --eco-root . --repo NGKsFileVisionary",
+  "tier": "TIER_1",
+  "regression_expected": true
+}

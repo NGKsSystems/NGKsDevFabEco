@@ -1,0 +1,6 @@
+repo,probe,doctor,configure,build,build_allowed,missing_count,proof_compliance,owner,blocker,gate
+NGKsFileVisionary,PASS,PASS,PASS,PASS,true,0,ZIP,—,CLEAN_PASS,PASS
+NGKsMediaLab,PASS,PASS,PASS,PASS,true,0,ZIP,—,CLEAN_PASS,PASS
+NGKsPlayerNative,PASS,PASS,PASS,PASS,true,0,ZIP,—,CLEAN_PASS,PASS
+NGKsUI_Runtime,PASS,PASS,PASS,PASS,true,0,ZIP,—,CLEAN_PASS,PASS
+NGKsGraph_self,PASS,PASS,PASS,PASS,true,0,ZIP,—,CLEAN_PASS,PASS

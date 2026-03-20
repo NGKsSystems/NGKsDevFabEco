@@ -1,0 +1,19 @@
+# Scenario 003 — Missing Qt Capability (NGKsFileVisionary)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the breaking change to NGKsFileVisionary ngksgraph.toml
+# Changed: moc_path = "C:/Qt/6.10.2/msvc2022_64/bin/moc.exe"
+# To:      moc_path = "C:/Qt/DOES_NOT_EXIST/bin/moc.exe"
+# (Edit made via replace_string_in_file tool)
+
+# Run certify-baseline for NGKsFileVisionary only
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsFileVisionary --json
+
+# Expected exit code: 1 (REGRESSION)
+# Actual exit code: 1  ✓
+
+# Restore ngksgraph.toml to correct state
+# (Restored via replace_string_in_file tool)

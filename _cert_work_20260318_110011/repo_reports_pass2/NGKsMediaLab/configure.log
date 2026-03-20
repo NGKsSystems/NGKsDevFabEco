@@ -1,0 +1,3 @@
+NGKSGRAPH_CONFIG_NORMALIZATION: qt.version='6.9.9' normalized_to_major=6
+PROOF_ZIP=C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\_proof\run_20260318_081150.zip
+CONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: app/cpp_host/src/main.cpp, app/cpp_host/src/mainwindow.cpp, app/win32_host/src/main.cpp).

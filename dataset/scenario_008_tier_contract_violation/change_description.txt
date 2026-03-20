@@ -1,0 +1,28 @@
+Scenario 008 — Tier Contract Violation (NGKs_Zohan as TIER_2 with configure=PASS)
+
+## Change Description
+
+The baseline manifest at `.baseline_v1_20260318_194000/repo_manifest.json` was edited to
+set NGKs_Zohan (a TIER_2 repo) with:
+
+    "configure": "PASS",
+    "build": "PASS"
+
+TIER_2 repos in the certification framework are allowed to have ONLY the `probe` and `doctor`
+stages in their baseline. The `configure` and `build` fields must be "N/A".
+
+## Why This Is a Regression
+
+Tier contract violations are treated as hard failures by certify-baseline. The tool verifies:
+- TIER_1 repos must have configure=PASS/FAIL (not N/A)
+- TIER_2 repos must have configure=N/A
+
+When the tier contract is violated, a regression is recorded regardless of whether the
+actual repo is functioning correctly. This ensures the baseline structure remains consistent
+with the tier definitions.
+
+Regression: `tier_contract_violation:TIER_2_requires_configure_NA_but_baseline_is_not_NA`
+
+## Restoration
+
+The configure and build fields were restored to "N/A" after the scenario was recorded.

@@ -1,0 +1,6 @@
+root_cause_stage=COMMAND_DISPATCH_FAILURE
+root_cause_code=INVALID_COMMAND_SHAPE
+root_cause_confidence=0.98
+root_cause_artifact=41_failure_stage_classification.json
+dispatch_failure_pf=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime\_proof\runs\dispatch_failure_20260318_103752
+

@@ -1,0 +1,14 @@
+{
+  "scenario_id": "scenario_010_external_dependency_version_bump",
+  "title": "External Dependency Version Bump (TIER_2)",
+  "description": "Modify external dependency version in a TIER_2 repo and verify behavioral outcome. TIER_2 repos are not subjected to build checks in release-gate mode, so a version bump from ^10.1.0 to ^10.2.0 in package.json for cross-env should not affect certification. Expected outcome: PASS (no regressions detected, all 10 repos pass, exit=0).",
+  "category": "PASS",
+  "subcategory": "version_bump_harmless",
+  "affected_repo": "NGKsPINirvana",
+  "affected_repo_tier": "TIER_2",
+  "certification_tool": "release-gate",
+  "certification_mode": "--no-build",
+  "run_id": "release_gate_20260319_130750",
+  "timestamp": "2026-03-19T13:07:50Z",
+  "session_id": "behavioral_dataset_scenarios_6_10_20260319"
+}

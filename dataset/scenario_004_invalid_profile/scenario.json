@@ -1,0 +1,16 @@
+{
+  "scenario_id": "scenario_004_profile_missing",
+  "title": "Profile Missing (Unknown Profile Error)",
+  "description": "This scenario removes or renames an expected profile entry in ngksgraph.toml, then runs certification for a repo that requires profile resolution. The run fails with an Unknown profile error. This is a true profile-related regression and not a path/repo-availability failure.",
+  "category": "REGRESSION",
+  "subcategory": "profile_missing",
+  "affected_repo": "NGKsMediaLab",
+  "affected_file": "NGKsMediaLab/ngksgraph.toml",
+  "change_type": "profile_removed_or_renamed",
+  "expected_exit_code": 1,
+  "expected_gate": "FAIL",
+  "expected_regression_types": [
+    "unknown_profile_error"
+  ],
+  "regression_expected": true
+}

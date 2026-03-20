@@ -1,0 +1,78 @@
+----------------------------------------
+CERTIFY-BASELINE
+baseline_manifest=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\.baseline_v1_20260318_194000\repo_manifest.json
+strict=false
+no_build=true
+build_mode=release
+repo_filter=NGKsUI_Runtime
+----------------------------------------
+{
+  "run_id": "certify_baseline_20260319_155912",
+  "timestamp": "2026-03-19T12:59:18.707859+00:00",
+  "baseline_name": "Certification_Baseline_v1",
+  "baseline_locked_at": "UNKNOWN",
+  "baseline_manifest": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.baseline_v1_20260318_194000\\repo_manifest.json",
+  "strict": false,
+  "no_build": true,
+  "build_mode": "release",
+  "gate": "PASS",
+  "repos_checked": 1,
+  "repos_pass": 1,
+  "repos_regression": 0,
+  "repos_improvement": 1,
+  "repo_results": [
+    {
+      "name": "NGKsUI_Runtime",
+      "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime",
+      "exists": true,
+      "overall": "IMPROVEMENT",
+      "regressions": [],
+      "improvements": [
+        "probe:FAIL->PASS",
+        "doctor:FAIL->PASS"
+      ],
+      "stages": [
+        {
+          "stage": "probe",
+          "exit_code": 0,
+          "baseline_value": "FAIL",
+          "current_value": "PASS",
+          "is_regression": false,
+          "is_improvement": true,
+          "notes": []
+        },
+        {
+          "stage": "doctor",
+          "exit_code": 0,
+          "baseline_value": "FAIL",
+          "current_value": "PASS",
+          "is_regression": false,
+          "is_improvement": true,
+          "notes": []
+        },
+        {
+          "stage": "configure",
+          "exit_code": -1,
+          "baseline_value": "PASS",
+          "current_value": "PASS",
+          "is_regression": false,
+          "is_improvement": false,
+          "notes": [
+            "skipped_no_build_flag"
+          ]
+        },
+        {
+          "stage": "build",
+          "exit_code": -1,
+          "baseline_value": "PASS",
+          "current_value": "PASS",
+          "is_regression": false,
+          "is_improvement": false,
+          "notes": [
+            "skipped_no_build_flag"
+          ]
+        }
+      ]
+    }
+  ]
+}

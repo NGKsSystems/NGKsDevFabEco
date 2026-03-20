@@ -1,0 +1,11 @@
+{
+  "exit_code": 2,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "partial_dependency_missing",
+  "run_id": "run_20260319_173414",
+  "targeted_failure_detected": true,
+  "failure_hint": "Qt tools missing",
+  "cascade_noise_detected": false,
+  "notes": "Only one capability path was intentionally invalidated (moc_path). Execution produced a targeted Qt-tools-missing failure signature. Config restored after capture."
+}

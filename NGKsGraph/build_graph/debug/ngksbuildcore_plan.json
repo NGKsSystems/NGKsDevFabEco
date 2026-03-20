@@ -1,0 +1,36 @@
+{
+  "base_dir": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph",
+  "nodes": [
+    {
+      "cmd": "cl /nologo /EHsc /std:c++20 /MD /FS /showIncludes /c examples/hello_msvc/src/main.cpp /Fobuild/debug/obj/examples/hello_msvc/src/main.obj /DDEBUG /DUNICODE /D_UNICODE /Od /Zi",
+      "cwd": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph",
+      "deps": [],
+      "desc": "Compile examples/hello_msvc/src/main.cpp for NGKsGraph",
+      "env": {},
+      "id": "cl:NGKsGraph:compile:main.cpp:c871f7a8932b",
+      "inputs": [
+        "examples/hello_msvc/src/main.cpp"
+      ],
+      "outputs": [
+        "build/debug/obj/examples/hello_msvc/src/main.obj"
+      ]
+    },
+    {
+      "cmd": "link /nologo build/debug/obj/examples/hello_msvc/src/main.obj /OUT:build/debug/bin/NGKsGraph.exe",
+      "cwd": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph",
+      "deps": [
+        "cl:NGKsGraph:compile:main.cpp:c871f7a8932b"
+      ],
+      "desc": "Link NGKsGraph",
+      "env": {},
+      "id": "link:NGKsGraph:link:70f0063675b1",
+      "inputs": [
+        "build/debug/obj/examples/hello_msvc/src/main.obj"
+      ],
+      "outputs": [
+        "build/debug/bin/NGKsGraph.exe"
+      ]
+    }
+  ],
+  "version": 1
+}

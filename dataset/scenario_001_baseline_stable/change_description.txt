@@ -1,0 +1,21 @@
+SCENARIO 001 — BASELINE STABLE
+
+Change Applied: None
+
+Description:
+No changes are made to any repository or configuration file. This scenario
+validates that the certification pipeline correctly returns PASS when all
+10 ecosystem repositories are in their baseline-certified states.
+
+This is the "green baseline" proof — demonstrating that the gate produces
+zero false positives when the ecosystem is clean. All 6 TIER_1 repos pass
+configure (probe, doctor, configure stages), and all 4 TIER_2 repos pass
+their applicable stages (probe, doctor only — no build baseline).
+
+Why This Matters:
+A pipeline that falsely flags regressions when nothing has changed is
+unusable in practice. This scenario confirms the gate has zero false-positive
+rate under nominal conditions.
+
+Expected Gate Behavior: PASS (exit code 0)
+Actual Gate Behavior:   PASS (exit code 0) ✓ CORRECT

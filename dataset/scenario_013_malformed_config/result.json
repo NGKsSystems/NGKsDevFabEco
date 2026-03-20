@@ -1,0 +1,13 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "malformed_config_parse_failure",
+  "run_id": "run_20260319_173238",
+  "certify_run_id": "certify_baseline_20260319_173244",
+  "parse_error_detected": true,
+  "parse_error_hint": "Cannot declare ('profiles', 'release') twice (at line 26, column 18)",
+  "configure_failed": true,
+  "build_failed": true,
+  "notes": "Malformed TOML produced a clear parser-level error in output hints and yielded clean failure behavior (no silent pass). Config restored after scenario."
+}

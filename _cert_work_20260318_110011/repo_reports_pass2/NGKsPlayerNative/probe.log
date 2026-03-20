@@ -1,0 +1,8 @@
+Documentation will be located at C:\Users\suppo\Desktop\NGKsSystems\NGKsPlayerNative\_proof
+Set --backup-root (or NGKS_BACKUP_ROOT) to mirror backup documentation; otherwise backup is disabled.
+project_root=C:\Users\suppo\Desktop\NGKsSystems\NGKsPlayerNative
+backup_root=disabled
+proof_dir=C:\Users\suppo\Desktop\NGKsSystems\NGKsPlayerNative\_proof\runs\probe_20260318_111151
+probe_report=C:\Users\suppo\Desktop\NGKsSystems\NGKsPlayerNative\_proof\runs\probe_20260318_111151\probe_report.json
+primary_path=npm
+exit_code=0

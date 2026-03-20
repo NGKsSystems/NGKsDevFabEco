@@ -1,0 +1,15 @@
+{
+  "id": "scenario_005_external_repo_stable",
+  "description": "A harmless metadata description field is added to NGKsPINirvana's package.json. Since NGKsPINirvana is TIER_2 (no build baseline), the release gate runs with --no-build and should return PASS, confirming no false positives on benign TIER_2 edits.",
+  "repo": "NGKsPINirvana",
+  "change": "Added 'description' field to package.json",
+  "change_type": "harmless_metadata",
+  "change_file": "C:/Users/suppo/Desktop/NGKsSystems/NGKsPINirvana/package.json",
+  "change_field": "description",
+  "original_value": null,
+  "broken_value": "NGKs PIN Nirvana secure entry manager",
+  "expected_outcome": "PASS",
+  "gate_command": "release-gate --eco-root . --no-build",
+  "tier": "TIER_2",
+  "regression_expected": false
+}

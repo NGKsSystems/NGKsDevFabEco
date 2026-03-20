@@ -1,0 +1,21 @@
+# Scenario 010 - External Dependency Version Bump
+
+## Objective
+Verify that a version bump in an external dependency (npm package.json cross-env from ^10.1.0 to ^10.2.0) 
+does not cause certification failures for a TIER_2 repo in release-gate mode.
+
+## Key Detail
+NGKsPINirvana is a TIER_2 repo. The TIER_2 contract means that this repo is only subjected to probe and doctor 
+checks during certification (no build stage). Therefore, a version change in package.json should not affect the 
+overall gate verdict.
+
+## Expected Behavior
+- Change: cross-env version in NGKsPINirvana/package.json from "^10.1.0" to "^10.2.0"
+- Tool Run: release-gate --no-build (all 10 repos, no build execution)
+- Expected Outcome: PASS (all 10 repos pass probe+doctor, 0 regressions, exit=0)
+- Notes: TIER_2 repos skip build testing, so version bumps to external deps are benign
+
+## Scenario Classification
+- Outcome: PASS (no regression or improvement detected—baseline behavior unchanged)
+- Impact: Demonstrates that version bumps in non-tested phases don't trigger false positives
+- Practical Use: Useful for change validation scenarios where touching package.json is expected

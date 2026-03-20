@@ -1,0 +1,18 @@
+SCENARIO 014 — PARTIAL DEPENDENCY
+
+Controlled change:
+In NGKsFileVisionary/ngksgraph.toml, moc_path was changed to a missing executable:
+C:/Qt/6.10.2/msvc2022_64/bin/moc_missing.exe
+
+All other configuration remained unchanged.
+
+Execution:
+ngksdevfabric run --project <NGKsFileVisionary> --mode ecosystem --profile release
+
+Observed behavior:
+- run failed with explicit hint: Qt tools missing
+- failure remained targeted to dependency availability
+- no unrelated/secondary classification noise observed in captured output
+
+Restoration:
+Original ngksgraph.toml restored in finally block.

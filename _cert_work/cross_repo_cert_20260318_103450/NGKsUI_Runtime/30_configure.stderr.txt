@@ -1,0 +1,5 @@
+usage: ngksgraph [-h] [--version]
+                 {init,import,scan,configure,build,plan,buildplan,planaudit,run,clean,doctor,graph,explain,diff,trace,freeze,thaw,verify,why,rebuild-cause,selftest} ...
+ngksgraph: error: the following arguments are required: command
+PROOF_ZIP=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime\.venv\Lib\site-packages\_proof\run_20260318_073753.zip
+

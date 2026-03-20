@@ -1,0 +1,86 @@
+{
+  "target_name": "NGKsGraph",
+  "build_allowed": true,
+  "resolved": [
+    {
+      "capability": "cxx.compiler",
+      "classification": "resolved",
+      "required": true,
+      "status": "available",
+      "detail": "Required capability is available.",
+      "detected_version": "",
+      "metadata": {
+        "cl_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+        "source": "vswhere"
+      }
+    },
+    {
+      "capability": "cxx.standard:20",
+      "classification": "resolved",
+      "required": true,
+      "status": "available",
+      "detail": "Required C++ language standard is configured and satisfied.",
+      "detected_version": "20",
+      "metadata": {}
+    },
+    {
+      "capability": "msvc.linker",
+      "classification": "resolved",
+      "required": true,
+      "status": "available",
+      "detail": "Required capability is available.",
+      "detected_version": "",
+      "metadata": {
+        "link_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe",
+        "source": "vswhere"
+      }
+    },
+    {
+      "capability": "windows.sdk",
+      "classification": "resolved",
+      "required": true,
+      "status": "available",
+      "detail": "Required capability is available.",
+      "detected_version": "10.0.26100.0",
+      "metadata": {
+        "include_root": "C:\\Program Files (x86)\\Windows Kits\\10\\Include"
+      }
+    }
+  ],
+  "missing": [],
+  "conflicting": [],
+  "downgraded": [],
+  "optional_missing": [
+    {
+      "capability": "pdb.debug",
+      "classification": "optional_missing",
+      "required": false,
+      "status": "missing",
+      "detail": "Optional capability is unavailable; build may continue.",
+      "detected_version": "",
+      "metadata": {}
+    }
+  ],
+  "inferred": [
+    {
+      "capability": "cxx.compiler",
+      "classification": "inferred",
+      "required": true,
+      "status": "available",
+      "detail": "Compiler present; validating active language standard separately.",
+      "detected_version": "",
+      "metadata": {
+        "cl_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+        "source": "vswhere"
+      }
+    }
+  ],
+  "summary": {
+    "resolved_count": 4,
+    "missing_count": 0,
+    "conflicting_count": 0,
+    "downgraded_count": 0,
+    "optional_missing_count": 1,
+    "inferred_count": 1
+  }
+}

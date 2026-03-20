@@ -1,0 +1,32 @@
+Scenario 007 — Improvement Detection (NGKsUI_Runtime probe and doctor FAIL → PASS)
+
+## Change Description
+
+The baseline manifest at `.baseline_v1_20260318_194000/repo_manifest.json` was edited to
+downgrade the NGKsUI_Runtime entry from:
+
+    "probe": "PASS",
+    "doctor": "PASS"
+
+to:
+
+    "probe": "FAIL",
+    "doctor": "FAIL"
+
+This simulates the scenario where a previous certification run recorded the repo as failing
+(e.g., because toolchain or environment issues existed at certification time), and those
+issues have since been resolved in the current state.
+
+## Why This Causes an Improvement
+
+When certify-baseline runs against the unmodified working repo:
+- probe: baseline=FAIL, current=PASS → IMPROVEMENT
+- doctor: baseline=FAIL, current=PASS → IMPROVEMENT
+
+The gate returns exit 0 (PASS) because improvements do not block the gate; they are
+informational signals indicating the ecosystem health has improved beyond the certified
+baseline.
+
+## Restoration
+
+The baseline manifest was restored to probe=PASS, doctor=PASS after the scenario was recorded.

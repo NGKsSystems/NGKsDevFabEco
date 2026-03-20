@@ -1,0 +1,40 @@
+=============================================================
+  NGKsFileVisionary - CERTIFICATION PHASE 5 REPORT
+  Generated: 2026-03-18 18:27:07
+=============================================================
+
+PF=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\_proof\run_20260318_152523.zip
+TARGET_REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary
+PRIMARY_BLOCKER=QT_ENTRYPOINT_LINK_ONLY_LIB_FALSE_NEGATIVE
+BLOCKER_OWNER=ecosystem (NGKsGraph canonical_target_spec.py)
+CONFIGURE_STATUS=PASS
+BUILD_STATUS=PASS
+TOOLCHAIN_ISSUE_FIXED=PASS
+GATE=PASS
+
+PHASE 3 FIX:
+  File: NGKsGraph\ngksgraph\targetspec\canonical_target_spec.py
+  Added _LINK_ONLY_QT_LIBS frozenset={'entrypoint'}
+  _required_capabilities() now skips Qt6EntryPoint from required caps.
+  Qt6EntryPoint is a Windows linker bootstrap lib — no include headers exist.
+
+PHASE 4 RESOLUTION REPORT (post-fix):
+  build_allowed     : true
+  resolved_count    : 9
+  missing_count     : 0
+  optional_missing  : 1  (pdb.debug — non-blocking)
+
+CAPABILITIES RESOLVED (9/9):
+  cxx.compiler      RESOLVED
+  cxx.standard:17   RESOLVED
+  msvc.linker       RESOLVED
+  qt.concurrent     RESOLVED
+  qt.core           RESOLVED
+  qt.gui            RESOLVED
+  qt.sql            RESOLVED
+  qt.widgets        RESOLVED
+  windows.sdk       RESOLVED  (10.0.26100.0)
+
+=============================================================
+GATE=PASS
+=============================================================

@@ -1,0 +1,24 @@
+# Scenario 008 — Tier Contract Violation (TIER_2 with configure=PASS)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the change: set NGKs_Zohan (TIER_2) configure=PASS, build=PASS (violates tier contract)
+$manifest = ".baseline_v1_20260318_194000\repo_manifest.json"
+$m = Get-Content $manifest | ConvertFrom-Json
+$zRepo = $m.certified_repos | Where-Object { $_.name -eq "NGKs_Zohan" }
+$zRepo.configure = "PASS"
+$zRepo.build = "PASS"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8
+
+# Run certify-baseline for NGKs_Zohan only (no-build mode)
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKs_Zohan --no-build --json
+# Expected exit code: 1 (REGRESSION — tier contract violation is a hard failure)
+# Expected regression: tier_contract_violation:TIER_2_requires_configure_NA_but_baseline_is_not_NA
+# Actual exit code: 1  ✓
+
+# Restore the manifest to correct tier contract (configure=N/A, build=N/A for TIER_2)
+$zRepo.configure = "N/A"
+$zRepo.build = "N/A"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8

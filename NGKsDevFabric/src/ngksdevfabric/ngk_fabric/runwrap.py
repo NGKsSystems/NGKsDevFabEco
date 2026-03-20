@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -666,6 +667,19 @@ def doctor_toolchain(project_path: Path, pf: Path) -> int:
     # Otherwise, leave these as best-effort empty states.
     # (If your file already defines buildcore detection variables, you can wire them in here.)
 
+    profile_contract = "config_missing"
+    available_profiles: list[str] = []
+    config_path = project_path / "ngksgraph.toml"
+    if config_path.exists():
+        try:
+            parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
+            profiles = parsed.get("profiles", {}) if isinstance(parsed, dict) else {}
+            if isinstance(profiles, dict) and profiles:
+                available_profiles = sorted(str(name) for name in profiles.keys() if str(name).strip())
+            profile_contract = "explicit_profile_required" if available_profiles else "implicit_default_no_profiles"
+        except Exception:
+            profile_contract = "config_unreadable"
+
     report: dict[str, object] = {
         "python_path": python_path,
         "python_version": f"Python {python_version}",
@@ -684,6 +698,8 @@ def doctor_toolchain(project_path: Path, pf: Path) -> int:
         "cpu_count": cpu_count,
         "buildcore_venv_state": buildcore_venv_state,
         "buildcore_venv_python": buildcore_venv_python,
+        "profile_contract": profile_contract,
+        "available_profiles": available_profiles,
         "doctor_warnings": {},
     }
 

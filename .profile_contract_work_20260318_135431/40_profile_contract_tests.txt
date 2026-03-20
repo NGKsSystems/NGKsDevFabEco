@@ -1,0 +1,2 @@
+pytest -q tests/test_profile_contract.py tests/test_config_cli_error_surface.py
+result: 5 passed in 0.45s

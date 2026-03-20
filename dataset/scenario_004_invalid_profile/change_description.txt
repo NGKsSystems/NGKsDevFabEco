@@ -1,0 +1,42 @@
+SCENARIO 004 — REPO UNAVAILABLE (NGKsUI_Runtime)
+
+Change Applied:
+File: .baseline_v1_20260318_194000/repo_manifest.json
+Field: certified_repos[name="NGKsUI_Runtime"].path
+
+Before:
+  "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime"
+
+After (broken):
+  "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime_DOES_NOT_EXIST"
+
+Description:
+The baseline manifest path for NGKsUI_Runtime is changed to reference a
+directory that does not exist. This simulates a scenario where a certified
+repository has been moved, renamed, or deleted from the filesystem since
+the baseline was created — without updating the manifest.
+
+This is a probe-level regression: before certify-baseline can run configure
+or build, it must first verify that the repo directory exists. If the
+directory is missing, the probe stage fails with exit code 2 and the gate
+records a regression of probe:PASS->FAIL.
+
+Note on scenario naming: Although this scenario is named "invalid_profile"
+(reflecting the original investigation intent, which was to trigger a bad
+ngksgraph profile), the final reliable trigger is "repo not found". Both
+types of failure represent category-4 reliability breakage — a repo that
+was in the certified baseline is no longer accessible or reproducible.
+
+After the scenario was captured, the baseline manifest was restored to
+the correct NGKsUI_Runtime path.
+
+Why This Matters:
+Repo availability is the most fundamental precondition for a green release
+gate. If a certified repo disappears, the gate must catch it — not silently
+skip it. This scenario proves that probe-level failures are correctly
+detected and surfaced as regressions.
+
+Expected Gate Behavior: REGRESSION (exit code 1)
+Actual Gate Behavior:   REGRESSION (exit code 1) ✓ CORRECT
+Regressions Caught: probe:REPO_NOT_FOUND
+Manifest Restored After Test: YES ✓

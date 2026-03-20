@@ -1,0 +1,2 @@
+C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\NGKsGraph\ngksgraph\__init__.py
+C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\NGKsGraph\ngksgraph\cli.py

@@ -1,0 +1,14 @@
+# Scenario 001 — Baseline Stable
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# No changes made to any repo
+
+# Run the release gate (no-build mode — probe + doctor + configure only)
+python -m ngksdevfabric.ngk_fabric.main release-gate --eco-root . --no-build --json
+
+# Expected exit code: 0
+# Expected verdict: PASS
+# Actual exit code: 0  ✓

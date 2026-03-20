@@ -1,0 +1,22 @@
+# Scenario 006 — Repo Path Unavailable
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the breaking change: update NGKsUI_Runtime path to nonexistent directory
+$manifest = ".baseline_v1_20260318_194000\repo_manifest.json"
+$m = Get-Content $manifest | ConvertFrom-Json
+$uiRepo = $m.certified_repos | Where-Object { $_.name -eq "NGKsUI_Runtime" }
+$uiRepo.path = "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI_Runtime_DELETED"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8
+
+# Run certify-baseline for NGKsUI_Runtime only (no-build, probe+doctor only)
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsUI_Runtime --no-build --json
+# Expected exit code: 1 (REGRESSION)
+# Expected regressions: ["probe:REPO_NOT_FOUND:...NGKsUI_Runtime_DELETED"]
+# Actual exit code: 1  ✓
+
+# Restore the manifest path to correct value
+$uiRepo.path = "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime"
+$m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8

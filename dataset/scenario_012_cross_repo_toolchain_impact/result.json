@@ -1,0 +1,15 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "cross_repo_probe_regression",
+  "run_id": "certify_baseline_20260319_173142",
+  "repos_checked": 10,
+  "repos_pass": 4,
+  "repos_regression": 6,
+  "impacted_repos_expected": 6,
+  "failure_class": "probe:REPO_NOT_FOUND",
+  "classification_consistent": true,
+  "repo_not_found_occurrences": 6,
+  "notes": "A single controlled break affected all Tier 1 paths. All impacted repos failed with the same probe-level REPO_NOT_FOUND classification. Manifest restored after capture."
+}

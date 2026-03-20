@@ -1,19 +1,24 @@
-[project]
-name = "NGKsPlayerNative"
+name = "NGKsGraph"
+out_dir = "build"
+target_type = "exe"
+cxx_std = 20
+src_glob = ["examples/hello_msvc/src/**/*.cpp"]
+include_dirs = []
+defines = ["UNICODE", "_UNICODE"]
+cflags = []
+ldflags = []
+libs = []
+lib_dirs = []
 
 [profiles.debug]
-cxx_std = "c++20"
+cflags = ["/Od", "/Zi"]
 defines = ["DEBUG"]
-cflags  = ["/EHsc", "/MD", "/Z7", "/Od", "/FS"]
 ldflags = []
-out_dir = "build/debug"
 
 [profiles.release]
-cxx_std = "c++20"
+cflags = ["/O2"]
 defines = ["NDEBUG"]
-cflags  = ["/EHsc", "/MD", "/O2", "/FS"]
 ldflags = []
-out_dir = "build/release"
 
-# ---- Targets (placeholders) ----
-# You will add [targets.<name>] blocks after discovery
+[qt]
+enabled = false

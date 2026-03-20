@@ -1,0 +1,19 @@
+# Scenario 002 — Break src_glob (NGKsMediaLab)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the breaking change to NGKsMediaLab ngksgraph.toml
+# Changed: src_glob = ["app/cpp_host/src/**/*.cpp", "app/win32_host/src/**/*.cpp"]
+# To:      src_glob = ["app/NONEXISTENT_BROKEN_DIR/**/*.cpp"]
+# (Edit made via replace_string_in_file tool)
+
+# Run certify-baseline for NGKsMediaLab only
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsMediaLab --json
+
+# Expected exit code: 1 (REGRESSION)
+# Actual exit code: 1  ✓
+
+# Restore ngksgraph.toml to correct state
+# (Restored via replace_string_in_file tool)

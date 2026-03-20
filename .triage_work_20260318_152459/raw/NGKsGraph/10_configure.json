@@ -1,0 +1,15 @@
+{
+  "args": [
+    "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+    "configure",
+    "--project",
+    "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+    "--profile",
+    "debug"
+  ],
+  "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\run_20260318_123315.zip\nCONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: examples/hello_msvc/src/main.cpp, examples/multi_target_msvc/src/app/main.cpp, examples/multi_target_msvc/src/core/core.cpp, examples/qt_msvc_real/build/debug/qt/moc_core_message.cpp, examples/qt_msvc_real/build/debug/qt/moc_main_window.cpp, examples/qt_msvc_real/build/debug/qt/qrc_app.cpp, examples/qt_msvc_real/build/release/qt/moc_core_message.cpp, examples/qt_msvc_real/build/release/qt/moc_main_window.cpp, examples/qt_msvc_real/build/release/qt/qrc_app.cpp, examples/qt_msvc_real/src/app/main.cpp).\n",
+  "combined": "PROOF_ZIP=C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\run_20260318_123315.zip\nCONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: examples/hello_msvc/src/main.cpp, examples/multi_target_msvc/src/app/main.cpp, examples/multi_target_msvc/src/core/core.cpp, examples/qt_msvc_real/build/debug/qt/moc_core_message.cpp, examples/qt_msvc_real/build/debug/qt/moc_main_window.cpp, examples/qt_msvc_real/build/debug/qt/qrc_app.cpp, examples/qt_msvc_real/build/release/qt/moc_core_message.cpp, examples/qt_msvc_real/build/release/qt/moc_main_window.cpp, examples/qt_msvc_real/build/release/qt/qrc_app.cpp, examples/qt_msvc_real/src/app/main.cpp)."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "scenario_001_baseline_stable",
+  "description": "Baseline stability check — no changes applied to any repo. The full ecosystem runs through the release gate with --no-build to confirm all 10 certified repos still pass probe, doctor, and configure stages.",
+  "repo": "ALL",
+  "change": "none",
+  "change_type": "none",
+  "expected_outcome": "PASS",
+  "gate_command": "release-gate --eco-root . --no-build",
+  "tier": "ALL",
+  "regression_expected": false
+}

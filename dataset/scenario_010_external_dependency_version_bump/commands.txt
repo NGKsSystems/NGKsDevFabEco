@@ -1,0 +1,21 @@
+# Scenario 010 — External Dependency Version Bump (TIER_2, Harmless Change)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the change: modify NGKsPINirvana package.json version for cross-env
+$pkgJsonPath = "NGKsPINirvana\package.json"
+$pkgJson = Get-Content $pkgJsonPath | ConvertFrom-Json
+$pkgJson.dependencies."cross-env" = "^10.2.0"
+$pkgJson | ConvertTo-Json -Depth 20 | Set-Content $pkgJsonPath -Encoding utf8
+
+# Run release-gate (all 10 repos, no-build mode)
+python -m ngksdevfabric.ngk_fabric.main release-gate --eco-root . --no-build --json
+# Expected exit code: 0 (PASS — version bump is harmless for TIER_2)
+# Expected result: repos_pass=10, regression_count=0, verdict=PASS
+# Actual exit code: 0  ✓
+
+# Restore the package.json to original version
+$pkgJson.dependencies."cross-env" = "^10.1.0"
+$pkgJson | ConvertTo-Json -Depth 20 | Set-Content $pkgJsonPath -Encoding utf8

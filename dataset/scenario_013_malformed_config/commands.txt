@@ -1,0 +1,20 @@
+# Scenario 013 — Malformed config handling (PowerShell)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+$dir = "dataset\scenario_013_malformed_config"
+$cfg = "..\NGKsMediaLab\ngksgraph.toml"
+$backup = "$dir\ngksgraph.toml.backup"
+
+Copy-Item $cfg $backup -Force
+try {
+  Add-Content -Path $cfg -Value "`n[profiles.release`n" -Encoding utf8
+
+  .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main run --project "C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab" --mode ecosystem --profile release 2>&1 |
+    Set-Content "$dir\run_raw.txt"
+
+  .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsMediaLab --json 2>&1 |
+    Set-Content "$dir\certify_raw.txt"
+}
+finally {
+  Copy-Item $backup $cfg -Force
+}

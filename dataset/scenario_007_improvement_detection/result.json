@@ -1,0 +1,20 @@
+{
+  "exit_code": 0,
+  "gate_verdict": "PASS",
+  "regression_detected": false,
+  "improvement_detected": true,
+  "correct_behavior": true,
+  "run_id": "certify_baseline_20260319_155912",
+  "timestamp": "2026-03-19T12:59:18.707859+00:00",
+  "repos_checked": 1,
+  "repos_pass": 1,
+  "repos_regression": 0,
+  "repos_improvement": 1,
+  "regression_count": 0,
+  "improvement_count": 2,
+  "improvements_detected": [
+    "probe:FAIL->PASS",
+    "doctor:FAIL->PASS"
+  ],
+  "notes": "Baseline was set to probe=FAIL and doctor=FAIL for NGKsUI_Runtime. The working repo produced probe exit=0 and doctor exit=0, which certify-baseline correctly identified as 2 improvements over the certified baseline. Gate returned PASS (exit 0) because improvements are non-blocking signals."
+}

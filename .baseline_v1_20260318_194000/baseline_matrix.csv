@@ -1,0 +1,11 @@
+baseline_name,date,repo,commit,tier,ecosystem_type,certification_scope,probe,doctor,configure,build,build_allowed,missing_count,optional_missing,proof_compliance,owner,blocker,gate
+Certification_Baseline_v1,2026-03-18,NGKsFileVisionary,4e5ad3338ba0244d907ba3250ad4b4cdd0f3b5fe,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,pdb.debug,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKsMediaLab,af193f12c6b90278f07ca673cabffada96768ad6,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKsPlayerNative,fefdef47533bb8e4812d1ec30ed3e8a9d356b97c,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKsUI_Runtime,90ca09c7f23ddc7f1d84f97f3a4d789fd401b712,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKsGraph,f07af35df06b1c7ecc6f1c47f665799ee74733d0,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,OfficeSuiteCpp,ae4ca5f44b9aad3e8e1727833df21d93a482d05f,TIER_1,cpp,full,PASS,PASS,PASS,PASS,true,0,,ZIP,—,CLEAN_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKsPINirvana,8ba88362af4b574d2e72e18f7e1b7aa8250dd089,TIER_2,npm+python,probe_doctor_only,PASS,PASS,N/A,N/A,,,,—,N/A,PROBE_DOCTOR_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKs_ExecLedger,10a0dc910e27ebae304eebf12879ce7d71679425,TIER_2,electron+node,probe_doctor_only,PASS,PASS,N/A,N/A,,,,—,N/A,PROBE_DOCTOR_PASS,PASS
+Certification_Baseline_v1,2026-03-18,NGKs_Zohan,086e0b62768274c88ef55a24498ad1db1c3157fe,TIER_2,node+python-ai,probe_doctor_only,PASS,PASS,N/A,N/A,,,,—,N/A,PROBE_DOCTOR_PASS,PASS
+Certification_Baseline_v1,2026-03-18,Content_Creator,197970ca9ed0dad59c62bebd6e7584b480654ba0,TIER_2,flutter,probe_doctor_only,PASS,PASS,N/A,N/A,,,,—,N/A,PROBE_DOCTOR_PASS,PASS

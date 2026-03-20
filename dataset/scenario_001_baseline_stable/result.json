@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "gate_verdict": "PASS",
+  "regression_detected": false,
+  "correct_behavior": true,
+  "run_id": "certify_baseline_20260319_092955",
+  "timestamp": "2026-03-19T06:30:55.977785+00:00",
+  "repos_checked": 10,
+  "repos_pass": 10,
+  "repos_regression": 0,
+  "regression_count": 0,
+  "tier_1_count": 6,
+  "tier_2_count": 4,
+  "notes": "All 10 repos passed with no regressions. Gate correctly returns PASS when ecosystem is in certified stable state."
+}

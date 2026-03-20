@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tomllib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,7 @@ from .certification_policy_surface import (
     evaluate_structural_certification_state,
     evaluate_target_capability_state,
 )
+from .certify_baseline import find_baseline_manifest, run_certify_baseline
 from .certify_compare import ComparisonPolicy, run_certification_comparison
 from .certify_gate import GateEnforcementPolicy, run_certification_gate
 from .decision_replay_validator import validate_decision_chain_from_proof
@@ -67,6 +69,22 @@ class StageResult:
 
 def _print_result(message: str) -> None:
     print(message)
+
+
+def _project_profile_contract(project_root: Path) -> tuple[str, list[str]]:
+    config_path = project_root / "ngksgraph.toml"
+    if not config_path.exists():
+        return "config_missing", []
+    try:
+        parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return "config_unreadable", []
+
+    profiles = parsed.get("profiles", {}) if isinstance(parsed, dict) else {}
+    if not isinstance(profiles, dict) or not profiles:
+        return "implicit_default_no_profiles", []
+    names = sorted(str(name) for name in profiles.keys() if str(name).strip())
+    return "explicit_profile_required", names
 
 
 def _print_project_health_hint(project_root: Path) -> None:
@@ -1179,9 +1197,16 @@ def _resolve_detected_build_root(project_root: Path, build_detect_reason: str) -
         candidate.relative_to(project_root.resolve())
     except Exception:
         return project_root
-    if candidate.is_dir():
-        return candidate
-    return candidate.parent
+    detected_root = candidate if candidate.is_dir() else candidate.parent
+    if detected_root == project_root:
+        return project_root
+
+    # Prevent graph/build handoff from drifting into nested third_party or tool folders
+    # unless that directory is explicitly graph-capable.
+    if (detected_root / "ngksgraph.toml").is_file():
+        return detected_root
+
+    return project_root
 
 
 def _apply_node_package_manager_to_plan(plan_file: Path, package_manager: str) -> tuple[bool, str]:
@@ -1308,10 +1333,13 @@ def cmd_probe(args: argparse.Namespace) -> int:
     if backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _register_bundle_safely(pf)
+    profile_contract, profile_names = _project_profile_contract(project)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"probe_report={pf / 'probe_report.json'}")
+    _print_result(f"profile_contract={profile_contract}")
+    _print_result(f"available_profiles={', '.join(profile_names) if profile_names else '<none>'}")
     _print_result(f"primary_path={report.get('primary_path')}")
     _print_result("exit_code=0")
     return 0
@@ -1892,10 +1920,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _register_bundle_safely(pf)
+    profile_contract, profile_names = _project_profile_contract(project)
     _print_result(f"project_root={project}")
     _print_result(f"backup_root={backup_root if backup_root is not None else 'disabled'}")
     _print_result(f"proof_dir={pf}")
     _print_result(f"toolchain_report={pf / 'toolchain_report.json'}")
+    _print_result(f"profile_contract={profile_contract}")
+    _print_result(f"available_profiles={', '.join(profile_names) if profile_names else '<none>'}")
     _print_result(f"exit_code={code}")
     if int(code) == 0:
         _print_project_health_hint(project)
@@ -3929,6 +3960,183 @@ def cmd_deliver_connectors(args: argparse.Namespace) -> int:
     return 0 if gate == "PASS" else 1
 
 
+def cmd_certify_baseline(args: argparse.Namespace) -> int:
+    """Gate enforcement for Certification_Baseline_v1 (and any later baselines).
+
+    Re-runs probe/doctor/configure/build across every repo in the baseline
+    manifest, compares results to the recorded baseline values, and exits:
+      0  PASS  — all stages identical or improved
+      1  FAIL  — at least one regression detected
+      2  ERROR — manifest unreadable or invocation error
+    """
+    eco_root_raw = str(getattr(args, "eco_root", "") or "").strip()
+    eco_root: Path | None = Path(eco_root_raw).resolve() if eco_root_raw else None
+
+    baseline_arg = str(getattr(args, "baseline", "") or "").strip()
+    try:
+        manifest_path = find_baseline_manifest(baseline_arg, eco_root)
+    except RuntimeError as exc:
+        _print_result(f"error={exc}")
+        _print_result("GATE=FAIL")
+        return 2
+
+    # Repo filter: --repo may be supplied multiple times or comma-separated.
+    raw_repos: list[str] = list(getattr(args, "repo", None) or [])
+    repo_filter: list[str] | None = None
+    if raw_repos:
+        repo_filter = [
+            r.strip()
+            for token in raw_repos
+            for r in token.split(",")
+            if r.strip()
+        ]
+
+    build_mode = str(getattr(args, "mode", "release") or "release").strip()
+    strict = bool(getattr(args, "strict", False))
+    no_build = bool(getattr(args, "no_build", False))
+    json_output = bool(getattr(args, "json_output", False))
+
+    if getattr(args, "pf", None):
+        pf = Path(str(args.pf)).resolve()
+    else:
+        pf = manifest_path.parent.parent / "_proof" / "certify_baseline_runs"
+    pf.mkdir(parents=True, exist_ok=True)
+
+    _print_result("----------------------------------------")
+    _print_result("CERTIFY-BASELINE")
+    _print_result(f"baseline_manifest={manifest_path}")
+    _print_result(f"strict={str(strict).lower()}")
+    _print_result(f"no_build={str(no_build).lower()}")
+    _print_result(f"build_mode={build_mode}")
+    if repo_filter:
+        _print_result(f"repo_filter={','.join(repo_filter)}")
+    _print_result("----------------------------------------")
+
+    try:
+        result = run_certify_baseline(
+            manifest_path=manifest_path,
+            repo_filter=repo_filter,
+            build_mode=build_mode,
+            strict=strict,
+            no_build=no_build,
+            pf=pf,
+        )
+    except RuntimeError as exc:
+        _print_result(f"error={exc}")
+        _print_result("GATE=FAIL")
+        return 2
+
+    gate = str(result.get("gate", "FAIL"))
+    repos_checked = int(result.get("repos_checked", 0))
+    repos_pass = int(result.get("repos_pass", 0))
+    repos_regression = int(result.get("repos_regression", 0))
+    repos_improvement = int(result.get("repos_improvement", 0))
+
+    run_id = str(result.get("run_id", ""))
+    gate_file = pf / run_id / "certify_baseline_gate.json"
+
+    if json_output:
+        print(json.dumps(result, indent=2))
+    else:
+        _print_result(f"baseline_name={result.get('baseline_name', 'UNKNOWN')}")
+        _print_result(f"repos_checked={repos_checked}")
+        _print_result(f"repos_pass={repos_pass}")
+        _print_result(f"repos_regression={repos_regression}")
+        _print_result(f"repos_improvement={repos_improvement}")
+        _print_result("----------------------------------------")
+        for repo in result.get("repo_results", []):
+            repo_name = str(repo.get("name", "?"))
+            overall = str(repo.get("overall", "?"))
+            regressions = repo.get("regressions", [])
+            improvements = repo.get("improvements", [])
+            tag = "[REGRESSION]" if overall == "REGRESSION" else ("[IMPROVEMENT]" if overall == "IMPROVEMENT" else "[PASS]")
+            _print_result(f"  {tag} {repo_name}")
+            for reg in regressions:
+                _print_result(f"    regression: {reg}")
+            for imp in improvements:
+                _print_result(f"    improvement: {imp}")
+        _print_result("----------------------------------------")
+        _print_result(f"PF={gate_file.parent.resolve()}")
+        _print_result(f"GATE={gate}")
+
+    return 0 if gate == "PASS" else 1
+
+
+def cmd_release_gate(args: argparse.Namespace) -> int:
+    """Mandatory pre-release gate: wraps certify-baseline and emits a
+    compact machine-readable release_gate_verdict.json artifact.
+
+    Exit codes:
+      0  PASS  — no regressions, release may proceed
+      1  FAIL  — regression detected, release BLOCKED
+      2  ERROR — misconfiguration or missing baseline
+    """
+    from .release_gate import run_release_gate
+
+    eco_root_raw = str(getattr(args, "eco_root", "") or "").strip()
+    eco_root: Path | None = Path(eco_root_raw).resolve() if eco_root_raw else None
+
+    baseline_arg = str(getattr(args, "baseline", "") or "").strip()
+    strict = bool(getattr(args, "strict", False))
+    no_build = bool(getattr(args, "no_build", False))
+    build_mode = str(getattr(args, "mode", "release") or "release").strip()
+    json_output = bool(getattr(args, "json_output", False))
+
+    if getattr(args, "pf", None):
+        pf = Path(str(args.pf)).resolve()
+    else:
+        eco = eco_root or Path.cwd()
+        pf = eco / "_proof" / "release_gate_runs"
+    pf.mkdir(parents=True, exist_ok=True)
+
+    _print_result("----------------------------------------")
+    _print_result("RELEASE-GATE")
+    _print_result(f"eco_root={eco_root or Path.cwd()}")
+    _print_result(f"strict={str(strict).lower()}")
+    _print_result(f"no_build={str(no_build).lower()}")
+    _print_result(f"build_mode={build_mode}")
+    _print_result("----------------------------------------")
+
+    result = run_release_gate(
+        eco_root=eco_root,
+        baseline_arg=baseline_arg,
+        strict=strict,
+        no_build=no_build,
+        build_mode=build_mode,
+        pf=pf,
+    )
+
+    gate = str(result.get("gate", "ERROR"))
+    exit_code = int(result.get("exit_code", 2))
+    verdict_path = result.get("verdict_path")
+    verdict = result.get("verdict", {})
+
+    if result.get("error"):
+        _print_result(f"error={result['error']}")
+        _print_result("GATE=FAIL")
+        return exit_code
+
+    if json_output:
+        print(json.dumps(verdict, indent=2))
+    else:
+        _print_result(f"baseline_name={verdict.get('baseline_name', 'UNKNOWN')}")
+        _print_result(f"baseline_path={verdict.get('baseline_path', 'UNKNOWN')}")
+        _print_result(f"git_head={verdict.get('git_head', 'UNKNOWN')}")
+        _print_result(f"tier_1_count={verdict.get('tier_1_count', 0)}")
+        _print_result(f"tier_2_count={verdict.get('tier_2_count', 0)}")
+        _print_result(f"repos_checked={verdict.get('repos_checked', 0)}")
+        _print_result(f"repos_pass={verdict.get('repos_pass', 0)}")
+        _print_result(f"regression_count={verdict.get('regression_count', 0)}")
+        _print_result(f"improvement_count={verdict.get('improvement_count', 0)}")
+        _print_result(f"timestamp={verdict.get('timestamp', '')}")
+        _print_result("----------------------------------------")
+        if verdict_path:
+            _print_result(f"VERDICT_ARTIFACT={verdict_path}")
+        _print_result(f"GATE={gate}")
+
+    return exit_code
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ngksdevfabric")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -4213,6 +4421,147 @@ def build_parser() -> argparse.ArgumentParser:
     certify_gate_parser.add_argument("--severe-drop-threshold", type=float, default=0.15, help="Severe regression threshold used by comparison policy.")
     certify_gate_parser.add_argument("--strict-mode", choices=["on", "off"], default="on", help="Apply strict gate enforcement policy mappings to certification decisions.")
     certify_gate_parser.set_defaults(func=cmd_certify_gate)
+
+    certify_baseline_parser = sub.add_parser(
+        "certify-baseline",
+        help="[BASELINE GATE] Re-run probe/doctor/build across all certified repos and enforce regression gate.",
+        description=(
+            "[BASELINE GATE]\n"
+            "Converts Certification_Baseline_v1 (or any later baseline) into an enforced gate.\n\n"
+            "For each repo in the baseline manifest:\n"
+            "  1. Runs probe  (all repos)\n"
+            "  2. Runs doctor (all repos)\n"
+            "  3. Runs build  (ngksgraph repos only, unless --no-build)\n\n"
+            "Gate decision:\n"
+            "  PASS  — all stages identical or improved vs. baseline\n"
+            "  FAIL  — any stage that was PASS is now FAIL\n\n"
+            "Strict mode (--strict):\n"
+            "  Additionally fails on warning-level drift (doctor exits non-zero).\n\n"
+            "Exit codes (CI-safe):\n"
+            "  0  PASS\n"
+            "  1  FAIL — regression detected\n"
+            "  2  ERROR — manifest unreadable or invocation error\n\n"
+            "Use when: pre-release checks, CI pipelines, or periodic ecosystem health verification."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    certify_baseline_parser.add_argument(
+        "--baseline",
+        required=False,
+        default="",
+        help=(
+            "Path to repo_manifest.json or the directory containing it. "
+            "If omitted, the latest .baseline_v* directory under --eco-root or cwd is used."
+        ),
+    )
+    certify_baseline_parser.add_argument(
+        "--eco-root",
+        required=False,
+        default="",
+        help="Root folder containing all NGK repos and the .baseline_v* directory. Defaults to cwd.",
+    )
+    certify_baseline_parser.add_argument(
+        "--repo",
+        dest="repo",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="Limit gate to one or more repo names (may be repeated or comma-separated). Default: all.",
+    )
+    certify_baseline_parser.add_argument(
+        "--mode",
+        choices=["debug", "release", "debug_x64", "release_x64"],
+        default="release",
+        help="Build mode passed to ngksdevfabric build for ngksgraph repos. Default: release.",
+    )
+    certify_baseline_parser.add_argument(
+        "--strict",
+        action="store_true",
+        default=False,
+        help="Fail on warning drift: treat any non-zero doctor exit as a regression.",
+    )
+    certify_baseline_parser.add_argument(
+        "--no-build",
+        action="store_true",
+        default=False,
+        help="Skip configure/build steps; run probe+doctor only.",
+    )
+    certify_baseline_parser.add_argument(
+        "--pf",
+        required=False,
+        help="Proof folder root for gate artifacts. Default: <baseline-dir>/../_proof/certify_baseline_runs/",
+    )
+    certify_baseline_parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        default=False,
+        help="Emit full gate result as JSON to stdout.",
+    )
+    certify_baseline_parser.set_defaults(func=cmd_certify_baseline)
+
+    release_gate_parser = sub.add_parser(
+        "release-gate",
+        help="[RELEASE GATE] Mandatory pre-release certification check. Blocks release on regression.",
+        description=(
+            "[RELEASE GATE]\n"
+            "Runs certify-baseline as the mandatory pre-release gate and emits\n"
+            "a machine-readable release_gate_verdict.json artifact.\n\n"
+            "No release bundle is valid unless this gate exits 0.\n\n"
+            "Exit codes:\n"
+            "  0  PASS  — no regressions, release may proceed\n"
+            "  1  FAIL  — regression detected, release BLOCKED\n"
+            "  2  ERROR — misconfiguration or missing baseline\n\n"
+            "Use when: before any release bundle cut or milestone tag."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    release_gate_parser.add_argument(
+        "--baseline",
+        required=False,
+        default="",
+        help=(
+            "Path to repo_manifest.json or the directory containing it. "
+            "If omitted, the latest .baseline_v* directory under --eco-root or cwd is used."
+        ),
+    )
+    release_gate_parser.add_argument(
+        "--eco-root",
+        required=False,
+        default="",
+        help="Root folder containing the .baseline_v* directory. Defaults to cwd.",
+    )
+    release_gate_parser.add_argument(
+        "--mode",
+        choices=["debug", "release", "debug_x64", "release_x64"],
+        default="release",
+        help="Build mode for ngksgraph repos. Default: release.",
+    )
+    release_gate_parser.add_argument(
+        "--strict",
+        action="store_true",
+        default=False,
+        help="Fail on warning drift: treat any non-zero doctor exit as a regression.",
+    )
+    release_gate_parser.add_argument(
+        "--no-build",
+        action="store_true",
+        default=False,
+        help="Skip configure/build steps; run probe+doctor only.",
+    )
+    release_gate_parser.add_argument(
+        "--pf",
+        required=False,
+        help="Proof folder root. Default: <eco-root>/_proof/release_gate_runs/",
+    )
+    release_gate_parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        default=False,
+        help="Emit full verdict as JSON to stdout.",
+    )
+    release_gate_parser.set_defaults(func=cmd_release_gate)
 
     certify_target_check_parser = sub.add_parser("certify-target-check")
     certify_target_check_parser.add_argument("--project", required=False, default=".")

@@ -1,0 +1,30 @@
+{
+  "target_spec": {
+    "target_name": "NGKsGraph",
+    "target_type": "desktop_app",
+    "language": "c++",
+    "platform": "windows",
+    "configuration": "debug",
+    "required_capabilities": [
+      "cxx.compiler",
+      "cxx.standard:20",
+      "msvc.linker",
+      "windows.sdk"
+    ],
+    "optional_capabilities": [
+      "pdb.debug"
+    ],
+    "policy_flags": {
+      "fail_on_missing_required_capability": true,
+      "require_active_language_standard": true
+    },
+    "source_roots": [
+      "examples"
+    ],
+    "entrypoints": [
+      "examples/hello_msvc/src/main.cpp"
+    ]
+  },
+  "source": "derived_from_graph",
+  "path": ""
+}

@@ -1,0 +1,38 @@
+SCENARIO 003 — MISSING QT CAPABILITY (NGKsFileVisionary)
+
+Change Applied:
+File: C:/Users/suppo/Desktop/NGKsSystems/NGKsFileVisionary/ngksgraph.toml
+Field: [qt].moc_path
+
+Before:
+  moc_path = "C:/Qt/6.10.2/msvc2022_64/bin/moc.exe"
+
+After (broken):
+  moc_path = "C:/Qt/DOES_NOT_EXIST/bin/moc.exe"
+
+Description:
+The Qt Meta-Object Compiler (moc) path is changed to reference a Qt version
+directory that does not exist on the system. NGKsFileVisionary is a Qt-based
+application; the moc tool is required to process Q_OBJECT macros and generate
+MOC output files before compilation can proceed.
+
+When the configure stage runs, it validates that the moc tool exists and is
+executable. With an invalid path, the tool is not found and the configure
+stage exits with code 2 (failure). The build stage is also blocked as a
+consequence.
+
+This simulates a common environment drift scenario: a Qt installation path
+changes after an upgrade (e.g., from Qt 6.10.2 to a new version), but the
+repository's ngksgraph.toml is not updated to match.
+
+After the scenario was captured, the ngksgraph.toml was restored to the
+correct moc_path.
+
+Why This Matters:
+Qt tool path mismatches are a real-world failure mode in C++/Qt development
+ecosystems. The certification pipeline must detect these and block release.
+
+Expected Gate Behavior: REGRESSION (exit code 1)
+Actual Gate Behavior:   REGRESSION (exit code 1) ✓ CORRECT
+Regressions Caught: configure:PASS->FAIL, build:PASS->FAIL
+File Restored After Test: YES ✓

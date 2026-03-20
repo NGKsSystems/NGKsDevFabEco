@@ -1,0 +1,14 @@
+# Scenario 011 — Repeatability (PowerShell)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+$dir = "dataset\scenario_011_repeatability"
+New-Item -ItemType Directory -Path $dir -Force | Out-Null
+
+for ($i=1; $i -le 3; $i++) {
+  $out = .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main release-gate --eco-root . --no-build --json 2>&1 | Out-String
+  Set-Content -Path (Join-Path $dir ("run"+$i+"_raw.txt")) -Value $out -Encoding utf8
+}
+
+# Determinism check (normalized signature)
+# verdict|repos_pass|regression_count|improvement_count
+Get-Content "$dir\consistency_summary.txt"

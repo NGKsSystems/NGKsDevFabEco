@@ -1,0 +1,17 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "repo_path_missing",
+  "correct_behavior": true,
+  "run_id": "certify_baseline_20260319_155811",
+  "timestamp": "2026-03-19T12:58:11.330195+00:00",
+  "repos_checked": 1,
+  "repos_pass": 0,
+  "repos_regression": 1,
+  "regression_count": 1,
+  "regressions_detected": [
+    "probe:REPO_NOT_FOUND:C:/Users/suppo/Desktop/NGKsSystems/NGKsUI_Runtime_DELETED"
+  ],
+  "notes": "The repo path in the baseline manifest was changed to a nonexistent directory. certify-baseline probe stage detected the missing directory and correctly reported a REGRESSION (exit 1). This demonstrates the tool's ability to detect repo unavailability as a baseline deviation."
+}

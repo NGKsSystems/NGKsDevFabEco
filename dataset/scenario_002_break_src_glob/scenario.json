@@ -1,0 +1,15 @@
+{
+  "id": "scenario_002_break_src_glob",
+  "description": "NGKsMediaLab src_glob is changed to reference a non-existent directory, causing the configure and build stages to fail. The gate must detect this as a regression against the certified baseline.",
+  "repo": "NGKsMediaLab",
+  "change": "src_glob changed from valid paths to ['app/NONEXISTENT_BROKEN_DIR/**/*.cpp']",
+  "change_type": "config_corruption",
+  "change_file": "C:/Users/suppo/Desktop/NGKsSystems/NGKsMediaLab/ngksgraph.toml",
+  "change_field": "targets[name=media_host_app].src_glob",
+  "original_value": ["app/cpp_host/src/**/*.cpp", "app/win32_host/src/**/*.cpp"],
+  "broken_value": ["app/NONEXISTENT_BROKEN_DIR/**/*.cpp"],
+  "expected_outcome": "REGRESSION",
+  "gate_command": "certify-baseline --eco-root . --repo NGKsMediaLab",
+  "tier": "TIER_1",
+  "regression_expected": true
+}

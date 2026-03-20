@@ -1,0 +1,36 @@
+SCENARIO 002 — BROKEN SRC_GLOB (NGKsMediaLab)
+
+Change Applied:
+File: C:/Users/suppo/Desktop/NGKsSystems/NGKsMediaLab/ngksgraph.toml
+Field: [[targets]] where name = "media_host_app", key = src_glob
+
+Before:
+  src_glob = ["app/cpp_host/src/**/*.cpp", "app/win32_host/src/**/*.cpp"]
+
+After (broken):
+  src_glob = ["app/NONEXISTENT_BROKEN_DIR/**/*.cpp"]
+
+Description:
+The source glob pattern for the main NGKsMediaLab build target is changed
+to reference a directory that does not exist on the filesystem. This simulates
+an accidental misconfiguration — for example, a developer renaming a source
+directory without updating the build configuration.
+
+During configure, no source files are resolved because the glob matches
+nothing. The configure stage exits with code 2 (failure). Because configure
+fails, the build stage also fails.
+
+Both regressions are detected against the certified baseline where both
+stages were PASS.
+
+After the scenario was captured, the ngksgraph.toml was restored to its
+original state with the correct src_glob values.
+
+Why This Matters:
+Source glob misconfigurations are a common developer error. The certification
+gate must catch them before they propagate to a release branch.
+
+Expected Gate Behavior: REGRESSION (exit code 1)
+Actual Gate Behavior:   REGRESSION (exit code 1) ✓ CORRECT
+Regressions Caught: configure:PASS->FAIL, build:PASS->FAIL
+File Restored After Test: YES ✓

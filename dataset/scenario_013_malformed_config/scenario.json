@@ -1,0 +1,11 @@
+{
+  "scenario_id": "scenario_013_malformed_config",
+  "title": "Malformed TOML Handling",
+  "description": "Inject invalid TOML syntax into ngksgraph.toml and run project execution plus baseline certification to verify parser failures are explicit and non-silent.",
+  "category": "REGRESSION",
+  "subcategory": "malformed_config",
+  "affected_repo": "NGKsMediaLab",
+  "affected_file": "NGKsMediaLab/ngksgraph.toml",
+  "controlled_change": "invalid_toml_syntax_appended",
+  "expected_failure": "explicit_parse_error"
+}

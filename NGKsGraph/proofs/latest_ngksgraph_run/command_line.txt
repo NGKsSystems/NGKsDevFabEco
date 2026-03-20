@@ -1,0 +1,1 @@
+ngksgraph why build\debug\bin\app.exe --profile debug

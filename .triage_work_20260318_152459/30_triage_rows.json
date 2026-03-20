@@ -1,0 +1,208 @@
+[
+  {
+    "repo": "NGKsUI Runtime",
+    "repo_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+    "configure": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+        "configure",
+        "--project",
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 0,
+      "plan_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\build_graph\\debug\\ngksgraph_plan.json",
+      "plan_snippet": "plan_keys=['generated_at', 'graph_version', 'plan_id', 'profile', 'project', 'project_root', 'schema_version', 'target', 'targets']; target=widget_sandbox",
+      "key_lines": [],
+      "source_failure_type": "NONE",
+      "source_ownership": "n/a"
+    },
+    "build": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+        "build",
+        ".",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 0,
+      "build_run_dir": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime\\_proof\\runs\\build_20260318_153014\\pipeline_build_run",
+      "invocation": "not_found",
+      "first_failing_node": "not_found",
+      "key_lines": [
+        "exit_code=0"
+      ],
+      "build_failure_type": "NONE",
+      "build_ownership": "n/a",
+      "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime"
+    },
+    "env_snapshot_file": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.triage_work_20260318_152459\\raw\\NGKsUI_Runtime\\00_env_snapshot.json"
+  },
+  {
+    "repo": "NGKsMediaLab",
+    "repo_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab",
+    "configure": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+        "configure",
+        "--project",
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+      ],
+      "exit_code": 1,
+      "plan_path": null,
+      "plan_snippet": "plan_not_found",
+      "key_lines": [
+        "CONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: app/cpp_host/src/main.cpp, app/cpp_host/src/mainwindow.cpp, app/win32_host/src/main.cpp)."
+      ],
+      "source_failure_type": "BAD_GLOB_OR_TARGET_CONFIG",
+      "source_ownership": "repo"
+    },
+    "build": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+        "build",
+        "."
+      ],
+      "exit_code": 0,
+      "build_run_dir": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab\\_proof\\runs\\build_20260318_153048\\pipeline_build_run",
+      "invocation": "not_found",
+      "first_failing_node": "not_found",
+      "key_lines": [
+        "exit_code=0"
+      ],
+      "build_failure_type": "NONE",
+      "build_ownership": "n/a",
+      "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab"
+    },
+    "env_snapshot_file": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.triage_work_20260318_152459\\raw\\NGKsMediaLab\\00_env_snapshot.json"
+  },
+  {
+    "repo": "NGKsFileVisionary",
+    "repo_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+    "configure": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+        "configure",
+        "--project",
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 0,
+      "plan_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\build_graph\\debug\\ngksgraph_plan.json",
+      "plan_snippet": "plan_keys=['generated_at', 'graph_version', 'plan_id', 'profile', 'project', 'project_root', 'schema_version', 'target', 'targets']; target=app",
+      "key_lines": [],
+      "source_failure_type": "NONE",
+      "source_ownership": "n/a"
+    },
+    "build": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+        "build",
+        ".",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 2,
+      "build_run_dir": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary\\_proof\\runs\\build_20260318_153115\\pipeline_build_run",
+      "invocation": "not_found",
+      "first_failing_node": "not_found",
+      "key_lines": [
+        "root_cause_stage=BUILDCORE_EXECUTION_FAILURE",
+        "root_cause_code=BUILDCORE_NONZERO_EXIT",
+        "exit_code=2"
+      ],
+      "build_failure_type": "SUBPROCESS_FAILURE",
+      "build_ownership": "repo_or_environment",
+      "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary"
+    },
+    "env_snapshot_file": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.triage_work_20260318_152459\\raw\\NGKsFileVisionary\\00_env_snapshot.json"
+  },
+  {
+    "repo": "NGKsPlayerNative",
+    "repo_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+    "configure": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+        "configure",
+        "--project",
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 0,
+      "plan_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\build_graph\\debug\\ngksgraph_plan.json",
+      "plan_snippet": "plan_keys=['generated_at', 'graph_version', 'plan_id', 'profile', 'project', 'project_root', 'schema_version', 'target', 'targets']; target=native",
+      "key_lines": [],
+      "source_failure_type": "NONE",
+      "source_ownership": "n/a"
+    },
+    "build": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+        "build",
+        ".",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 2,
+      "build_run_dir": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative\\_proof\\runs\\build_20260318_153253\\pipeline_build_run",
+      "invocation": "not_found",
+      "first_failing_node": "not_found",
+      "key_lines": [
+        "root_cause_stage=BUILDCORE_EXECUTION_FAILURE",
+        "root_cause_code=BUILDCORE_NONZERO_EXIT",
+        "exit_code=2"
+      ],
+      "build_failure_type": "SUBPROCESS_FAILURE",
+      "build_ownership": "repo_or_environment",
+      "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative"
+    },
+    "env_snapshot_file": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.triage_work_20260318_152459\\raw\\NGKsPlayerNative\\00_env_snapshot.json"
+  },
+  {
+    "repo": "NGKsGraph",
+    "repo_path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+    "configure": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksgraph.exe",
+        "configure",
+        "--project",
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 1,
+      "plan_path": null,
+      "plan_snippet": "plan_not_found",
+      "key_lines": [
+        "CONFIG_ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: examples/hello_msvc/src/main.cpp, examples/multi_target_msvc/src/app/main.cpp, examples/multi_target_msvc/src/core/core.cpp, examples/qt_msvc_real/build/debug/qt/moc_core_message.cpp, examples/qt_msvc_real/build/debug/qt/moc_main_window.cpp, examples/qt_msvc_real/build/debug/qt/qrc_app.cpp, examples/qt_msvc_real/build/release/qt/moc_core_message.cpp, examples/qt_msvc_real/build/release/qt/moc_main_window.cpp, examples/qt_msvc_real/build/release/qt/qrc_app.cpp, examples/qt_msvc_real/src/app/main.cpp)."
+      ],
+      "source_failure_type": "BAD_GLOB_OR_TARGET_CONFIG",
+      "source_ownership": "repo"
+    },
+    "build": {
+      "cmd": [
+        "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\ngksdevfabric.exe",
+        "build",
+        ".",
+        "--profile",
+        "debug"
+      ],
+      "exit_code": 2,
+      "build_run_dir": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\build_20260318_153316\\pipeline_build_run",
+      "invocation": "not_found",
+      "first_failing_node": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\build_20260318_153316\\pipeline_build_run\\build_stdout.txt: failure_summary: Build failed in Graph (class=precondition_failed, reason=missing_required_outputs). Action: check prior stage outputs and rerun. Details: C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph\\_proof\\runs\\devfabric_run_run_20260318_153321\\30_errors.txt. Hint: ERROR: NO_SOURCES_MATCHED: target='app' src_glob=[src/**/*.cpp] matched 0 files, but repository contains source files (sample: examples/hello_msvc/src/main.cpp, examples/multi_target_msvc/src/app/main.cpp, examples/multi",
+      "key_lines": [
+        "root_cause_stage=BUILDCORE_EXECUTION_FAILURE",
+        "root_cause_code=BUILDCORE_NONZERO_EXIT",
+        "exit_code=2"
+      ],
+      "build_failure_type": "SUBPROCESS_FAILURE",
+      "build_ownership": "repo_or_environment",
+      "cwd": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph"
+    },
+    "env_snapshot_file": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.triage_work_20260318_152459\\raw\\NGKsGraph\\00_env_snapshot.json"
+  }
+]

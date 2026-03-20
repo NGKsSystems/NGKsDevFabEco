@@ -249,14 +249,17 @@ class Config:
         self.normalize()
         if not self.profiles:
             if profile and profile != "default":
-                raise ValueError(f"Unknown profile '{profile}'. No profiles are defined in config.")
+                raise ValueError(
+                    f"Unknown profile '{profile}'. No profiles are defined in config; implicit default mode does not accept named profiles."
+                )
             return "default"
 
         if not profile:
-            raise ValueError("Profiles are defined in config; --profile is required.")
+            known = ", ".join(self.profile_names())
+            raise ValueError(f"Profiles are defined in config; --profile is required. Available profiles: {known}")
         if profile not in self.profiles:
             known = ", ".join(self.profile_names())
-            raise ValueError(f"Unknown profile '{profile}'. Known profiles: {known}")
+            raise ValueError(f"Unknown profile '{profile}'. Available profiles: {known}")
 
         selected = self.profiles[profile]
         for target in self.targets:

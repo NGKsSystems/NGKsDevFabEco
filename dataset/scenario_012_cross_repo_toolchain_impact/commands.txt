@@ -1,0 +1,23 @@
+# Scenario 012 — Cross-repo impact (PowerShell)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+$dir = "dataset\scenario_012_cross_repo_toolchain_impact"
+$manifest = ".baseline_v1_20260318_194000\repo_manifest.json"
+$backup = "$dir\repo_manifest.backup.json"
+
+Copy-Item $manifest $backup -Force
+try {
+  $m = Get-Content $manifest | ConvertFrom-Json
+  foreach ($r in $m.certified_repos) {
+    if ($r.tier -eq "TIER_1") {
+      $r.path = "C:/BROKEN_SHARED_TOOLCHAIN_ROOT/" + $r.name
+    }
+  }
+  $m | ConvertTo-Json -Depth 20 | Set-Content $manifest -Encoding utf8
+
+  .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --no-build --json 2>&1 |
+    Set-Content "$dir\_raw_output.txt"
+}
+finally {
+  Copy-Item $backup $manifest -Force
+}

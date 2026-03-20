@@ -1,0 +1,11 @@
+{
+  "exit_code": 1,
+  "gate_verdict": "FAIL",
+  "regression_detected": true,
+  "regression_type": "tier1_contract_violation",
+  "run_id": "certify_baseline_20260319_160600",
+  "regressions_detected": [
+    "tier_contract_violation:TIER_1_requires_configure_PASS_but_baseline_is_NA"
+  ],
+  "notes": "NGKsFileVisionary is a TIER_1 repo, which requires configure=PASS or configure=FAIL in the baseline manifest. The modified manifest incorrectly set configure=N/A, which violates the TIER_1 contract. This is detected as a hard regression by the tier contract checker. Exit code: 1."
+}

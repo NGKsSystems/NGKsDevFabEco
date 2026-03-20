@@ -1,0 +1,11 @@
+{
+  "scenario_id": "scenario_012_cross_repo_toolchain_impact",
+  "title": "Cross-Repo Impact via Shared Root Break",
+  "description": "Apply one controlled manifest-level break to Tier 1 repo paths and run certify-baseline across the ecosystem. Validate consistent failure classification across impacted repos.",
+  "category": "REGRESSION",
+  "subcategory": "cross_repo_impact",
+  "controlled_change": "single_manifest_rule_affecting_all_tier1_paths",
+  "affected_scope": "all_tier1_repos",
+  "expected_failure_class": "probe:REPO_NOT_FOUND",
+  "expected_consistency": true
+}

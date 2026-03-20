@@ -1,0 +1,495 @@
+[
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKs ExecLedger",
+    "why_included": [
+      "git"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Other",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKs Zohan",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\car_content_creator_flutter",
+    "why_included": [
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": false,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": false,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsHome-RealEstate-Enterprize",
+    "why_included": [
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": false,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": false,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NX Writer",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsFileVisionary",
+    "why_included": [
+      "ngksgraph_toml",
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": true,
+    "has_git": true,
+    "appears_as": "mixed",
+    "markers": {
+      "ngksgraph_toml": true,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPINirvana",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayer",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsUI Runtime",
+    "why_included": [
+      "ngksgraph_toml",
+      "git"
+    ],
+    "has_ngksgraph_toml": true,
+    "has_git": true,
+    "appears_as": "C++",
+    "markers": {
+      "ngksgraph_toml": true,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPresents",
+    "why_included": [
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": false,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": false,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsEnvCapsule",
+    "why_included": [
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsBuildCore",
+    "why_included": [
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMediaLab",
+    "why_included": [
+      "ngksgraph_toml",
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": true,
+    "has_git": true,
+    "appears_as": "mixed",
+    "markers": {
+      "ngksgraph_toml": true,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPlayerNative",
+    "why_included": [
+      "ngksgraph_toml",
+      "git",
+      "cmake"
+    ],
+    "has_ngksgraph_toml": true,
+    "has_git": true,
+    "appears_as": "C++",
+    "markers": {
+      "ngksgraph_toml": true,
+      "git": true,
+      "cmake": true,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsCells",
+    "why_included": [
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": false,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": false,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\Office Suite",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\OfficeSuiteCpp",
+    "why_included": [
+      "git",
+      "cmake"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "C++",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": true,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsLibrary",
+    "why_included": [
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsMailcpp",
+    "why_included": [
+      "git",
+      "cmake"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "C++",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": true,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsPinMap_clean",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\PinMap Apple",
+    "why_included": [
+      "git",
+      "package_json"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Node",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": false,
+      "package_json": true,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKs DL Manager V2.0",
+    "why_included": [
+      "git",
+      "setup_py"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": true,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco",
+    "why_included": [
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKs DL Manager",
+    "why_included": [
+      "git",
+      "setup_py"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": false,
+      "setup_py": true,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabric",
+    "why_included": [
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": false,
+    "has_git": true,
+    "appears_as": "Python",
+    "markers": {
+      "ngksgraph_toml": false,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  },
+  {
+    "path": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsGraph",
+    "why_included": [
+      "ngksgraph_toml",
+      "git",
+      "pyproject"
+    ],
+    "has_ngksgraph_toml": true,
+    "has_git": true,
+    "appears_as": "mixed",
+    "markers": {
+      "ngksgraph_toml": true,
+      "git": true,
+      "cmake": false,
+      "pyproject": true,
+      "setup_py": false,
+      "package_json": false,
+      "sln": false
+    }
+  }
+]

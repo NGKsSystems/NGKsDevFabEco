@@ -1,0 +1,31 @@
+
+path appears_as has_ngksgraph_toml has_git why
+---- ---------- ------------------ ------- ---
+                                           git
+                                           git,package_json
+                                           package_json
+                                           package_json
+                                           git,package_json
+                                           ngksgraph_toml,git,pac…
+                                           git,package_json
+                                           git,package_json
+                                           ngksgraph_toml,git
+                                           package_json
+                                           git,pyproject
+                                           git,pyproject
+                                           ngksgraph_toml,git,pyp…
+                                           ngksgraph_toml,git,cma…
+                                           package_json
+                                           git,package_json
+                                           git,cmake
+                                           git,pyproject
+                                           git,cmake
+                                           git,package_json
+                                           git,package_json
+                                           git,setup_py
+                                           git,pyproject
+                                           git,setup_py
+                                           git,pyproject
+                                           ngksgraph_toml,git,pyp…
+
+

@@ -1,0 +1,18 @@
+# Scenario 005 — External Repo Stable Under Harmless Edit (NGKsPINirvana)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply harmless metadata change to NGKsPINirvana package.json
+# Added: "description": "NGKs PIN Nirvana secure entry manager"
+# (Edit made via replace_string_in_file tool)
+
+# Run the full-ecosystem release gate (no-build — probe + doctor + configure for TIER_1)
+python -m ngksdevfabric.ngk_fabric.main release-gate --eco-root . --no-build --json
+
+# Expected exit code: 0 (PASS — harmless TIER_2 edit, no regressions)
+# Actual exit code: 0  ✓
+
+# Restore package.json to original state
+# (Restored via replace_string_in_file tool)

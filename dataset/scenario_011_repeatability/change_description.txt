@@ -1,0 +1,21 @@
+SCENARIO 011 — REPEATABILITY
+
+Condition:
+No repository files or baseline metadata were changed between runs.
+
+Action:
+release-gate was executed three times in sequence with --no-build.
+
+Validation logic:
+Outputs were normalized to deterministic fields:
+- verdict
+- repos_pass
+- regression_count
+- improvement_count
+
+Outcome:
+All normalized signatures matched exactly:
+PASS|10|0|0, PASS|10|0|0, PASS|10|0|0
+
+Interpretation:
+No non-determinism was observed for gate outcomes under stable inputs.

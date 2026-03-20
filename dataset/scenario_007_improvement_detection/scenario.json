@@ -1,0 +1,17 @@
+{
+  "scenario_id": "scenario_007_improvement_detection",
+  "title": "Fix Previously Failing Repo (Improvement Detection)",
+  "description": "The baseline manifest is modified to mark NGKsUI_Runtime probe=FAIL and doctor=FAIL (simulating a prior broken state that was then fixed). When certify-baseline runs against the working repo, both probe and doctor pass, which the tool correctly identifies as improvements over the certified baseline.",
+  "category": "IMPROVEMENT",
+  "subcategory": "probe_doctor_improvement",
+  "affected_repo": "NGKsUI_Runtime",
+  "affected_file": ".baseline_v1_20260318_194000/repo_manifest.json",
+  "change_type": "manifest_baseline_downgrade",
+  "expected_exit_code": 0,
+  "expected_gate": "PASS",
+  "expected_improvement_types": ["probe:FAIL->PASS", "doctor:FAIL->PASS"],
+  "run_id": "certify_baseline_20260319_155912",
+  "timestamp": "2026-03-19T12:59:18.707859+00:00",
+  "tool_version": "ngksdevfabric certify-baseline",
+  "mode": "no_build"
+}

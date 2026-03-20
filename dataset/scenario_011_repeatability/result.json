@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "gate_verdict": "PASS",
+  "regression_detected": false,
+  "improvement_detected": false,
+  "run_count": 3,
+  "normalized_signatures": [
+    "PASS|10|0|0",
+    "PASS|10|0|0",
+    "PASS|10|0|0"
+  ],
+  "unique_signature_count": 1,
+  "non_determinism_detected": false,
+  "notes": "All three runs produced identical normalized signatures (verdict, repos_pass, regression_count, improvement_count)."
+}

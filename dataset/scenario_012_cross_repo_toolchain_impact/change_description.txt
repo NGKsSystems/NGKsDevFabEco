@@ -1,0 +1,19 @@
+SCENARIO 012 — CROSS-REPO IMPACT
+
+Single controlled change:
+The baseline manifest was edited once so all Tier 1 repo paths resolved under a broken shared root:
+C:/BROKEN_SHARED_TOOLCHAIN_ROOT/<repo-name>
+
+Why this is high-value:
+One defect in a shared dependency surface should create consistent behavior across all affected repos.
+
+Observed behavior:
+- certify-baseline gate: FAIL
+- repos_regression: 6
+- each impacted repo classification: probe:REPO_NOT_FOUND
+
+Consistency:
+Failure class was consistent across all impacted Tier 1 repos.
+
+Restoration:
+The manifest was restored from backup immediately after capture.

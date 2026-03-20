@@ -1,0 +1,19 @@
+# Scenario 004 — Repo Unavailable (NGKsUI_Runtime)
+# Commands executed (PowerShell, from NGKsDevFabEco root)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+.\_validation_venv\Scripts\Activate.ps1
+
+# Apply the breaking change to the baseline manifest
+# Changed: "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime"
+# To:      "path": "C:/Users/suppo/Desktop/NGKsSystems/NGKsUI Runtime_DOES_NOT_EXIST"
+# (Edit made via replace_string_in_file tool on .baseline_v1_20260318_194000/repo_manifest.json)
+
+# Run certify-baseline for NGKsUI_Runtime only
+python -m ngksdevfabric.ngk_fabric.main certify-baseline --eco-root . --repo NGKsUI_Runtime --json
+
+# Expected exit code: 1 (REGRESSION — probe:REPO_NOT_FOUND)
+# Actual exit code: 1  ✓
+
+# Restore baseline manifest to correct state
+# (Restored via replace_string_in_file tool)

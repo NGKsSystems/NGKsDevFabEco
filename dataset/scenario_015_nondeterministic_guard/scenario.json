@@ -1,0 +1,9 @@
+{
+  "scenario_id": "scenario_015_nondeterministic_guard",
+  "title": "Non-Deterministic Guard (Timestamp-Only Change)",
+  "description": "Modify only file timestamp metadata on a non-critical input and run no-build release-gate. No semantic configuration/content change is introduced.",
+  "category": "PASS",
+  "subcategory": "timestamp_cache_guard",
+  "controlled_change": "last_write_time_only",
+  "expected_outcome": "no_regression"
+}

@@ -1,0 +1,16 @@
+{
+  "exit_code": 0,
+  "gate_verdict": "PASS",
+  "regression_detected": false,
+  "improvement_detected": false,
+  "run_id": "release_gate_20260319_130750",
+  "repos_checked": 10,
+  "repos_pass": 10,
+  "repos_regression": 0,
+  "repos_improvement": 0,
+  "regression_count": 0,
+  "improvement_count": 0,
+  "regressions_detected": [],
+  "improvements_detected": [],
+  "notes": "NGKsPINirvana is a TIER_2 repo. The version bump from cross-env ^10.1.0 to ^10.2.0 does not affect certification because TIER_2 repos skip build testing. All 10 repos pass probe+doctor stages. No regressions or improvements detected. Gate verdict: PASS. Exit code: 0."
+}

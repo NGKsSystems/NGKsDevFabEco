@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-03-18T16:36:19Z",
+  "graph_version": "ef0a37130daaf67664f032a52751502e32c6ee3d62b6a70bf4a8084626fd3ccf",
+  "plan_id": "110ad21f5440a29bc436590daeed7b97dbc54c11c7e38e8d85d47fcf69cea378",
+  "profile": "debug",
+  "project": "NGKsGraph",
+  "project_root": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph",
+  "schema_version": 1,
+  "target": "NGKsGraph",
+  "targets": [
+    {
+      "name": "NGKsGraph",
+      "output_path": "build/debug/bin/NGKsGraph.exe",
+      "steps": [
+        {
+          "cflags": [
+            "/Od",
+            "/Zi"
+          ],
+          "defines": [
+            "DEBUG",
+            "UNICODE",
+            "_UNICODE"
+          ],
+          "fingerprint": "fb49e6797e31c866a45ab17c4e77b02835342aff8d3d3a40685b310335e448c5",
+          "include_dirs": [],
+          "inputs": [
+            "examples/hello_msvc/src/main.cpp"
+          ],
+          "kind": "compile",
+          "ldflags": [],
+          "libs": [],
+          "outputs": [
+            "build/debug/obj/examples/hello_msvc/src/main.obj"
+          ],
+          "step_id": "compile_e2cdbbbd47ff",
+          "toolchain": "cl/link"
+        },
+        {
+          "cflags": [],
+          "defines": [],
+          "fingerprint": "396a76380b03beca7e5c711058b2063d71adc7135cf2f81504bb23000f8f55a6",
+          "include_dirs": [],
+          "inputs": [
+            "build/debug/obj/examples/hello_msvc/src/main.obj"
+          ],
+          "kind": "link",
+          "ldflags": [],
+          "libs": [],
+          "outputs": [
+            "build/debug/bin/NGKsGraph.exe"
+          ],
+          "step_id": "link_95e675f7292f",
+          "toolchain": "cl/link"
+        }
+      ],
+      "type": "exe"
+    }
+  ]
+}

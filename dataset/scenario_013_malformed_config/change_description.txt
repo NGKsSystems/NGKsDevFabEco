@@ -1,0 +1,19 @@
+SCENARIO 013 — MALFORMED CONFIG
+
+Controlled change:
+A malformed TOML fragment was appended to NGKsMediaLab/ngksgraph.toml.
+
+Injected invalid syntax:
+[profiles.release
+
+Execution:
+1) ngksdevfabric run --project <NGKsMediaLab> --mode ecosystem --profile release
+2) certify-baseline --eco-root . --repo NGKsMediaLab --json
+
+Observed behavior:
+- explicit parser error hint reported
+- configure/build stages failed in certify-baseline
+- no silent pass condition observed
+
+Restoration:
+Original ngksgraph.toml was restored from backup in finally block.

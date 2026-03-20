@@ -1,0 +1,12 @@
+ M src/ui/MainWindow.cpp
+ M src/ui/MainWindow.h
+?? .graph_state/
+?? .ngks/
+?? certification/
+?? certification_target.json
+?? env_capsule.hash.txt
+?? env_capsule.lock.json
+?? env_capsule.resolved.hash.txt
+?? env_capsule.resolved.json
+?? proof/
+

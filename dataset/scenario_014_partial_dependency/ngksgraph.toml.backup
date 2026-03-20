@@ -1,0 +1,51 @@
+# Auto-detected repo family: qt-app
+name = "app"
+out_dir = "build"
+target_type = "exe"
+cxx_std = 17
+
+src_glob = ["src/**/*.cpp", "src/**/*.c"]
+include_dirs = ["C:/Qt/6.10.2/msvc2022_64/include", "C:/Qt/6.10.2/msvc2022_64/include/QtCore", "C:/Qt/6.10.2/msvc2022_64/include/QtGui", "C:/Qt/6.10.2/msvc2022_64/include/QtWidgets", "C:/Qt/6.10.2/msvc2022_64/include/QtSql", "src"]
+defines = ["UNICODE", "_UNICODE"]
+cflags = ["/Zc:__cplusplus", "/permissive-", "/FS"]
+ldflags = ["/SUBSYSTEM:WINDOWS", "/ENTRY:mainCRTStartup"]
+libs = ["Qt6Core", "Qt6Gui", "Qt6Widgets", "Qt6Concurrent", "Qt6Sql", "Qt6EntryPoint"]
+lib_dirs = ["C:/Qt/6.10.2/msvc2022_64/lib"]
+warnings = "default"
+
+[profiles.debug]
+cflags = ["/Od", "/Zi", "/FS"]
+defines = ["DEBUG"]
+ldflags = ["/SUBSYSTEM:WINDOWS", "/ENTRY:mainCRTStartup"]
+
+[profiles.release]
+cflags = ["/O2"]
+defines = ["NDEBUG"]
+ldflags = ["/SUBSYSTEM:WINDOWS", "/ENTRY:mainCRTStartup"]
+
+[qt]
+enabled = true
+qt_root = "C:/Qt/6.10.2/msvc2022_64"
+prefix = "C:/Qt/6.10.2/msvc2022_64"
+version = 6
+modules = ["Core", "Gui", "Widgets", "Concurrent", "Sql"]
+moc_path = "C:/Qt/6.10.2/msvc2022_64/bin/moc.exe"
+uic_path = "C:/Qt/6.10.2/msvc2022_64/bin/uic.exe"
+rcc_path = "C:/Qt/6.10.2/msvc2022_64/bin/rcc.exe"
+include_dirs = ["C:/Qt/6.10.2/msvc2022_64/include", "C:/Qt/6.10.2/msvc2022_64/include/QtCore", "C:/Qt/6.10.2/msvc2022_64/include/QtGui", "C:/Qt/6.10.2/msvc2022_64/include/QtWidgets", "C:/Qt/6.10.2/msvc2022_64/include/QtSql"]
+lib_dirs = ["C:/Qt/6.10.2/msvc2022_64/lib"]
+libs = ["Qt6Core", "Qt6Gui", "Qt6Widgets", "Qt6Concurrent", "Qt6Sql", "Qt6EntryPoint"]
+
+[ai]
+enabled = false
+plugin = ""
+mode = "advise"
+max_actions = 3
+log_tail_lines = 200
+redact_paths = true
+redact_env = true
+
+[ai.provider]
+model = ""
+endpoint = ""
+api_key_env = ""

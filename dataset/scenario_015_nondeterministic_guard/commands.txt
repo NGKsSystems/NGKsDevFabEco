@@ -1,0 +1,17 @@
+# Scenario 015 — Non-deterministic guard (PowerShell)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+$dir = "dataset\scenario_015_nondeterministic_guard"
+$f = "..\NGKsPINirvana\package.json"
+$item = Get-Item $f
+$orig = $item.LastWriteTimeUtc
+
+try {
+  (Get-Item $f).LastWriteTimeUtc = $orig.AddMinutes(7)
+
+  .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main release-gate --eco-root . --no-build --json 2>&1 |
+    Set-Content "$dir\_raw_output.txt"
+}
+finally {
+  (Get-Item $f).LastWriteTimeUtc = $orig
+}

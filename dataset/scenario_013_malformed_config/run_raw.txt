@@ -1,0 +1,13 @@
+[certification-bootstrap]
+mode=skipped
+reason=existing certification assets detected
+created_assets=0
+preserved_assets=5
+skipped_assets=0
+structural_state=CERTIFICATION_READY_WITH_WARNINGS
+preserved_asset_paths=C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\certification\baseline_v1\baseline_manifest.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\certification\baseline_v1\baseline_matrix.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\certification\baseline_v1\diagnostic_metrics.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\certification\scenario_index.json;C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\certification_target.json
+failure_summary: Build failed in Graph (class=precondition_failed, reason=missing_required_outputs). Action: check prior stage outputs and rerun. Details: C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\_proof\runs\devfabric_run_run_20260319_173238\30_errors.txt. Hint: ERROR: Cannot declare ('profiles', 'release') twice (at line 26, column 18)
+run_id=run_20260319_173238
+proof_dir=C:\Users\suppo\Desktop\NGKsSystems\NGKsMediaLab\_proof\runs\devfabric_run_run_20260319_173238
+exit_code=2
+

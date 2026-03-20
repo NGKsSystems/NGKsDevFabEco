@@ -1,0 +1,3 @@
+Configured plan: C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\build_graph\debug\ngksgraph_plan.json
+PROOF_ZIP=C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary\_proof\run_20260318_144204.zip
+

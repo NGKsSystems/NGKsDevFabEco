@@ -1,0 +1,19 @@
+# Scenario 014 — Partial dependency availability (PowerShell)
+
+Set-Location "C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco"
+$dir = "dataset\scenario_014_partial_dependency"
+$cfg = "..\NGKsFileVisionary\ngksgraph.toml"
+$backup = "$dir\ngksgraph.toml.backup"
+
+Copy-Item $cfg $backup -Force
+try {
+  $txt = Get-Content $cfg -Raw
+  $txt2 = $txt -replace 'moc_path\s*=\s*"[^"]+"','moc_path = "C:/Qt/6.10.2/msvc2022_64/bin/moc_missing.exe"'
+  Set-Content -Path $cfg -Value $txt2 -Encoding utf8
+
+  .\_validation_venv\Scripts\python.exe -m ngksdevfabric.ngk_fabric.main run --project "C:\Users\suppo\Desktop\NGKsSystems\NGKsFileVisionary" --mode ecosystem --profile release 2>&1 |
+    Set-Content "$dir\run_raw.txt"
+}
+finally {
+  Copy-Item $backup $cfg -Force
+}
