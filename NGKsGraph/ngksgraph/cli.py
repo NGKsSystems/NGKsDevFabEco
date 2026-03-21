@@ -43,6 +43,7 @@ from ngksgraph.mode import get_mode, is_ecosystem
 from ngksgraph.toolchain import doctor_report, doctor_toolchain_report
 from ngksgraph.plan_cache import CACHE_SCHEMA_VERSION
 from ngksgraph.msvc import bootstrap_msvc, resolve_msvc_toolchain_paths
+from ngksgraph.target_drift_detector import TargetDriftDetector
 from ngksgraph.proof import (
     TeeTextIO,
     activate_proof_run,
@@ -946,6 +947,76 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def cmd_drift(args: argparse.Namespace) -> int:
+    """Detect and report target drift between discovered and declared targets."""
+    repo_root, config_path = _resolve_repo_and_config(getattr(args, "project", None))
+    if repo_root is None or config_path is None:
+        return 1
+
+    try:
+        cfg = load_config(config_path)
+        
+        # Convert Config object to dict for detector
+        config_dict = {
+            "targets": cfg.targets if hasattr(cfg, "targets") else [],
+            "name": cfg.name if hasattr(cfg, "name") else "",
+        }
+
+        detector = TargetDriftDetector(config_dict, repo_root)
+        
+        # Emit report to proof folder
+        report_path = Path(current_proof_run_dir()) / "drift_report.json" if current_proof_run_dir() else Path("drift_report.json")
+        report = detector.emit_json_report(report_path)
+
+        if report.get("error"):
+            print(f"ERROR: {report.get('error')}", file=sys.stderr)
+            return 1
+
+        output_format = getattr(args, "output_format", "text")
+
+        if output_format == "json":
+            print(json.dumps(report, indent=2, default=str))
+        else:
+            print(f"Total discovered:  {report.get('total_discovered', 0)}")
+            print(f"Total declared:    {report.get('total_declared', 0)}")
+            print(f"Undeclared count:  {report.get('undeclared_count', 0)}")
+            print()
+
+            entries = report.get("entries", [])
+            if not entries:
+                print("No drift detected.")
+                print(f"REPORT={report_path}")
+                return 0
+
+            for entry in entries:
+                disc = entry.get("discovered", {})
+                status = entry.get("status", "unknown")
+                action = entry.get("action", "none")
+                print(f"Target: {disc.get('name', 'UNKNOWN')}")
+                print(f"  Type:       {disc.get('type', 'unknown')}")
+                print(f"  Location:   {disc.get('location', 'unknown')}")
+                print(f"  Confidence: {disc.get('confidence', 0.0):.2f}")
+                print(f"  Reason:     {disc.get('reason', 'unknown')}")
+                print(f"  Status:     {status}")
+                print(f"  Action:     {action}")
+                print()
+
+        if report.get("undeclared_count", 0) > 0:
+            print(f"DRIFT_DETECTED=true undeclared_count={report.get('undeclared_count')}")
+            print(f"REPORT={report_path}")
+            return 1
+
+        print("GATE=PASS")
+        print(f"REPORT={report_path}")
+        return 0
+
+    except Exception as exc:
+        import traceback
+        print(f"ERROR: {exc}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return 1
+
+
 def cmd_graph(args: argparse.Namespace) -> int:
     repo_root = _repo_root_from_cwd()
     config_path = _config_path(repo_root)
@@ -1433,6 +1504,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor.add_argument("--profile", default=None)
     p_doctor.add_argument("--profiles", action="store_true", default=False)
     p_doctor.set_defaults(func=cmd_doctor)
+
+    p_drift = sub.add_parser("drift", help="Detect and report target drift between discovered and declared targets")
+    p_drift.add_argument("--project", default=None)
+    p_drift.add_argument("--output-format", default="text", choices=["text", "json"])
+    p_drift.add_argument("--out", default=None)
+    p_drift.set_defaults(func=cmd_drift)
 
     p_graph = sub.add_parser("graph", help="Export build graph as JSON")
     p_graph.add_argument("--json", action="store_true", default=True)
