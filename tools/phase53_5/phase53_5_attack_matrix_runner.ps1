@@ -30,8 +30,18 @@ $exeBak = "$exe.phase53_5_bak"
 $art111Bak = "$art111.phase53_5_bak"
 
 function Restore-State {
-    if (Test-Path -LiteralPath $exeBak) { Move-Item -LiteralPath $exeBak -Destination $exe -Force }
-    if (Test-Path -LiteralPath $art111Bak) { Move-Item -LiteralPath $art111Bak -Destination $art111 -Force }
+    if (Test-Path -LiteralPath $exeBak) {
+        # Remove-Item first: Move-Item -Force can fail on Windows if the exe was recently
+        # run and still has an open handle (e.g. held by security software).
+        if (Test-Path -LiteralPath $exe) { Remove-Item -LiteralPath $exe -Force }
+        Move-Item -LiteralPath $exeBak -Destination $exe
+        # Wait for OS/AV to finish scanning the restored exe before proceeding.
+        Start-Sleep -Milliseconds 2000
+    }
+    if (Test-Path -LiteralPath $art111Bak) {
+        if (Test-Path -LiteralPath $art111) { Remove-Item -LiteralPath $art111 -Force }
+        Move-Item -LiteralPath $art111Bak -Destination $art111
+    }
 }
 
 function Safe-NativeRun {
