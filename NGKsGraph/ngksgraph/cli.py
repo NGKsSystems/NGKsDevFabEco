@@ -1017,6 +1017,66 @@ def cmd_drift(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_sync(args: argparse.Namespace) -> int:
+    """Generate or apply safe sync updates for undeclared discovered targets."""
+    repo_root, config_path = _resolve_repo_and_config(getattr(args, "project", None))
+    if repo_root is None or config_path is None:
+        return 1
+
+    try:
+        cfg = load_config(config_path)
+        config_dict = {
+            "targets": cfg.targets if hasattr(cfg, "targets") else [],
+            "name": cfg.name if hasattr(cfg, "name") else "",
+        }
+
+        detector = TargetDriftDetector(config_dict, repo_root)
+        proposals = detector.build_sync_proposal(min_confidence=float(getattr(args, "min_confidence", 0.8)))
+
+        output_path = getattr(args, "out", None)
+        if output_path:
+            proposal_path = Path(output_path).resolve()
+        elif current_proof_run_dir():
+            proposal_path = Path(current_proof_run_dir()) / "sync_proposal.json"
+        else:
+            proposal_path = Path("sync_proposal.json").resolve()
+
+        proposal_payload = {
+            "repo_root": str(repo_root),
+            "config_path": str(config_path),
+            "proposal_count": len(proposals),
+            "proposals": proposals,
+        }
+        proposal_path.parent.mkdir(parents=True, exist_ok=True)
+        proposal_path.write_text(json.dumps(proposal_payload, indent=2, default=str), encoding="utf-8")
+
+        if not proposals:
+            print("SYNC_NOOP=no_high_confidence_undeclared_targets")
+            print(f"SYNC_PROPOSAL={proposal_path}")
+            return 0
+
+        apply_changes = bool(getattr(args, "apply", False))
+        if not apply_changes:
+            print(f"SYNC_PROPOSAL={proposal_path}")
+            print(f"SYNC_PENDING count={len(proposals)}")
+            return 1
+
+        added = detector.apply_sync_to_toml(config_path, proposals)
+        if not added:
+            print("SYNC_NOOP=already_declared")
+            print(f"SYNC_PROPOSAL={proposal_path}")
+            return 0
+
+        print(f"SYNC_APPLIED count={len(added)} names={','.join(added)}")
+        print(f"SYNC_PROPOSAL={proposal_path}")
+        print(f"CONFIG_UPDATED={config_path}")
+        return 0
+
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+
 def cmd_graph(args: argparse.Namespace) -> int:
     repo_root = _repo_root_from_cwd()
     config_path = _config_path(repo_root)
@@ -1510,6 +1570,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_drift.add_argument("--output-format", default="text", choices=["text", "json"])
     p_drift.add_argument("--out", default=None)
     p_drift.set_defaults(func=cmd_drift)
+
+    p_sync = sub.add_parser("sync", help="Generate/apply safe target sync updates from drift detection")
+    p_sync.add_argument("--project", default=None)
+    p_sync.add_argument("--out", default=None)
+    p_sync.add_argument("--apply", action="store_true", default=False)
+    p_sync.add_argument("--min-confidence", type=float, default=0.8)
+    p_sync.set_defaults(func=cmd_sync)
 
     p_graph = sub.add_parser("graph", help="Export build graph as JSON")
     p_graph.add_argument("--json", action="store_true", default=True)
