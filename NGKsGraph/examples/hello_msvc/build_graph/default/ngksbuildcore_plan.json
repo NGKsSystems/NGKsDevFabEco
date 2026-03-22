@@ -1,0 +1,36 @@
+{
+  "base_dir": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph/examples/hello_msvc",
+  "nodes": [
+    {
+      "cmd": "cl /nologo /EHsc /std:c++20 /MD /FS /showIncludes /c src/main.cpp /Fobuild/obj/src/main.obj /Iinclude /DUNICODE /D_UNICODE",
+      "cwd": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph/examples/hello_msvc",
+      "deps": [],
+      "desc": "Compile src/main.cpp for hello_msvc",
+      "env": {},
+      "id": "cl:hello_msvc:compile:main.cpp:3a51e8677539",
+      "inputs": [
+        "src/main.cpp"
+      ],
+      "outputs": [
+        "build/obj/src/main.obj"
+      ]
+    },
+    {
+      "cmd": "link /nologo build/obj/src/main.obj /OUT:build/bin/hello_msvc.exe",
+      "cwd": "C:/Users/suppo/Desktop/NGKsSystems/NGKsDevFabEco/NGKsGraph/examples/hello_msvc",
+      "deps": [
+        "cl:hello_msvc:compile:main.cpp:3a51e8677539"
+      ],
+      "desc": "Link hello_msvc",
+      "env": {},
+      "id": "link:hello_msvc:link:50057eba733b",
+      "inputs": [
+        "build/obj/src/main.obj"
+      ],
+      "outputs": [
+        "build/bin/hello_msvc.exe"
+      ]
+    }
+  ],
+  "version": 1
+}

@@ -1,0 +1,30 @@
+{
+  "target_spec": {
+    "target_name": "hello_msvc",
+    "target_type": "desktop_app",
+    "language": "c++",
+    "platform": "windows",
+    "configuration": "default",
+    "required_capabilities": [
+      "cxx.compiler",
+      "cxx.standard:20",
+      "msvc.linker",
+      "windows.sdk"
+    ],
+    "optional_capabilities": [
+      "pdb.debug"
+    ],
+    "policy_flags": {
+      "fail_on_missing_required_capability": true,
+      "require_active_language_standard": true
+    },
+    "source_roots": [
+      "src"
+    ],
+    "entrypoints": [
+      "src/main.cpp"
+    ]
+  },
+  "source": "derived_from_graph",
+  "path": ""
+}

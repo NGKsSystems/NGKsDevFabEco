@@ -45,10 +45,17 @@ def find_vswhere_path() -> Path | None:
 
 
 def find_vs_installation(vswhere_path: Path) -> str | None:
+    """
+    Query vswhere for the latest VS or BuildTools installation that has VC tools.
+    Uses -products * so that BuildTools installations are included alongside VS IDE.
+    Returns the installation path string, or None if no matching installation is found.
+    """
     proc = subprocess.run(
         [
             str(vswhere_path),
             "-latest",
+            "-products",
+            "*",
             "-requires",
             "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
             "-property",
@@ -126,17 +133,19 @@ def resolve_msvc_toolchain_paths(env: dict[str, str] | None = None) -> MSVCToolc
     )
 
 
-def resolve_vsdevcmd_path(vs_install_path: str) -> Path:
+def resolve_vsdevcmd_path(vs_install_path: str) -> Path | None:
+    """
+    Resolve VsDevCmd.bat from a VS/BuildTools installation path returned by vswhere.
+
+    Uses only the path as given by vswhere — no hardcoded defaults, no guessing.
+    Returns the verified Path if VsDevCmd.bat exists at that location, or None.
+    Never returns a path that has not been verified to exist on disk.
+    """
     normalized_install = _strip_wrapping_quotes(vs_install_path)
     candidate = Path(normalized_install) / "Common7" / "Tools" / "VsDevCmd.bat"
     if candidate.exists():
         return candidate
-    # Fallback for BuildTools which might be in Program Files (x86)
-    alt_path = normalized_install.replace("Program Files", "Program Files (x86)")
-    alt_candidate = Path(alt_path) / "Common7" / "Tools" / "VsDevCmd.bat"
-    if alt_candidate.exists():
-        return alt_candidate
-    return candidate  # Return original even if not exists, for error reporting
+    return None
 
 
 def build_capture_env_command(vsdevcmd_path: str | Path, arch: str = "amd64") -> str:
@@ -214,7 +223,7 @@ def bootstrap_msvc(arch: str = "amd64") -> MSVCBootstrapResult:
             vs_install_path=None,
             vsdevcmd_path=None,
             env={},
-            error="vswhere.exe not found",
+            error="no Visual Studio developer command environment found; vswhere.exe not found",
         )
 
     vs_install = find_vs_installation(vswhere)
@@ -225,18 +234,24 @@ def bootstrap_msvc(arch: str = "amd64") -> MSVCBootstrapResult:
             vs_install_path=None,
             vsdevcmd_path=None,
             env={},
-            error="Visual Studio installation with VC tools not found",
+            error=(
+                "no Visual Studio developer command environment found; "
+                "vswhere found no installation with Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+            ),
         )
 
     vsdevcmd = resolve_vsdevcmd_path(vs_install)
-    if not vsdevcmd.exists():
+    if vsdevcmd is None:
         return MSVCBootstrapResult(
             success=False,
             vswhere_path=str(vswhere),
             vs_install_path=vs_install,
-            vsdevcmd_path=str(vsdevcmd),
+            vsdevcmd_path=None,
             env={},
-            error="VsDevCmd.bat not found",
+            error=(
+                "no Visual Studio developer command environment found; "
+                f"VsDevCmd.bat not found under {vs_install}"
+            ),
         )
 
     try:

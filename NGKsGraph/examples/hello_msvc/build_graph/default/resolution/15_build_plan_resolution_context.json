@@ -1,0 +1,15 @@
+{
+  "target_name": "hello_msvc",
+  "build_allowed": true,
+  "required_capabilities": [
+    "cxx.compiler",
+    "cxx.standard:20",
+    "msvc.linker",
+    "windows.sdk"
+  ],
+  "blocking_capabilities": [],
+  "policy_flags": {
+    "fail_on_missing_required_capability": true,
+    "require_active_language_standard": true
+  }
+}

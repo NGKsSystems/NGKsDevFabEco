@@ -1,0 +1,70 @@
+{
+  "records": [
+    {
+      "capability_name": "cxx.compiler",
+      "provider": "MSVC",
+      "version": "",
+      "status": "available",
+      "metadata": {
+        "cl_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+        "source": "vswhere"
+      }
+    },
+    {
+      "capability_name": "msvc.linker",
+      "provider": "MSVC",
+      "version": "",
+      "status": "available",
+      "metadata": {
+        "link_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe",
+        "source": "vswhere"
+      }
+    },
+    {
+      "capability_name": "cxx.standard.max",
+      "provider": "MSVC",
+      "version": "23",
+      "status": "available",
+      "metadata": {
+        "max_supported_standard": 23
+      }
+    },
+    {
+      "capability_name": "cxx.standard.active",
+      "provider": "BuildConfig",
+      "version": "20",
+      "status": "available",
+      "metadata": {
+        "configured_standard": 20
+      }
+    },
+    {
+      "capability_name": "windows.sdk",
+      "provider": "WindowsSDK",
+      "version": "10.0.26100.0",
+      "status": "available",
+      "metadata": {
+        "include_root": "C:\\Program Files (x86)\\Windows Kits\\10\\Include"
+      }
+    },
+    {
+      "capability_name": "windeployqt",
+      "provider": "Qt",
+      "version": "6",
+      "status": "missing",
+      "metadata": {
+        "windeployqt_path": ""
+      }
+    },
+    {
+      "capability_name": "pdb.debug",
+      "provider": "MSVC",
+      "version": "",
+      "status": "missing",
+      "metadata": {}
+    }
+  ],
+  "total_records": 7,
+  "available_count": 5,
+  "missing_count": 2
+}
