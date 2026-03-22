@@ -356,6 +356,335 @@ def _sync_refusal_records(
     return records
 
 
+def _governance_reason_code(kind: str) -> str:
+    mapping = {
+        "applied": "GOV_APPLY_EXPLICIT_OPERATOR_APPLY",
+        "pending": "GOV_PROPOSE_CONFIDENCE_MEETS_THRESHOLD",
+        "pending_apply_threshold": "GOV_PROPOSE_BELOW_APPLY_THRESHOLD",
+        "already_declared": "GOV_REFUSE_ALREADY_DECLARED",
+        "not_detected": "GOV_REFUSE_NOT_DETECTED",
+        "below_threshold": "GOV_REFUSE_BELOW_THRESHOLD",
+        "below_proposal_threshold": "GOV_REFUSE_BELOW_PROPOSAL_THRESHOLD",
+        "ambiguous_similarity": "GOV_REFUSE_AMBIGUOUS_SIMILAR_DECLARED_TARGET",
+        "no_proposal_generated": "GOV_REFUSE_NO_PROPOSAL_GENERATED",
+        "none_available": "GOV_REFUSE_NO_UNDECLARED_TARGETS",
+    }
+    return mapping.get(str(kind), "GOV_REFUSE_UNCLASSIFIED")
+
+
+def _policy_profiles() -> dict[str, dict[str, object]]:
+    return {
+        "conservative": {
+            "name": "conservative",
+            "apply_threshold": 0.95,
+            "proposal_threshold": 0.90,
+            "refuse_ambiguous": True,
+            "ambiguity_similarity_min": 0.60,
+            "description": "Maximum caution; only very high confidence can apply.",
+        },
+        "balanced": {
+            "name": "balanced",
+            "apply_threshold": 0.90,
+            "proposal_threshold": 0.80,
+            "refuse_ambiguous": True,
+            "ambiguity_similarity_min": 0.60,
+            "description": "Default safety posture; high confidence can apply, moderate confidence proposes.",
+        },
+        "aggressive": {
+            "name": "aggressive",
+            "apply_threshold": 0.80,
+            "proposal_threshold": 0.70,
+            "refuse_ambiguous": False,
+            "ambiguity_similarity_min": 0.75,
+            "description": "Higher automation posture while staying fail-closed below proposal threshold.",
+        },
+    }
+
+
+def _resolve_policy_profile(policy_name: str | None) -> dict[str, object]:
+    profiles = _policy_profiles()
+    key = str(policy_name or "balanced").strip().lower()
+    if key not in profiles:
+        names = ", ".join(sorted(profiles.keys()))
+        raise ValueError(f"UNKNOWN_POLICY_PROFILE: {key}. Supported: {names}")
+    return dict(profiles[key])
+
+
+def _policy_summary_payload(policy: dict[str, object], selected_names: list[str]) -> dict[str, object]:
+    return {
+        "selected_policy": str(policy.get("name", "unknown")),
+        "description": str(policy.get("description", "")),
+        "apply_threshold": float(policy.get("apply_threshold", 1.0)),
+        "proposal_threshold": float(policy.get("proposal_threshold", 1.0)),
+        "refuse_ambiguous": bool(policy.get("refuse_ambiguous", True)),
+        "ambiguity_similarity_min": float(policy.get("ambiguity_similarity_min", 0.6)),
+        "selected_targets": list(selected_names),
+    }
+
+
+def _build_policy_sync_candidates(
+    *,
+    report: dict[str, object],
+    selected_names: list[str],
+    apply_changes: bool,
+    policy: dict[str, object],
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+    entries = list(report.get("entries", []))
+    declared_names = [
+        str(entry.get("declared"))
+        for entry in entries
+        if entry.get("status") == "declared" and entry.get("declared")
+    ]
+    undeclared_by_name = {
+        str((entry.get("discovered", {}) or {}).get("name", "")): entry
+        for entry in entries
+        if entry.get("status") == "undeclared"
+    }
+
+    candidate_names = list(selected_names) if selected_names else sorted(
+        [name for name in undeclared_by_name.keys() if name.strip()]
+    )
+    apply_threshold = float(policy.get("apply_threshold", 1.0))
+    proposal_threshold = float(policy.get("proposal_threshold", 1.0))
+    refuse_ambiguous = bool(policy.get("refuse_ambiguous", True))
+    ambiguity_similarity_min = float(policy.get("ambiguity_similarity_min", 0.60))
+
+    proposal_candidates: list[dict[str, object]] = []
+    apply_candidates: list[dict[str, object]] = []
+    refusal_records: list[dict[str, object]] = []
+
+    for name in candidate_names:
+        if name in declared_names:
+            refusal_records.append(
+                {
+                    "target": name,
+                    "kind": "already_declared",
+                    "message": f"{name}: already declared; no manifest change needed.",
+                }
+            )
+            continue
+
+        entry = undeclared_by_name.get(name)
+        if entry is None:
+            refusal_records.append(
+                {
+                    "target": name,
+                    "kind": "not_detected",
+                    "message": f"{name}: not detected in drift output; Graph refused to guess.",
+                }
+            )
+            continue
+
+        disc = dict(entry.get("discovered", {}) or {})
+        confidence = float(disc.get("confidence", 0.0))
+        similar = _similar_declared_targets(name, declared_names)
+        ambiguous = False
+        if similar:
+            top_score = difflib.SequenceMatcher(None, name, similar[0]).ratio()
+            ambiguous = top_score >= ambiguity_similarity_min
+
+        if ambiguous and refuse_ambiguous:
+            refusal_records.append(
+                {
+                    "target": name,
+                    "kind": "ambiguous_similarity",
+                    "confidence": confidence,
+                    "threshold": proposal_threshold,
+                    "similar_declared": similar,
+                    "message": (
+                        f"{name}: ambiguity refusal; similar declared target(s) {', '.join(similar)} met similarity guard."
+                    ),
+                }
+            )
+            continue
+
+        if confidence < proposal_threshold:
+            refusal_records.append(
+                {
+                    "target": name,
+                    "kind": "below_proposal_threshold",
+                    "confidence": confidence,
+                    "threshold": proposal_threshold,
+                    "message": (
+                        f"{name}: detected at confidence {confidence:.2f} ({_confidence_band(confidence)}), "
+                        f"below proposal threshold {proposal_threshold:.2f}; refused."
+                    ),
+                }
+            )
+            continue
+
+        proposal = {
+            "name": name,
+            "type": "exe" if disc.get("type") in ("exe", "test_exe") else "staticlib",
+            "src_glob": list(disc.get("src_globs", []) or []),
+            "include_dirs": [],
+            "defines": ["UNICODE", "_UNICODE"],
+            "cflags": [],
+            "libs": [],
+            "lib_dirs": [],
+            "ldflags": [],
+            "cxx_std": 20,
+            "links": [],
+            "confidence": confidence,
+            "reason": disc.get("reason", ""),
+            "policy_name": str(policy.get("name", "unknown")),
+        }
+        proposal_candidates.append(proposal)
+
+        if apply_changes and confidence >= apply_threshold:
+            apply_candidates.append(proposal)
+
+    return proposal_candidates, apply_candidates, refusal_records
+
+
+def _build_governance_decisions(
+    *,
+    selected_names: list[str],
+    undeclared_by_name: dict[str, dict[str, object]],
+    proposals: list[dict[str, object]],
+    added_names: list[str] | None,
+    refusal_records: list[dict[str, object]],
+    apply_changes: bool,
+    apply_threshold: float,
+    proposal_threshold: float,
+) -> list[dict[str, object]]:
+    decisions: list[dict[str, object]] = []
+    added_set = set(str(v) for v in (added_names or []) if str(v).strip())
+    refusal_by_target = {
+        str(item.get("target", "")).strip(): item
+        for item in refusal_records
+        if str(item.get("target", "")).strip()
+    }
+
+    for proposal in proposals:
+        name = str(proposal.get("name", "")).strip()
+        if not name:
+            continue
+        confidence = float(proposal.get("confidence", 0.0))
+        if name in added_set:
+            decision_class = "apply"
+            kind = "applied"
+            message = (
+                f"{name}: confidence {confidence:.2f} met apply threshold {apply_threshold:.2f} and operator enabled --apply; "
+                "manifest update was written."
+            )
+        else:
+            decision_class = "propose"
+            if apply_changes:
+                kind = "pending_apply_threshold"
+                message = (
+                    f"{name}: confidence {confidence:.2f} met proposal threshold {proposal_threshold:.2f} but did not meet "
+                    f"apply threshold {apply_threshold:.2f}; proposal retained for manual review."
+                )
+            else:
+                kind = "pending"
+                message = (
+                    f"{name}: confidence {confidence:.2f} met proposal threshold {proposal_threshold:.2f}; "
+                    "Graph generated proposal and waited for explicit operator apply."
+                )
+        decisions.append(
+            {
+                "target": name,
+                "decision_class": decision_class,
+                "reason_code": _governance_reason_code(kind),
+                "confidence": confidence,
+                "apply_threshold": apply_threshold,
+                "proposal_threshold": proposal_threshold,
+                "message": message,
+                "mode": "apply" if apply_changes else "dry-run",
+            }
+        )
+
+    for target_name, record in refusal_by_target.items():
+        kind = str(record.get("kind", ""))
+        decisions.append(
+            {
+                "target": target_name,
+                "decision_class": "refuse",
+                "reason_code": _governance_reason_code(kind),
+                "confidence": float(record.get("confidence", 0.0)) if "confidence" in record else None,
+                "apply_threshold": apply_threshold,
+                "proposal_threshold": float(record.get("threshold", proposal_threshold)) if "threshold" in record else proposal_threshold,
+                "message": str(record.get("message", "")).strip(),
+                "mode": "apply" if apply_changes else "dry-run",
+            }
+        )
+
+    # Keep deterministic ordering for auditability.
+    decisions.sort(key=lambda item: (str(item.get("target", "")), str(item.get("decision_class", ""))))
+    return decisions
+
+
+def _governance_counts(decisions: list[dict[str, object]]) -> dict[str, int]:
+    apply_count = sum(1 for item in decisions if str(item.get("decision_class", "")) == "apply")
+    propose_count = sum(1 for item in decisions if str(item.get("decision_class", "")) == "propose")
+    refuse_count = sum(1 for item in decisions if str(item.get("decision_class", "")) == "refuse")
+    return {
+        "apply": apply_count,
+        "propose": propose_count,
+        "refuse": refuse_count,
+    }
+
+
+def _print_governance_summary(decisions: list[dict[str, object]]) -> None:
+    counts = _governance_counts(decisions)
+    print()
+    print("CONFIDENCE GOVERNANCE")
+    print(f"- apply:   {counts['apply']}")
+    print(f"- propose: {counts['propose']}")
+    print(f"- refuse:  {counts['refuse']}")
+    for item in decisions:
+        target = str(item.get("target", "")).strip() or "<none>"
+        print(
+            f"- {target}: class={item.get('decision_class')} reason={item.get('reason_code')} "
+            f"message={item.get('message')}"
+        )
+
+
+def _write_confidence_policy_file(review_root: Path) -> Path:
+    path = review_root / "confidence_policy.md"
+    lines = [
+        "# NGKsGraph Confidence Governance Policy",
+        "",
+        "Decision classes:",
+        "- apply: confidence met threshold and operator explicitly used --apply.",
+        "- propose: confidence met threshold, but no manifest write occurred in this run.",
+        "- refuse: Graph did not propose/apply due to explicit fail-closed reason.",
+        "",
+        "Fail-closed contract:",
+        "- below-threshold confidence is never auto-proposed.",
+        "- not-detected targets are never guessed.",
+        "- already-declared targets are never duplicated.",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_reason_codes_file(review_root: Path) -> Path:
+    path = review_root / "decision_reason_codes.json"
+    payload = {
+        "GOV_APPLY_EXPLICIT_OPERATOR_APPLY": "Target met threshold and operator chose --apply; manifest updated.",
+        "GOV_PROPOSE_CONFIDENCE_MEETS_THRESHOLD": "Target met threshold and was proposed for manual review/apply.",
+        "GOV_PROPOSE_BELOW_APPLY_THRESHOLD": "Target met proposal threshold but did not meet apply threshold.",
+        "GOV_REFUSE_ALREADY_DECLARED": "Target already exists in manifest; Graph refused duplicate mutation.",
+        "GOV_REFUSE_NOT_DETECTED": "Selected target not present in drift evidence; Graph refused to guess.",
+        "GOV_REFUSE_BELOW_THRESHOLD": "Detected target confidence is below threshold.",
+        "GOV_REFUSE_BELOW_PROPOSAL_THRESHOLD": "Detected target confidence is below proposal threshold.",
+        "GOV_REFUSE_AMBIGUOUS_SIMILAR_DECLARED_TARGET": "Target was refused due to ambiguity against similar declared targets.",
+        "GOV_REFUSE_NO_PROPOSAL_GENERATED": "Unexpected missing proposal; Graph refused unsafe mutation.",
+        "GOV_REFUSE_NO_UNDECLARED_TARGETS": "No undeclared targets available for sync.",
+        "GOV_REFUSE_UNCLASSIFIED": "Fallback refusal code for unknown fail-closed refusal paths.",
+    }
+    _write_json_file(path, payload)
+    return path
+
+
+def _write_policy_profiles_file(review_root: Path) -> Path:
+    path = review_root / "policy_profiles.json"
+    _write_json_file(path, {"profiles": _policy_profiles()})
+    return path
+
+
 def _build_drift_comparison(previous_report: dict[str, object] | None, current_report: dict[str, object]) -> dict[str, object]:
     previous = previous_report or {}
     previous_undeclared = set(_undeclared_names(previous))
@@ -400,6 +729,9 @@ def _update_review_index(review_root: Path) -> Path:
     drift_report = dict(drift_latest.get("report", {}) or {})
     drift_undeclared = _undeclared_names(drift_report)
     sync_summary = dict(sync_latest.get("summary", {}) or {})
+    policy_summary = dict(sync_summary.get("policy", {}) or {})
+    governance = dict(sync_summary.get("governance", {}) or {})
+    decision_counts = dict(governance.get("decision_counts", {}) or {})
 
     lines = [
         "# NGKsGraph Review Index",
@@ -416,10 +748,14 @@ def _update_review_index(review_root: Path) -> Path:
         "## Latest Sync",
         f"- run_id: {sync_latest.get('run_id', 'none')}",
         f"- mode: {sync_summary.get('mode', 'none')}",
+        f"- selected_policy: {policy_summary.get('selected_policy', 'none')}",
         f"- sync_outcome: {sync_summary.get('sync_outcome', 'none')}",
         f"- proposals_generated: {sync_summary.get('proposals_generated', 0)}",
         f"- applied_count: {len(sync_summary.get('applied_names', []) or [])}",
         f"- refusal_count: {len(sync_summary.get('refusal_records', []) or [])}",
+        f"- governance_apply: {decision_counts.get('apply', 0)}",
+        f"- governance_propose: {decision_counts.get('propose', 0)}",
+        f"- governance_refuse: {decision_counts.get('refuse', 0)}",
         f"- sync_artifact: {sync_latest.get('artifact_path', 'none')}",
         f"- comparison_artifact: {sync_latest.get('comparison_path', 'none')}",
         "",
@@ -503,6 +839,18 @@ def _persist_sync_review(
     _write_json_file(artifact_path, summary_payload)
     _write_json_file(comparison_path, comparison)
 
+    governance_summary_path = run_dir / "governance_summary.json"
+    governance_payload = dict(summary_payload.get("governance", {}) or {})
+    _write_json_file(governance_summary_path, governance_payload)
+
+    selected_policy_summary_path = run_dir / "selected_policy_summary.json"
+    selected_policy_payload = dict(summary_payload.get("policy", {}) or {})
+    _write_json_file(selected_policy_summary_path, selected_policy_payload)
+
+    reason_codes_path = _write_reason_codes_file(review_root)
+    policy_path = _write_confidence_policy_file(review_root)
+    policy_profiles_path = _write_policy_profiles_file(review_root)
+
     refusal_path: Path | None = None
     refusal_records = list(summary_payload.get("refusal_records", []) or [])
     if refusal_records:
@@ -525,6 +873,11 @@ def _persist_sync_review(
         "timestamp_utc": summary_payload.get("timestamp_utc", datetime.now(timezone.utc).isoformat()),
         "artifact_path": str(artifact_path),
         "comparison_path": str(comparison_path),
+        "governance_path": str(governance_summary_path),
+        "selected_policy_path": str(selected_policy_summary_path),
+        "policy_profiles_path": str(policy_profiles_path),
+        "reason_codes_path": str(reason_codes_path),
+        "policy_path": str(policy_path),
         "refusal_path": str(refusal_path) if refusal_path else "",
         "summary": summary_payload,
     }
@@ -534,6 +887,11 @@ def _persist_sync_review(
         "review_root": review_root,
         "artifact_path": artifact_path,
         "comparison_path": comparison_path,
+        "governance_path": governance_summary_path,
+        "selected_policy_path": selected_policy_summary_path,
+        "policy_profiles_path": policy_profiles_path,
+        "reason_codes_path": reason_codes_path,
+        "policy_path": policy_path,
         "index_path": index_path,
     }
     if refusal_path is not None:
@@ -556,9 +914,12 @@ def _print_sync_summary(
     repo_root: Path,
     config_path: Path,
     proposal_path: Path,
+    policy_name: str,
+    apply_threshold: float,
+    proposal_threshold: float,
     selected_names: list[str],
-    min_confidence: float,
     proposals: list[dict[str, object]],
+    refusal_records: list[dict[str, object]],
     report: dict[str, object],
     apply_changes: bool,
     repaired_from_backup: bool,
@@ -581,8 +942,10 @@ def _print_sync_summary(
     print("SYNC SUMMARY")
     print(f"Repo:                {repo_root}")
     print(f"Config:              {config_path}")
+    print(f"Policy:              {policy_name}")
     print(f"Mode:                {'apply' if apply_changes else 'dry-run'}")
-    print(f"Min confidence:      {min_confidence:.2f}")
+    print(f"Apply threshold:     {apply_threshold:.2f}")
+    print(f"Proposal threshold:  {proposal_threshold:.2f}")
     print(f"Selected targets:    {', '.join(selected_names) if selected_names else 'all eligible targets'}")
     print(f"Undeclared detected: {len(undeclared_by_name)}")
     print(f"Proposals generated: {len(proposals)}")
@@ -592,8 +955,12 @@ def _print_sync_summary(
 
     if not proposals:
         print("REFUSAL / NO-CHANGE SUMMARY")
-        for line in _sync_refusal_lines(selected_names, undeclared_by_name, declared_names, min_confidence):
-            print(line)
+        lines = [f"- {str(item.get('message', '')).strip()}" for item in refusal_records if str(item.get("message", "")).strip()]
+        if lines:
+            for line in lines:
+                print(line)
+        else:
+            print("- No proposal candidates were available for this policy/selection.")
         print()
         print("NEXT STEP")
         print("- Review drift output for evidence and confidence before lowering thresholds.")
@@ -1540,12 +1907,27 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
         detector = TargetDriftDetector(config_dict, repo_root)
         report = detector.compare()
-        min_confidence = float(getattr(args, "min_confidence", 0.8))
-        proposals = detector.build_sync_proposal(min_confidence=min_confidence)
+        policy = _resolve_policy_profile(getattr(args, "policy", "balanced"))
+        min_confidence_override = getattr(args, "min_confidence", None)
+        if min_confidence_override is not None:
+            override_value = float(min_confidence_override)
+            if override_value < 0.0 or override_value > 1.0:
+                raise ValueError("MIN_CONFIDENCE_OUT_OF_RANGE")
+            policy["proposal_threshold"] = override_value
+            if float(policy.get("apply_threshold", 1.0)) < override_value:
+                policy["apply_threshold"] = override_value
+
+        apply_threshold = float(policy.get("apply_threshold", 1.0))
+        proposal_threshold = float(policy.get("proposal_threshold", 1.0))
+
         selected_names = [str(name) for name in (getattr(args, "target_name", []) or [])]
-        if selected_names:
-            selected_set = {str(name) for name in selected_names}
-            proposals = [proposal for proposal in proposals if str(proposal.get("name", "")) in selected_set]
+        apply_changes = bool(getattr(args, "apply", False))
+        proposals, apply_candidates, refusal_records = _build_policy_sync_candidates(
+            report=report,
+            selected_names=selected_names,
+            apply_changes=apply_changes,
+            policy=policy,
+        )
 
         output_path = getattr(args, "out", None)
         if output_path:
@@ -1558,46 +1940,43 @@ def cmd_sync(args: argparse.Namespace) -> int:
         proposal_payload = {
             "repo_root": str(repo_root),
             "config_path": str(config_path),
+            "policy": _policy_summary_payload(policy, selected_names),
             "proposal_count": len(proposals),
             "proposals": proposals,
         }
         proposal_path.parent.mkdir(parents=True, exist_ok=True)
         proposal_path.write_text(json.dumps(proposal_payload, indent=2, default=str), encoding="utf-8")
 
-        apply_changes = bool(getattr(args, "apply", False))
         original_target_count = len(getattr(cfg, "targets", []) or [])
         entries = list(report.get("entries", []))
-        declared_names = [
-            str(entry.get("declared"))
-            for entry in entries
-            if entry.get("status") == "declared" and entry.get("declared")
-        ]
         undeclared_by_name = {
             str((entry.get("discovered", {}) or {}).get("name", "")): entry
             for entry in entries
             if entry.get("status") == "undeclared"
         }
-        proposed_name_set = {
-            str(proposal.get("name", ""))
-            for proposal in proposals
-            if str(proposal.get("name", "")).strip()
-        }
-        refusal_records = _sync_refusal_records(
-            selected_names,
-            undeclared_by_name,
-            declared_names,
-            min_confidence,
-            proposed_name_set,
-        )
 
-        def _persist_sync_summary(sync_outcome: str, added_names: list[str] | None = None) -> dict[str, Path]:
+        def _persist_sync_summary(
+            sync_outcome: str,
+            added_names: list[str] | None = None,
+        ) -> tuple[dict[str, Path], list[dict[str, object]]]:
+            governance_decisions = _build_governance_decisions(
+                selected_names=selected_names,
+                undeclared_by_name=undeclared_by_name,
+                proposals=proposals,
+                added_names=added_names,
+                refusal_records=refusal_records,
+                apply_changes=apply_changes,
+                apply_threshold=apply_threshold,
+                proposal_threshold=proposal_threshold,
+            )
             summary_payload: dict[str, object] = {
                 "kind": "sync_summary",
                 "timestamp_utc": datetime.now(timezone.utc).isoformat(),
                 "repo_root": str(repo_root),
                 "config_path": str(config_path),
                 "mode": "apply" if apply_changes else "dry-run",
-                "min_confidence": min_confidence,
+                "policy": _policy_summary_payload(policy, selected_names),
+                "min_confidence": proposal_threshold,
                 "selected_targets": selected_names,
                 "undeclared_detected": len(undeclared_by_name),
                 "proposals_generated": len(proposals),
@@ -1609,27 +1988,45 @@ def cmd_sync(args: argparse.Namespace) -> int:
                 "proposal_path": str(proposal_path),
                 "repaired_from_backup": repaired_from_backup,
                 "backup_path": str(backup_path) if backup_path.exists() else "",
+                "governance": {
+                    "policy_version": "1.0",
+                    "thresholds": {
+                        "apply_threshold": apply_threshold,
+                        "proposal_threshold": proposal_threshold,
+                    },
+                    "decision_counts": _governance_counts(governance_decisions),
+                    "decisions": governance_decisions,
+                },
             }
-            return _persist_sync_review(repo_root, summary_payload)
+            return _persist_sync_review(repo_root, summary_payload), governance_decisions
 
         if not proposals:
-            review_paths = _persist_sync_summary("noop")
+            review_paths, governance_decisions = _persist_sync_summary("noop")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
                 proposal_path=proposal_path,
+                policy_name=str(policy.get("name", "unknown")),
+                apply_threshold=apply_threshold,
+                proposal_threshold=proposal_threshold,
                 selected_names=selected_names,
-                min_confidence=min_confidence,
                 proposals=proposals,
+                refusal_records=refusal_records,
                 report=report,
                 apply_changes=apply_changes,
                 repaired_from_backup=repaired_from_backup,
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            _print_governance_summary(governance_decisions)
             print(f"REVIEW_ROOT={review_paths['review_root']}")
             print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
             print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            print(f"REVIEW_GOVERNANCE_SUMMARY={review_paths['governance_path']}")
+            print(f"REVIEW_SELECTED_POLICY_SUMMARY={review_paths['selected_policy_path']}")
+            print(f"REVIEW_POLICY_PROFILES={review_paths['policy_profiles_path']}")
+            print(f"REVIEW_DECISION_REASON_CODES={review_paths['reason_codes_path']}")
+            print(f"REVIEW_CONFIDENCE_POLICY={review_paths['policy_path']}")
             if "refusal_path" in review_paths:
                 print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
             print(f"REVIEW_INDEX={review_paths['index_path']}")
@@ -1640,23 +2037,32 @@ def cmd_sync(args: argparse.Namespace) -> int:
             return 0
 
         if not apply_changes:
-            review_paths = _persist_sync_summary("pending")
+            review_paths, governance_decisions = _persist_sync_summary("pending")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
                 proposal_path=proposal_path,
+                policy_name=str(policy.get("name", "unknown")),
+                apply_threshold=apply_threshold,
+                proposal_threshold=proposal_threshold,
                 selected_names=selected_names,
-                min_confidence=min_confidence,
                 proposals=proposals,
+                refusal_records=refusal_records,
                 report=report,
                 apply_changes=apply_changes,
                 repaired_from_backup=repaired_from_backup,
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            _print_governance_summary(governance_decisions)
             print(f"REVIEW_ROOT={review_paths['review_root']}")
             print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
             print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            print(f"REVIEW_GOVERNANCE_SUMMARY={review_paths['governance_path']}")
+            print(f"REVIEW_SELECTED_POLICY_SUMMARY={review_paths['selected_policy_path']}")
+            print(f"REVIEW_POLICY_PROFILES={review_paths['policy_profiles_path']}")
+            print(f"REVIEW_DECISION_REASON_CODES={review_paths['reason_codes_path']}")
+            print(f"REVIEW_CONFIDENCE_POLICY={review_paths['policy_path']}")
             if "refusal_path" in review_paths:
                 print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
             print(f"REVIEW_INDEX={review_paths['index_path']}")
@@ -1666,42 +2072,54 @@ def cmd_sync(args: argparse.Namespace) -> int:
             print(f"SYNC_PENDING count={len(proposals)}")
             return 1
 
-        added = detector.apply_sync_to_toml(config_path, proposals)
+        added = detector.apply_sync_to_toml(config_path, apply_candidates)
         if not added:
-            review_paths = _persist_sync_summary("noop")
+            review_paths, governance_decisions = _persist_sync_summary("pending")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
                 proposal_path=proposal_path,
+                policy_name=str(policy.get("name", "unknown")),
+                apply_threshold=apply_threshold,
+                proposal_threshold=proposal_threshold,
                 selected_names=selected_names,
-                min_confidence=min_confidence,
-                proposals=[],
+                proposals=proposals,
+                refusal_records=refusal_records,
                 report=report,
                 apply_changes=apply_changes,
                 repaired_from_backup=repaired_from_backup,
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            _print_governance_summary(governance_decisions)
             print(f"REVIEW_ROOT={review_paths['review_root']}")
             print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
             print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            print(f"REVIEW_GOVERNANCE_SUMMARY={review_paths['governance_path']}")
+            print(f"REVIEW_SELECTED_POLICY_SUMMARY={review_paths['selected_policy_path']}")
+            print(f"REVIEW_POLICY_PROFILES={review_paths['policy_profiles_path']}")
+            print(f"REVIEW_DECISION_REASON_CODES={review_paths['reason_codes_path']}")
+            print(f"REVIEW_CONFIDENCE_POLICY={review_paths['policy_path']}")
             if "refusal_path" in review_paths:
                 print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
             print(f"REVIEW_INDEX={review_paths['index_path']}")
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
-            print("SYNC_NOOP=already_declared")
+            print("SYNC_NOOP=no_targets_met_apply_threshold")
             print(f"SYNC_PROPOSAL={proposal_path}")
-            return 0
+            return 1
 
-        review_paths = _persist_sync_summary("applied", added)
+        review_paths, governance_decisions = _persist_sync_summary("applied", added)
         _print_sync_summary(
             repo_root=repo_root,
             config_path=config_path,
             proposal_path=proposal_path,
+            policy_name=str(policy.get("name", "unknown")),
+            apply_threshold=apply_threshold,
+            proposal_threshold=proposal_threshold,
             selected_names=selected_names,
-            min_confidence=min_confidence,
             proposals=proposals,
+            refusal_records=refusal_records,
             report=report,
             apply_changes=apply_changes,
             repaired_from_backup=repaired_from_backup,
@@ -1709,9 +2127,15 @@ def cmd_sync(args: argparse.Namespace) -> int:
             added=added,
             original_target_count=original_target_count,
         )
+        _print_governance_summary(governance_decisions)
         print(f"REVIEW_ROOT={review_paths['review_root']}")
         print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
         print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+        print(f"REVIEW_GOVERNANCE_SUMMARY={review_paths['governance_path']}")
+        print(f"REVIEW_SELECTED_POLICY_SUMMARY={review_paths['selected_policy_path']}")
+        print(f"REVIEW_POLICY_PROFILES={review_paths['policy_profiles_path']}")
+        print(f"REVIEW_DECISION_REASON_CODES={review_paths['reason_codes_path']}")
+        print(f"REVIEW_CONFIDENCE_POLICY={review_paths['policy_path']}")
         if "refusal_path" in review_paths:
             print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
         print(f"REVIEW_INDEX={review_paths['index_path']}")
@@ -2225,7 +2649,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument("--project", default=None)
     p_sync.add_argument("--out", default=None)
     p_sync.add_argument("--apply", action="store_true", default=False)
-    p_sync.add_argument("--min-confidence", type=float, default=0.8)
+    p_sync.add_argument("--policy", default="balanced", choices=["conservative", "balanced", "aggressive"])
+    p_sync.add_argument("--min-confidence", type=float, default=None)
     p_sync.add_argument("--target-name", action="append", default=[])
     p_sync.set_defaults(func=cmd_sync)
 
