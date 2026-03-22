@@ -192,6 +192,163 @@ function Invoke-Pip {
     Invoke-Logged -Executable $PythonExe -Arguments (@('-m', 'pip') + $PipArgs)
 }
 
+function Invoke-PipSoft {
+    param(
+        [string]$PythonExe,
+        [string[]]$PipArgs
+    )
+    Write-Log ("RUN_SOFT: " + $PythonExe + " -m pip " + ($PipArgs -join ' '))
+    $previousErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $PythonExe -m pip @PipArgs 2>&1 | Tee-Object -FilePath $logFile -Append | Out-Host
+        return [int]$LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+}
+
+function Get-PythonSitePackagesPath {
+    param(
+        [string]$PythonExe,
+        [switch]$UserScope
+    )
+
+    $code = if ($UserScope) {
+        'import site; print(site.getusersitepackages())'
+    } else {
+        'import site; paths=[p for p in site.getsitepackages() if "site-packages" in p]; print(paths[0] if paths else site.getusersitepackages())'
+    }
+
+    $path = (& $PythonExe -c $code 2>$null | Select-Object -Last 1)
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return ""
+    }
+    return $path.Trim()
+}
+
+function New-NgksPackagePlan {
+    param([string]$EcoVersion)
+
+    $componentVersions = Resolve-ComponentVersions -EcoVersion $EcoVersion
+    $specs = @(
+        ("ngksdevfabeco==" + $EcoVersion),
+        ("ngksdevfabric==" + $componentVersions['devfabric']),
+        ("ngksgraph==" + $componentVersions['graph']),
+        ("ngksbuildcore==" + $componentVersions['buildcore']),
+        ("ngksenvcapsule==" + $componentVersions['envcapsule']),
+        ("ngkslibrary==" + $componentVersions['library'])
+    )
+    $names = @('ngksdevfabeco', 'ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
+
+    return @{
+        specs = $specs
+        names = $names
+    }
+}
+
+function Test-NgksStateDrift {
+    param(
+        [string]$SitePackagesPath,
+        [string[]]$PackageSpecs
+    )
+
+    if (-not (Test-Path $SitePackagesPath)) {
+        return $false
+    }
+
+    foreach ($spec in $PackageSpecs) {
+        $parts = $spec -split '=='
+        if ($parts.Count -ne 2) {
+            continue
+        }
+        $name = $parts[0]
+        $expected = $parts[1]
+        $matches = Get-ChildItem -Path $SitePackagesPath -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like ($name + '-*.dist-info') }
+        if ($matches.Count -gt 1) {
+            Write-Log "drift_detected=duplicate_dist_info package=$name count=$($matches.Count)"
+            return $true
+        }
+        if ($matches.Count -eq 1 -and -not $matches[0].Name.StartsWith($name + '-' + $expected + '.dist-info')) {
+            Write-Log "drift_detected=version_mismatch package=$name actual=$($matches[0].Name) expected=$expected"
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Repair-NgksState {
+    param(
+        [string]$PythonExe,
+        [string]$SitePackagesPath,
+        [string[]]$PackageNames,
+        [switch]$UserScope
+    )
+
+    Write-Log "repair_action=begin site_packages=$SitePackagesPath user_scope=$([int]$UserScope)"
+    [void](Invoke-PipSoft -PythonExe $PythonExe -PipArgs (@('uninstall', '-y') + $PackageNames))
+
+    if (Test-Path $SitePackagesPath) {
+        foreach ($name in $PackageNames) {
+            $pkgDir = Join-Path $SitePackagesPath $name
+            if (Test-Path $pkgDir) {
+                try {
+                    Remove-Item -Recurse -Force $pkgDir
+                    Write-Log "repair_removed=$pkgDir"
+                }
+                catch {
+                    Write-Log "repair_warn_failed_remove=$pkgDir"
+                }
+            }
+            Get-ChildItem -Path $SitePackagesPath -Directory -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -like ($name + '-*.dist-info') } |
+                ForEach-Object {
+                    try {
+                        Remove-Item -Recurse -Force $_.FullName
+                        Write-Log "repair_removed=$($_.FullName)"
+                    }
+                    catch {
+                        Write-Log "repair_warn_failed_remove=$($_.FullName)"
+                    }
+                }
+        }
+    }
+}
+
+function Assert-NgksVersions {
+    param(
+        [string]$PythonExe,
+        [string[]]$PackageSpecs
+    )
+
+    $kvPairs = @()
+    foreach ($spec in $PackageSpecs) {
+        $parts = $spec -split '=='
+        if ($parts.Count -eq 2) {
+            $kvPairs += ($parts[0] + ':' + $parts[1])
+        }
+    }
+    $kvBlob = ($kvPairs -join ',')
+    $code = @"
+import importlib.metadata as m
+expected = {}
+for pair in "$kvBlob".split(','):
+    if not pair:
+        continue
+    name, ver = pair.split(':', 1)
+    expected[name] = ver
+actual = {name: m.version(name) for name in expected.keys()}
+bad = {k: (actual.get(k), v) for k, v in expected.items() if actual.get(k) != v}
+print(actual)
+raise SystemExit(0 if not bad else 1)
+"@
+
+    Invoke-Logged -Executable $PythonExe -Arguments @('-c', $code)
+}
+
 function Test-WheelhouseContains {
     param(
         [string]$SourcePath,
@@ -231,9 +388,20 @@ if ($UserInstall) {
                 throw "VENV_PYTHON_MISSING: $venvPython"
             }
 
+            $plan = New-NgksPackagePlan -EcoVersion $Version
+            $packageSpecs = @($plan['specs'])
+            $packageNames = @($plan['names'])
+            $sitePackagesPath = Get-PythonSitePackagesPath -PythonExe $venvPython
+
             Invoke-Pip -PythonExe $venvPython -PipArgs @('install', '--upgrade', 'pip', 'setuptools', 'wheel')
-            Invoke-Pip -PythonExe $venvPython -PipArgs @('install', '--upgrade', ("ngksdevfabeco==" + $Version))
-            Invoke-Pip -PythonExe $venvPython -PipArgs @('show', 'ngksdevfabeco', 'ngksdevfabric')
+            if (Test-NgksStateDrift -SitePackagesPath $sitePackagesPath -PackageSpecs $packageSpecs) {
+                Repair-NgksState -PythonExe $venvPython -SitePackagesPath $sitePackagesPath -PackageNames $packageNames
+                Invoke-Pip -PythonExe $venvPython -PipArgs (@('install', '--upgrade', '--force-reinstall', '--no-cache-dir', '--no-deps') + $packageSpecs)
+            } else {
+                Invoke-Pip -PythonExe $venvPython -PipArgs (@('install', '--upgrade') + $packageSpecs)
+            }
+            Assert-NgksVersions -PythonExe $venvPython -PackageSpecs $packageSpecs
+            Invoke-Pip -PythonExe $venvPython -PipArgs (@('show') + $packageNames)
             Invoke-Pip -PythonExe $venvPython -PipArgs @('check')
 
             Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksdevfabric', '--help')
@@ -259,9 +427,20 @@ if ($UserInstall) {
 
     Add-UserScriptsPath -Persist:$PersistUserScriptsPath
 
+    $plan = New-NgksPackagePlan -EcoVersion $Version
+    $packageSpecs = @($plan['specs'])
+    $packageNames = @($plan['names'])
+    $userSitePackagesPath = Get-PythonSitePackagesPath -PythonExe $installerPython -UserScope
+
     Invoke-Pip -PythonExe $installerPython -PipArgs @('install', '--user', '--upgrade', 'pip', 'setuptools', 'wheel')
-    Invoke-Pip -PythonExe $installerPython -PipArgs @('install', '--user', '--upgrade', ("ngksdevfabeco==" + $Version))
-    Invoke-Pip -PythonExe $installerPython -PipArgs @('show', 'ngksdevfabeco', 'ngksdevfabric')
+    if (Test-NgksStateDrift -SitePackagesPath $userSitePackagesPath -PackageSpecs $packageSpecs) {
+        Repair-NgksState -PythonExe $installerPython -SitePackagesPath $userSitePackagesPath -PackageNames $packageNames -UserScope
+        Invoke-Pip -PythonExe $installerPython -PipArgs (@('install', '--user', '--upgrade', '--force-reinstall', '--no-cache-dir', '--no-deps') + $packageSpecs)
+    } else {
+        Invoke-Pip -PythonExe $installerPython -PipArgs (@('install', '--user', '--upgrade') + $packageSpecs)
+    }
+    Assert-NgksVersions -PythonExe $installerPython -PackageSpecs $packageSpecs
+    Invoke-Pip -PythonExe $installerPython -PipArgs (@('show') + $packageNames)
     Invoke-Pip -PythonExe $installerPython -PipArgs @('check')
 
     Invoke-Logged -Executable $installerPython -Arguments @('-m', 'ngksdevfabric', '--help')
@@ -323,16 +502,10 @@ if (-not (Test-Path $venvPython)) {
 
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'pip')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'install', '--upgrade', 'setuptools', 'wheel')
-$componentVersions = Resolve-ComponentVersions -EcoVersion $Version
-$packages = @(
-    ("ngksdevfabeco==" + $Version),
-    ("ngksdevfabric==" + $componentVersions['devfabric']),
-    ("ngksgraph==" + $componentVersions['graph']),
-    ("ngksbuildcore==" + $componentVersions['buildcore']),
-    ("ngksenvcapsule==" + $componentVersions['envcapsule']),
-    ("ngkslibrary==" + $componentVersions['library'])
-)
-$packageNames = @('ngksdevfabeco', 'ngksdevfabric', 'ngksgraph', 'ngksbuildcore', 'ngksenvcapsule', 'ngkslibrary')
+$plan = New-NgksPackagePlan -EcoVersion $Version
+$packages = @($plan['specs'])
+$packageNames = @($plan['names'])
+$sitePackagesPath = Get-PythonSitePackagesPath -PythonExe $venvPython
 
 $canUseWheelhouse = $true
 foreach ($spec in $packages) {
@@ -360,12 +533,21 @@ if ($InstallSource -eq 'wheelhouse') {
 
 if ($useWheelhouse) {
     Write-Log 'install_path=wheelhouse'
+    if (Test-NgksStateDrift -SitePackagesPath $sitePackagesPath -PackageSpecs $packages) {
+        Repair-NgksState -PythonExe $venvPython -SitePackagesPath $sitePackagesPath -PackageNames $packageNames
+    }
     Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--no-index', '--no-cache-dir', '--force-reinstall', '--find-links', $wheelSource) + $packages)
 } else {
     Write-Log 'install_path=pypi'
-    Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--upgrade') + $packages)
+    if (Test-NgksStateDrift -SitePackagesPath $sitePackagesPath -PackageSpecs $packages) {
+        Repair-NgksState -PythonExe $venvPython -SitePackagesPath $sitePackagesPath -PackageNames $packageNames
+        Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--upgrade', '--force-reinstall', '--no-cache-dir', '--no-deps') + $packages)
+    } else {
+        Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'install', '--upgrade') + $packages)
+    }
 }
 
+Assert-NgksVersions -PythonExe $venvPython -PackageSpecs $packages
 Invoke-Logged -Executable $venvPython -Arguments (@('-m', 'pip', 'show') + $packageNames)
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'pip', 'check')
 Invoke-Logged -Executable $venvPython -Arguments @('-m', 'ngksgraph', '--help')
