@@ -126,6 +126,236 @@ def _config_path(repo_root: Path) -> Path:
     return repo_root / "ngksgraph.toml"
 
 
+def _confidence_band(confidence: float) -> str:
+    value = float(confidence)
+    if value >= 0.9:
+        return "high"
+    if value >= 0.8:
+        return "strong"
+    if value >= 0.7:
+        return "heuristic"
+    return "low"
+
+
+def _preview_src_globs(src_globs: list[str], limit: int = 3) -> str:
+    values = [str(item) for item in (src_globs or []) if str(item).strip()]
+    if not values:
+        return "none"
+    preview = values[:limit]
+    suffix = "" if len(values) <= limit else f" ... (+{len(values) - limit} more)"
+    return ", ".join(preview) + suffix
+
+
+def _similar_declared_targets(candidate: str, declared_names: list[str], limit: int = 2) -> list[str]:
+    scored: list[tuple[float, str]] = []
+    for declared_name in declared_names:
+        if declared_name == candidate:
+            continue
+        score = difflib.SequenceMatcher(None, candidate, declared_name).ratio()
+        if score >= 0.6:
+            scored.append((score, declared_name))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [name for _, name in scored[:limit]]
+
+
+def _print_drift_text_report(repo_root: Path, config_path: Path, report: dict[str, object]) -> None:
+    entries = list(report.get("entries", []))
+    undeclared_entries = [entry for entry in entries if entry.get("status") == "undeclared"]
+    declared_names = [
+        str(entry.get("declared"))
+        for entry in entries
+        if entry.get("status") == "declared" and entry.get("declared")
+    ]
+    auto_syncable = sum(
+        1
+        for entry in undeclared_entries
+        if float((entry.get("discovered", {}) or {}).get("confidence", 0.0)) >= 0.8
+    )
+    manual_review = len(undeclared_entries) - auto_syncable
+
+    print("DRIFT SUMMARY")
+    print(f"Repo:                {repo_root}")
+    print(f"Config:              {config_path}")
+    print(f"Declared targets:    {report.get('total_declared', 0)}")
+    print(f"Discovered targets:  {report.get('total_discovered', 0)}")
+    print(f"Undeclared targets:  {report.get('undeclared_count', 0)}")
+    print(f"Auto-sync eligible:  {auto_syncable}")
+    print(f"Manual review only:  {manual_review}")
+    print()
+
+    if not entries:
+        print("No targets were discovered. Nothing to compare.")
+        print()
+        print("NEXT STEP")
+        print("- Verify the repository contains supported build metadata before running drift again.")
+        return
+
+    print("TARGET ANALYSIS")
+    for entry in entries:
+        disc = dict(entry.get("discovered", {}) or {})
+        status = str(entry.get("status", "unknown"))
+        action = str(entry.get("action", "none"))
+        name = str(disc.get("name", "UNKNOWN"))
+        confidence = float(disc.get("confidence", 0.0))
+        band = _confidence_band(confidence)
+        similar = _similar_declared_targets(name, declared_names)
+        print(f"- {name}")
+        print(f"  Status:      {status}")
+        print(f"  Type:        {disc.get('type', 'unknown')}")
+        print(f"  Location:    {disc.get('location', 'unknown')}")
+        print(f"  Confidence:  {confidence:.2f} ({band})")
+        print(f"  Why Graph believes this: {disc.get('reason', 'unknown')}")
+        print(f"  Evidence:    {_preview_src_globs(list(disc.get('src_globs', []) or []))}")
+        if similar:
+            print(f"  Ambiguity signal: similar declared target(s): {', '.join(similar)}")
+        if status == "undeclared":
+            if confidence >= 0.8:
+                print("  Suggested action: targeted sync is allowed for this target.")
+                print(f"  Next command: ngksgraph sync --project {repo_root} --target-name {name}")
+            else:
+                print("  Suggested action: do not auto-apply; review manually first.")
+                print(f"  Next command: inspect the report, then rerun with --target-name {name} only if verified.")
+        else:
+            print(f"  Suggested action: none ({action}).")
+        print()
+
+    print("NEXT STEP")
+    if undeclared_entries:
+        print("- Review undeclared targets above before syncing anything.")
+        print("- Use --target-name to limit sync scope to one verified target at a time.")
+    else:
+        print("- No undeclared targets remain. Drift is clean for this repository.")
+
+
+def _sync_refusal_lines(
+    selected_names: list[str],
+    undeclared_by_name: dict[str, dict[str, object]],
+    declared_names: list[str],
+    min_confidence: float,
+) -> list[str]:
+    lines: list[str] = []
+    if selected_names:
+        for selected_name in selected_names:
+            if selected_name in declared_names:
+                lines.append(f"- {selected_name}: already declared; no manifest change needed.")
+                continue
+            entry = undeclared_by_name.get(selected_name)
+            if entry is None:
+                lines.append(f"- {selected_name}: not detected in drift output; Graph refused to guess.")
+                continue
+            disc = dict(entry.get("discovered", {}) or {})
+            confidence = float(disc.get("confidence", 0.0))
+            if confidence < min_confidence:
+                lines.append(
+                    f"- {selected_name}: detected at confidence {confidence:.2f} ({_confidence_band(confidence)}), below threshold {min_confidence:.2f}; no auto-sync proposal generated."
+                )
+            else:
+                lines.append(f"- {selected_name}: no proposal generated for an unknown reason; inspect drift report before retrying.")
+        return lines
+
+    if undeclared_by_name:
+        for name, entry in undeclared_by_name.items():
+            disc = dict(entry.get("discovered", {}) or {})
+            confidence = float(disc.get("confidence", 0.0))
+            if confidence < min_confidence:
+                lines.append(
+                    f"- {name}: detected but held back at confidence {confidence:.2f} ({_confidence_band(confidence)}), below threshold {min_confidence:.2f}."
+                )
+    else:
+        lines.append("- No undeclared targets were available for sync.")
+    return lines
+
+
+def _print_sync_summary(
+    *,
+    repo_root: Path,
+    config_path: Path,
+    proposal_path: Path,
+    selected_names: list[str],
+    min_confidence: float,
+    proposals: list[dict[str, object]],
+    report: dict[str, object],
+    apply_changes: bool,
+    repaired_from_backup: bool,
+    backup_path: Path,
+    added: list[str] | None = None,
+    original_target_count: int | None = None,
+) -> None:
+    entries = list(report.get("entries", []))
+    declared_names = [
+        str(entry.get("declared"))
+        for entry in entries
+        if entry.get("status") == "declared" and entry.get("declared")
+    ]
+    undeclared_by_name = {
+        str((entry.get("discovered", {}) or {}).get("name", "")): entry
+        for entry in entries
+        if entry.get("status") == "undeclared"
+    }
+
+    print("SYNC SUMMARY")
+    print(f"Repo:                {repo_root}")
+    print(f"Config:              {config_path}")
+    print(f"Mode:                {'apply' if apply_changes else 'dry-run'}")
+    print(f"Min confidence:      {min_confidence:.2f}")
+    print(f"Selected targets:    {', '.join(selected_names) if selected_names else 'all eligible targets'}")
+    print(f"Undeclared detected: {len(undeclared_by_name)}")
+    print(f"Proposals generated: {len(proposals)}")
+    if repaired_from_backup:
+        print(f"Backup repair used:  {backup_path}")
+    print()
+
+    if not proposals:
+        print("REFUSAL / NO-CHANGE SUMMARY")
+        for line in _sync_refusal_lines(selected_names, undeclared_by_name, declared_names, min_confidence):
+            print(line)
+        print()
+        print("NEXT STEP")
+        print("- Review drift output for evidence and confidence before lowering thresholds.")
+        print("- If you still intend to sync, keep --target-name narrow and verify the target manually first.")
+        print(f"- Proposal file written for audit: {proposal_path}")
+        return
+
+    print("PROPOSED MANIFEST CHANGES")
+    for proposal in proposals:
+        name = str(proposal.get("name", "UNKNOWN"))
+        confidence = float(proposal.get("confidence", 0.0))
+        similar = _similar_declared_targets(name, declared_names)
+        print(f"- [[targets]] name = \"{name}\"")
+        print(f"  Type:        {proposal.get('type', 'unknown')}")
+        print(f"  Confidence:  {confidence:.2f} ({_confidence_band(confidence)})")
+        print(f"  Why Graph proposes it: {proposal.get('reason', 'unknown')}")
+        print(f"  Manifest payload: src_glob={_preview_src_globs(list(proposal.get('src_glob', []) or []))}")
+        if similar:
+            print(f"  Ambiguity signal: similar declared target(s): {', '.join(similar)}")
+        print()
+
+    if not apply_changes:
+        print("MANIFEST WRITE")
+        print("- No changes were written. This was a dry run.")
+        print()
+        print("NEXT STEP")
+        print(f"- Review proposal file: {proposal_path}")
+        print("- If the proposal is correct, rerun the same command with --apply.")
+        print("- Keep the scope narrow with --target-name for operator-safe sync.")
+        return
+
+    applied = added or []
+    after_count = (original_target_count or 0) + len(applied)
+    print("MANIFEST CHANGES APPLIED")
+    print(f"- Added targets: {', '.join(applied) if applied else 'none'}")
+    if original_target_count is not None:
+        print(f"- Target count: {original_target_count} -> {after_count}")
+    print(f"- Config updated: {config_path}")
+    print(f"- Proposal file: {proposal_path}")
+    if backup_path.exists():
+        print(f"- Backup file: {backup_path}")
+    print()
+    print("NEXT STEP")
+    print("- Run ngksgraph configure for the added target to verify plan resolution.")
+    print("- Re-run drift afterward to confirm no unintended targets remain.")
+
+
 def _parse_seed_range(raw: str) -> range:
     text = str(raw).strip()
     if ".." in text:
@@ -977,29 +1207,7 @@ def cmd_drift(args: argparse.Namespace) -> int:
         if output_format == "json":
             print(json.dumps(report, indent=2, default=str))
         else:
-            print(f"Total discovered:  {report.get('total_discovered', 0)}")
-            print(f"Total declared:    {report.get('total_declared', 0)}")
-            print(f"Undeclared count:  {report.get('undeclared_count', 0)}")
-            print()
-
-            entries = report.get("entries", [])
-            if not entries:
-                print("No drift detected.")
-                print(f"REPORT={report_path}")
-                return 0
-
-            for entry in entries:
-                disc = entry.get("discovered", {})
-                status = entry.get("status", "unknown")
-                action = entry.get("action", "none")
-                print(f"Target: {disc.get('name', 'UNKNOWN')}")
-                print(f"  Type:       {disc.get('type', 'unknown')}")
-                print(f"  Location:   {disc.get('location', 'unknown')}")
-                print(f"  Confidence: {disc.get('confidence', 0.0):.2f}")
-                print(f"  Reason:     {disc.get('reason', 'unknown')}")
-                print(f"  Status:     {status}")
-                print(f"  Action:     {action}")
-                print()
+            _print_drift_text_report(repo_root, config_path, report)
 
         if report.get("undeclared_count", 0) > 0:
             print(f"DRIFT_DETECTED=true undeclared_count={report.get('undeclared_count')}")
@@ -1040,8 +1248,10 @@ def cmd_sync(args: argparse.Namespace) -> int:
         }
 
         detector = TargetDriftDetector(config_dict, repo_root)
-        proposals = detector.build_sync_proposal(min_confidence=float(getattr(args, "min_confidence", 0.8)))
-        selected_names = list(getattr(args, "target_name", []) or [])
+        report = detector.compare()
+        min_confidence = float(getattr(args, "min_confidence", 0.8))
+        proposals = detector.build_sync_proposal(min_confidence=min_confidence)
+        selected_names = [str(name) for name in (getattr(args, "target_name", []) or [])]
         if selected_names:
             selected_set = {str(name) for name in selected_names}
             proposals = [proposal for proposal in proposals if str(proposal.get("name", "")) in selected_set]
@@ -1063,15 +1273,43 @@ def cmd_sync(args: argparse.Namespace) -> int:
         proposal_path.parent.mkdir(parents=True, exist_ok=True)
         proposal_path.write_text(json.dumps(proposal_payload, indent=2, default=str), encoding="utf-8")
 
+        apply_changes = bool(getattr(args, "apply", False))
+        original_target_count = len(getattr(cfg, "targets", []) or [])
+
         if not proposals:
+            _print_sync_summary(
+                repo_root=repo_root,
+                config_path=config_path,
+                proposal_path=proposal_path,
+                selected_names=selected_names,
+                min_confidence=min_confidence,
+                proposals=proposals,
+                report=report,
+                apply_changes=apply_changes,
+                repaired_from_backup=repaired_from_backup,
+                backup_path=backup_path,
+                original_target_count=original_target_count,
+            )
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=no_high_confidence_undeclared_targets")
             print(f"SYNC_PROPOSAL={proposal_path}")
             return 0
 
-        apply_changes = bool(getattr(args, "apply", False))
         if not apply_changes:
+            _print_sync_summary(
+                repo_root=repo_root,
+                config_path=config_path,
+                proposal_path=proposal_path,
+                selected_names=selected_names,
+                min_confidence=min_confidence,
+                proposals=proposals,
+                report=report,
+                apply_changes=apply_changes,
+                repaired_from_backup=repaired_from_backup,
+                backup_path=backup_path,
+                original_target_count=original_target_count,
+            )
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print(f"SYNC_PROPOSAL={proposal_path}")
@@ -1080,12 +1318,39 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
         added = detector.apply_sync_to_toml(config_path, proposals)
         if not added:
+            _print_sync_summary(
+                repo_root=repo_root,
+                config_path=config_path,
+                proposal_path=proposal_path,
+                selected_names=selected_names,
+                min_confidence=min_confidence,
+                proposals=[],
+                report=report,
+                apply_changes=apply_changes,
+                repaired_from_backup=repaired_from_backup,
+                backup_path=backup_path,
+                original_target_count=original_target_count,
+            )
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=already_declared")
             print(f"SYNC_PROPOSAL={proposal_path}")
             return 0
 
+        _print_sync_summary(
+            repo_root=repo_root,
+            config_path=config_path,
+            proposal_path=proposal_path,
+            selected_names=selected_names,
+            min_confidence=min_confidence,
+            proposals=proposals,
+            report=report,
+            apply_changes=apply_changes,
+            repaired_from_backup=repaired_from_backup,
+            backup_path=backup_path,
+            added=added,
+            original_target_count=original_target_count,
+        )
         if repaired_from_backup:
             print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
         print(f"SYNC_APPLIED count={len(added)} names={','.join(added)}")
