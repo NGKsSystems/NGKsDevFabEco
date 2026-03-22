@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Set
@@ -35,6 +36,8 @@ class TargetDriftDetector:
 
         self._collect_declared_target_names()
         self._scan_qmake_projects()
+        self._scan_cmake_projects()
+        self._scan_graph_json_projects()
         self._scan_common_test_directories()
 
         return self.discovered
@@ -91,6 +94,84 @@ class TargetDriftDetector:
 
         self.discovered.extend(by_name.values())
 
+    def _scan_cmake_projects(self) -> None:
+        by_name: Dict[str, DiscoveredTarget] = {}
+        allowed_first_parts = {"", "apps", "app", "src", "tests", "platform", "engines", "modules", "lib", "libs"}
+        for cmake_file in self.repo_root.rglob("CMakeLists.txt"):
+            rel_parts = cmake_file.relative_to(self.repo_root).parts[:-1]
+            first_part = rel_parts[0] if rel_parts else ""
+            if first_part not in allowed_first_parts:
+                continue
+            if any(part in {"build", "dist", "_proof", ".git", ".venv", "venv", "node_modules", "third_party"} for part in rel_parts):
+                continue
+            for parsed in self._parse_cmake_targets(cmake_file):
+                name = str(parsed.get("name", ""))
+                if not name:
+                    continue
+                candidate = DiscoveredTarget(
+                    name=name,
+                    type=str(parsed.get("type", "exe")),
+                    src_globs=list(parsed.get("src_globs", [])),
+                    confidence=0.9,
+                    reason=f"CMake target discovered: {cmake_file.relative_to(self.repo_root)}",
+                    location=str(cmake_file.parent.relative_to(self.repo_root)).replace("\\", "/"),
+                )
+                if name not in by_name:
+                    by_name[name] = candidate
+        for name, candidate in by_name.items():
+            if not any(existing.name == name for existing in self.discovered):
+                self.discovered.append(candidate)
+
+    def _parse_cmake_targets(self, cmake_file: Path) -> List[Dict[str, Any]]:
+        try:
+            text = cmake_file.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return []
+
+        patterns = [
+            ("qt_add_executable", "exe"),
+            ("add_executable", "exe"),
+            ("add_library", "staticlib"),
+        ]
+        results: List[Dict[str, Any]] = []
+        for macro, default_type in patterns:
+            for match in re.finditer(rf"{macro}\s*\((.*?)\)", text, flags=re.DOTALL):
+                body = match.group(1)
+                lines = [line.strip() for line in body.splitlines() if line.strip()]
+                if not lines:
+                    continue
+                tokens: List[str] = []
+                for line in lines:
+                    line = line.split("#", 1)[0].strip()
+                    if not line:
+                        continue
+                    tokens.extend(line.split())
+                if not tokens:
+                    continue
+                name = tokens[0]
+                source_tokens = tokens[1:]
+                target_type = default_type
+                if macro == "add_library" and source_tokens:
+                    kind = source_tokens[0].upper()
+                    if kind in {"STATIC", "SHARED", "MODULE", "OBJECT", "INTERFACE"}:
+                        source_tokens = source_tokens[1:]
+                        target_type = "staticlib" if kind in {"STATIC", "OBJECT"} else "dll"
+
+                rel_sources: List[str] = []
+                for token in source_tokens:
+                    if token.startswith("$"):
+                        continue
+                    if any(token.endswith(ext) for ext in (".cpp", ".cc", ".c", ".cxx")):
+                        source_path = (cmake_file.parent / token).resolve()
+                        try:
+                            rel_sources.append(str(source_path.relative_to(self.repo_root)).replace("\\", "/"))
+                        except ValueError:
+                            continue
+                if not rel_sources:
+                    continue
+                results.append({"name": name, "type": target_type, "src_globs": rel_sources})
+        return results
+
     def _parse_qmake_target(self, pro_file: Path) -> Dict[str, Any] | None:
         try:
             text = pro_file.read_text(encoding="utf-8", errors="ignore")
@@ -139,6 +220,43 @@ class TargetDriftDetector:
                     location=rel,
                 )
             )
+
+    def _scan_graph_json_projects(self) -> None:
+        by_name: Dict[str, DiscoveredTarget] = {}
+        for graph_file in self.repo_root.glob("graph/*.graph.json"):
+            try:
+                payload = json.loads(graph_file.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            targets = payload.get("targets", [])
+            if not isinstance(targets, list):
+                continue
+            for target in targets:
+                if not isinstance(target, dict):
+                    continue
+                name = str(target.get("name", "") or "").strip()
+                if not name:
+                    continue
+                sources = [str(src).replace("\\", "/") for src in target.get("sources", []) if isinstance(src, str)]
+                if not sources:
+                    continue
+                target_type = "exe"
+                raw_type = str(target.get("type", "") or "").lower()
+                if "lib" in raw_type:
+                    target_type = "staticlib"
+                candidate = DiscoveredTarget(
+                    name=name,
+                    type=target_type,
+                    src_globs=sources,
+                    confidence=0.92,
+                    reason=f"graph metadata discovered: {graph_file.name}",
+                    location=str(graph_file.parent.relative_to(self.repo_root)).replace("\\", "/"),
+                )
+                if name not in by_name:
+                    by_name[name] = candidate
+        for name, candidate in by_name.items():
+            if not any(existing.name == name for existing in self.discovered):
+                self.discovered.append(candidate)
 
     def compare(self) -> Dict:
         """Compare discovered vs declared targets."""
@@ -224,7 +342,9 @@ class TargetDriftDetector:
                 continue
 
             src_globs = proposal.get("src_glob", []) or []
-            src_glob_lines = "\n".join([f'  "{g}"' for g in src_globs])
+            src_glob_lines = "\n".join(
+                [f'  "{g}",' if idx < len(src_globs) - 1 else f'  "{g}"' for idx, g in enumerate(src_globs)]
+            )
             block = (
                 "\n\n[[targets]]\n"
                 f'name = "{name}"\n'
@@ -249,5 +369,6 @@ class TargetDriftDetector:
 
         backup = config_path.with_suffix(config_path.suffix + ".bak_drift_sync")
         backup.write_text(original, encoding="utf-8")
+        tomllib.loads(updated)
         config_path.write_text(updated, encoding="utf-8")
         return added

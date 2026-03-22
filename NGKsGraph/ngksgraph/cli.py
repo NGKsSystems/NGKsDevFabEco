@@ -1024,7 +1024,16 @@ def cmd_sync(args: argparse.Namespace) -> int:
         return 1
 
     try:
-        cfg = load_config(config_path)
+        backup_path = config_path.with_suffix(config_path.suffix + ".bak_drift_sync")
+        repaired_from_backup = False
+        try:
+            cfg = load_config(config_path)
+        except Exception:
+            if not backup_path.exists():
+                raise
+            config_path.write_text(backup_path.read_text(encoding="utf-8"), encoding="utf-8")
+            cfg = load_config(config_path)
+            repaired_from_backup = True
         config_dict = {
             "targets": cfg.targets if hasattr(cfg, "targets") else [],
             "name": cfg.name if hasattr(cfg, "name") else "",
@@ -1032,6 +1041,10 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
         detector = TargetDriftDetector(config_dict, repo_root)
         proposals = detector.build_sync_proposal(min_confidence=float(getattr(args, "min_confidence", 0.8)))
+        selected_names = list(getattr(args, "target_name", []) or [])
+        if selected_names:
+            selected_set = {str(name) for name in selected_names}
+            proposals = [proposal for proposal in proposals if str(proposal.get("name", "")) in selected_set]
 
         output_path = getattr(args, "out", None)
         if output_path:
@@ -1051,22 +1064,30 @@ def cmd_sync(args: argparse.Namespace) -> int:
         proposal_path.write_text(json.dumps(proposal_payload, indent=2, default=str), encoding="utf-8")
 
         if not proposals:
+            if repaired_from_backup:
+                print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=no_high_confidence_undeclared_targets")
             print(f"SYNC_PROPOSAL={proposal_path}")
             return 0
 
         apply_changes = bool(getattr(args, "apply", False))
         if not apply_changes:
+            if repaired_from_backup:
+                print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print(f"SYNC_PROPOSAL={proposal_path}")
             print(f"SYNC_PENDING count={len(proposals)}")
             return 1
 
         added = detector.apply_sync_to_toml(config_path, proposals)
         if not added:
+            if repaired_from_backup:
+                print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=already_declared")
             print(f"SYNC_PROPOSAL={proposal_path}")
             return 0
 
+        if repaired_from_backup:
+            print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
         print(f"SYNC_APPLIED count={len(added)} names={','.join(added)}")
         print(f"SYNC_PROPOSAL={proposal_path}")
         print(f"CONFIG_UPDATED={config_path}")
@@ -1576,6 +1597,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument("--out", default=None)
     p_sync.add_argument("--apply", action="store_true", default=False)
     p_sync.add_argument("--min-confidence", type=float, default=0.8)
+    p_sync.add_argument("--target-name", action="append", default=[])
     p_sync.set_defaults(func=cmd_sync)
 
     p_graph = sub.add_parser("graph", help="Export build graph as JSON")
