@@ -567,6 +567,412 @@ def _probe_cl_via_vsdevcmd(vsdevcmd_path: str) -> dict[str, object]:
     }
 
 
+# ---------------------------------------------------------------------------
+# VS Code terminal profile audit and auto-fix
+# ---------------------------------------------------------------------------
+# Motivation: VS Code terminal profiles that launch VsDevCmd.bat are a common
+# source of "VsDevCmd.bat is not recognized" startup errors.  Two root causes
+# appear repeatedly:
+#   1. Wrong installation path (e.g., BuildTools vs Community, missing (x86)).
+#   2. Badly-quoted combined arg: "\"path\" -arch=x64" in a single JSON string
+#      — VS Code re-escapes the embedded quotes, so cmd.exe receives literal
+#      backslash-quotes it cannot parse.
+# DevFabEco detects both issues during `doctor` and offers `--fix-vscode` to
+# correct them automatically (with a timestamped backup of settings.json).
+# ---------------------------------------------------------------------------
+
+def _vscode_user_settings_path() -> Path | None:
+    """Return the VS Code user settings.json path, or None if not found."""
+    appdata = os.environ.get("APPDATA", "")
+    if not appdata:
+        return None
+    p = Path(appdata) / "Code" / "User" / "settings.json"
+    return p if p.exists() else None
+
+
+def _strip_jsonc_comments(text: str) -> str:
+    """Strip full-line // comments from JSONC so json.loads() can parse it."""
+    lines = []
+    for line in text.splitlines():
+        if line.lstrip().startswith("//"):
+            continue
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def scan_vscode_vsdevcmd_profiles() -> dict:
+    """
+    Scan VS Code user settings.json for terminal profiles whose args contain
+    a VsDevCmd.bat reference.  Returns a findings dict without modifying anything.
+
+    Return shape::
+
+        {
+            "settings_path": str,          # absolute path to settings.json
+            "profiles_scanned": int,
+            "profiles_found": [
+                {
+                    "profile_name": str,
+                    "arg_index": int,       # index of the offending arg in args[]
+                    "arg_value": str,       # raw arg string as stored in settings.json
+                    "extracted_path": str,  # just the .bat file path (unquoted)
+                    "has_embedded_quotes": bool,  # path is wrapped in \" inside the string
+                    "has_combined_flags": bool,   # path and -arch flags in one string
+                }
+            ],
+            "error": str | None,
+        }
+    """
+    result: dict = {
+        "settings_path": "",
+        "profiles_scanned": 0,
+        "profiles_found": [],
+        "error": None,
+    }
+
+    sp = _vscode_user_settings_path()
+    if sp is None:
+        result["error"] = "VS Code user settings.json not found"
+        return result
+
+    result["settings_path"] = str(sp)
+
+    try:
+        raw = sp.read_text(encoding="utf-8")
+        settings = json.loads(_strip_jsonc_comments(raw))
+    except Exception as exc:
+        result["error"] = f"Could not parse settings.json: {exc}"
+        return result
+
+    profiles = settings.get("terminal.integrated.profiles.windows") or {}
+    if not isinstance(profiles, dict):
+        return result
+
+    result["profiles_scanned"] = len(profiles)
+
+    for profile_name, profile_cfg in profiles.items():
+        if not isinstance(profile_cfg, dict):
+            continue
+        args = profile_cfg.get("args")
+        if not isinstance(args, list):
+            continue
+        for idx, arg in enumerate(args):
+            if not isinstance(arg, str):
+                continue
+            if "vsdevcmd.bat" not in arg.lower():
+                continue
+
+            # Detect quoting issue: embedded literal quotes around the path
+            has_embedded_quotes = arg.startswith('"') or '\\"' in arg
+            # Detect combined arg: path and flag(s) packed into a single string
+            has_combined_flags = bool(
+                re.search(r'VsDevCmd\.bat["\s\\].*-\w', arg, re.IGNORECASE)
+            )
+            # Extract just the filesystem path from the arg value
+            cleaned = arg.replace('\\"', "").strip('"')
+            path_match = re.search(
+                r'([A-Za-z]:\\[^"\']*?VsDevCmd\.bat)', cleaned, re.IGNORECASE
+            )
+            extracted_path = path_match.group(1) if path_match else ""
+
+            result["profiles_found"].append(
+                {
+                    "profile_name": str(profile_name),
+                    "arg_index": idx,
+                    "arg_value": str(arg),
+                    "extracted_path": extracted_path,
+                    "has_embedded_quotes": has_embedded_quotes,
+                    "has_combined_flags": has_combined_flags,
+                }
+            )
+
+    return result
+
+
+def fix_vscode_vsdevcmd_profiles(real_vsdevcmd_path: str) -> dict:
+    """
+    Auto-fix VS Code terminal profiles whose args reference VsDevCmd.bat
+    incorrectly (wrong path or bad quoting / combined-arg format).
+
+    Makes a timestamped backup of settings.json before writing.  Comments in
+    the original JSONC file are not preserved in the rewritten version (the
+    backup retains them).
+
+    Args:
+        real_vsdevcmd_path: The authoritative VsDevCmd.bat path from
+            ``bootstrap_msvc()`` or ``doctor_toolchain()``.
+
+    Returns a dict::
+
+        {
+            "fixed_count": int,      # number of profiles patched
+            "settings_path": str,
+            "backup_path": str,
+            "changes": [
+                {"profile": str, "old_arg": str,
+                 "new_bat_path": str, "split_flags": list[str]}
+            ],
+            "error": str | None,
+        }
+    """
+    import datetime
+
+    result: dict = {
+        "fixed_count": 0,
+        "settings_path": "",
+        "backup_path": "",
+        "changes": [],
+        "error": None,
+    }
+
+    sp = _vscode_user_settings_path()
+    if sp is None:
+        result["error"] = "VS Code user settings.json not found"
+        return result
+
+    result["settings_path"] = str(sp)
+
+    # --- backup first ---
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup = sp.with_name(f"settings.{ts}.bak.json")
+    try:
+        shutil.copy2(str(sp), str(backup))
+        result["backup_path"] = str(backup)
+    except Exception as exc:
+        result["error"] = f"Backup failed: {exc}"
+        return result
+
+    # --- parse ---
+    try:
+        raw = sp.read_text(encoding="utf-8")
+        settings = json.loads(_strip_jsonc_comments(raw))
+    except Exception as exc:
+        result["error"] = f"Parse failed: {exc}"
+        return result
+
+    profiles = settings.get("terminal.integrated.profiles.windows") or {}
+    if not isinstance(profiles, dict):
+        return result
+
+    changed = False
+    real_lower = real_vsdevcmd_path.lower()
+
+    for profile_name, profile_cfg in list(profiles.items()):
+        if not isinstance(profile_cfg, dict):
+            continue
+        args = profile_cfg.get("args")
+        if not isinstance(args, list):
+            continue
+
+        new_args: list[str] = []
+        profile_changed = False
+
+        for arg in args:
+            if not isinstance(arg, str) or "vsdevcmd.bat" not in arg.lower():
+                new_args.append(arg)
+                continue
+
+            # Strip embedded literal quotes and leading/trailing whitespace
+            cleaned = arg.replace('\\"', "").strip('"').strip()
+
+            # Split into: bat-file-path + any trailing flags
+            m = re.match(
+                r'([A-Za-z]:\\[^"\']*?VsDevCmd\.bat)(.*)',
+                cleaned,
+                re.IGNORECASE,
+            )
+            if not m:
+                new_args.append(arg)  # can't parse — leave untouched
+                continue
+
+            old_path = m.group(1).strip()
+            trailing = m.group(2).strip().strip('"').strip("\\").strip()
+            flag_args = [f for f in trailing.split() if f.strip() not in ("", '"', "'")]
+
+            # Use real_vsdevcmd_path only when the referenced file doesn't exist.
+            # If it exists (e.g. BuildTools alongside Community), preserve it as-is.
+            old_path_exists = Path(old_path).exists()
+            effective_bat = old_path if old_path_exists else real_vsdevcmd_path
+            format_ok = not arg.startswith('"') and '\\"' not in arg and not flag_args
+            path_ok = old_path_exists  # existing path is fine even if different from vswhere
+
+            if path_ok and format_ok:
+                new_args.append(arg)  # already correct
+                continue
+
+            # Record the change and emit clean replacement
+            result["changes"].append(
+                {
+                    "profile": str(profile_name),
+                    "old_arg": str(arg),
+                    "new_bat_path": effective_bat,
+                    "split_flags": flag_args,
+                }
+            )
+            new_args.append(effective_bat)
+            new_args.extend(flag_args)
+            profile_changed = True
+
+        if profile_changed:
+            profile_cfg["args"] = new_args
+            profiles[profile_name] = profile_cfg
+            result["fixed_count"] += 1
+            changed = True
+
+    if changed:
+        settings["terminal.integrated.profiles.windows"] = profiles
+        sp.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+
+    return result
+
+
+def _read_jsonc_settings(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = path.read_text(encoding="utf-8")
+        parsed = json.loads(_strip_jsonc_comments(raw))
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
+def _is_cmd_profile(profile_name: str, profile_cfg: dict[str, Any] | None) -> bool:
+    name = (profile_name or "").strip().lower()
+    if "command prompt" in name or name == "cmd" or name.startswith("cmd"):
+        return True
+    cfg = profile_cfg or {}
+    path = str(cfg.get("path", "")).strip().lower()
+    source = str(cfg.get("source", "")).strip().lower()
+    return path.endswith("cmd.exe") or source == "command prompt"
+
+
+def scan_workspace_terminal_activation(project_path: Path) -> dict:
+    """
+    Detect shell/activation mismatch that causes startup errors like:
+    "& was unexpected at this time." in cmd.exe when a PowerShell activation
+    command is injected.
+    """
+    project_path = Path(project_path).resolve()
+    workspace_settings_path = project_path / ".vscode" / "settings.json"
+    user_settings_path = _vscode_user_settings_path()
+
+    ws = _read_jsonc_settings(workspace_settings_path)
+    us = _read_jsonc_settings(user_settings_path) if user_settings_path else {}
+
+    ws_profiles = ws.get("terminal.integrated.profiles.windows")
+    us_profiles = us.get("terminal.integrated.profiles.windows")
+    ws_profiles = ws_profiles if isinstance(ws_profiles, dict) else {}
+    us_profiles = us_profiles if isinstance(us_profiles, dict) else {}
+
+    ws_default = ws.get("terminal.integrated.defaultProfile.windows")
+    us_default = us.get("terminal.integrated.defaultProfile.windows")
+    effective_default = (
+        str(ws_default).strip()
+        if isinstance(ws_default, str) and ws_default.strip()
+        else (str(us_default).strip() if isinstance(us_default, str) and us_default.strip() else "")
+    )
+
+    profile_cfg = ws_profiles.get(effective_default)
+    if not isinstance(profile_cfg, dict):
+        profile_cfg = us_profiles.get(effective_default)
+    if not isinstance(profile_cfg, dict):
+        profile_cfg = {}
+
+    # Python extension defaults this to true when unspecified.
+    ws_activate = ws.get("python.terminal.activateEnvironment")
+    us_activate = us.get("python.terminal.activateEnvironment")
+    if isinstance(ws_activate, bool):
+        activate_environment = ws_activate
+    elif isinstance(us_activate, bool):
+        activate_environment = us_activate
+    else:
+        activate_environment = True
+
+    is_cmd = _is_cmd_profile(effective_default, profile_cfg)
+    # Primary risk pattern observed by users.
+    mismatch_risk = bool(is_cmd and activate_environment)
+
+    return {
+        "status": "issues_found" if mismatch_risk else "ok",
+        "workspace_settings_path": str(workspace_settings_path),
+        "user_settings_path": str(user_settings_path) if user_settings_path else "",
+        "effective_default_profile_windows": effective_default or "<unset>",
+        "effective_profile_is_cmd": is_cmd,
+        "python_terminal_activate_environment": activate_environment,
+        "issue": (
+            "cmd_profile_with_python_auto_activate"
+            if mismatch_risk else ""
+        ),
+        "hint": (
+            "Run 'ngksdevfabric doctor . --fix-vscode' to write workspace-local "
+            "terminal defaults compatible with Python venv auto-activation."
+            if mismatch_risk else ""
+        ),
+    }
+
+
+def fix_workspace_terminal_activation(project_path: Path) -> dict:
+    """
+    Write workspace-local VS Code settings that keep terminal startup and Python
+    venv activation compatible across repos:
+      - default shell => PowerShell
+      - python auto-activation remains enabled
+      - interpreter path pinned to ${workspaceFolder}\\.venv\\Scripts\\python.exe
+    """
+    import datetime
+
+    project_path = Path(project_path).resolve()
+    vscode_dir = project_path / ".vscode"
+    settings_path = vscode_dir / "settings.json"
+    vscode_dir.mkdir(parents=True, exist_ok=True)
+
+    result: dict[str, Any] = {
+        "settings_path": str(settings_path),
+        "backup_path": "",
+        "updated": False,
+        "changes": [],
+        "error": None,
+    }
+
+    existing_raw = ""
+    if settings_path.exists():
+        try:
+            existing_raw = settings_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            result["error"] = f"Could not read workspace settings: {exc}"
+            return result
+
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup = settings_path.with_name(f"settings.{ts}.bak.json")
+        try:
+            shutil.copy2(str(settings_path), str(backup))
+            result["backup_path"] = str(backup)
+        except Exception as exc:
+            result["error"] = f"Could not back up workspace settings: {exc}"
+            return result
+
+    ws = _read_jsonc_settings(settings_path)
+    before = dict(ws)
+
+    desired: dict[str, Any] = {
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "python.terminal.activateEnvironment": True,
+        "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+    }
+    for k, v in desired.items():
+        old = ws.get(k)
+        if old != v:
+            ws[k] = v
+            result["changes"].append({"key": k, "old": old, "new": v})
+
+    if ws != before:
+        settings_path.write_text(json.dumps(ws, indent=2), encoding="utf-8")
+        result["updated"] = True
+
+    return result
+
+
 def doctor_toolchain(project_path: Path, pf: Path) -> int:
     """
     Writes a FULL toolchain_report.json (toolchain snapshot + doctor summary).
@@ -734,6 +1140,53 @@ def doctor_toolchain(project_path: Path, pf: Path) -> int:
 
     report["doctor_required_missing"] = missing
     report["doctor_exit_code"] = 2 if missing else 0
+
+    # --- VS Code terminal profile audit (advisory, not a hard fail) ---
+    vscode_vsdevcmd_audit: dict = {"status": "skipped"}
+    if vsdevcmd_path:
+        try:
+            _audit = scan_vscode_vsdevcmd_profiles()
+            if _audit.get("error"):
+                vscode_vsdevcmd_audit = {"status": "error", "error": _audit["error"]}
+            elif _audit.get("profiles_found"):
+                _issues = []
+                for _p in _audit["profiles_found"]:
+                    _ep = _p.get("extracted_path", "")
+                    _path_missing = bool(_ep) and not Path(_ep).exists()
+                    if (
+                        _path_missing
+                        or _p.get("has_embedded_quotes")
+                        or _p.get("has_combined_flags")
+                    ):
+                        _p["path_missing"] = _path_missing
+                        _issues.append(_p)
+                vscode_vsdevcmd_audit = {
+                    "status": "issues_found" if _issues else "ok",
+                    "settings_path": _audit.get("settings_path", ""),
+                    "profiles_with_issues": _issues,
+                    "hint": (
+                        "Run 'ngksdevfabric doctor . --fix-vscode' to auto-correct."
+                        if _issues else ""
+                    ),
+                }
+            else:
+                vscode_vsdevcmd_audit = {
+                    "status": "no_vsdevcmd_profiles",
+                    "settings_path": _audit.get("settings_path", ""),
+                }
+        except Exception as _exc:
+            vscode_vsdevcmd_audit = {"status": "error", "error": str(_exc)}
+
+    report["vscode_vsdevcmd_audit"] = vscode_vsdevcmd_audit
+
+    # --- VS Code workspace shell/venv activation compatibility audit ---
+    try:
+        report["vscode_terminal_activation_audit"] = scan_workspace_terminal_activation(project_path)
+    except Exception as _exc:
+        report["vscode_terminal_activation_audit"] = {
+            "status": "error",
+            "error": str(_exc),
+        }
 
     (pf / "toolchain_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return int(report["doctor_exit_code"])

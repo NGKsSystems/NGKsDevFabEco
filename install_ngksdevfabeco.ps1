@@ -2,7 +2,7 @@ param(
     [string]$WheelhousePath,
     [switch]$ForceRecreateVenv,
     [switch]$UserInstall,
-    [string]$Version = '1.2.5',
+    [string]$Version = '1.3.2',
     [switch]$CleanupInvalidUserDistributions,
     [switch]$PersistUserScriptsPath,
     [ValidateSet('auto', 'wheelhouse', 'pypi')]
@@ -124,6 +124,33 @@ function Resolve-ComponentVersions {
     param([string]$EcoVersion)
 
     switch ($EcoVersion) {
+        '1.3.2' {
+            return @{
+                devfabric  = '1.3.2'
+                graph      = '0.2.0'
+                buildcore  = '0.2.0'
+                envcapsule = '0.2.0'
+                library    = '0.2.0'
+            }
+        }
+        '1.3.1' {
+            return @{
+                devfabric  = '1.3.1'
+                graph      = '0.2.0'
+                buildcore  = '0.2.0'
+                envcapsule = '0.2.0'
+                library    = '0.2.0'
+            }
+        }
+        '1.3.0' {
+            return @{
+                devfabric  = '1.3.0'
+                graph      = '0.2.0'
+                buildcore  = '0.2.0'
+                envcapsule = '0.2.0'
+                library    = '0.2.0'
+            }
+        }
         '1.2.5' {
             return @{
                 devfabric  = '1.2.5'

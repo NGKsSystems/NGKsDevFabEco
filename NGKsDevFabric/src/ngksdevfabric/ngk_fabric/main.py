@@ -168,6 +168,79 @@ def _enforce_workspace_integrity(*, pf: Path | None, scope: str) -> bool:
     return False
 
 
+def _package_version_for_bootstrap(package_name: str) -> str | None:
+    try:
+        return str(importlib.metadata.version(package_name)).strip()
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    except Exception:
+        return None
+
+
+def _bootstrap_repo_venv_and_rerun(*, project_root: Path, effective_argv: list[str]) -> int | None:
+    if os.environ.get("NGKS_VENV_BOOTSTRAP_ATTEMPTED", "") == "1":
+        return None
+
+    venv_dir = (project_root / ".venv").resolve()
+    venv_python = venv_dir / "Scripts" / "python.exe"
+    package_version = _package_version_for_bootstrap("ngksdevfabeco")
+    if not package_version:
+        package_version = _package_version_for_bootstrap("ngksdevfabric")
+
+    if not package_version:
+        _print_result("workspace_integrity_autofix=SKIP")
+        _print_result("workspace_integrity_autofix_reason=unable_to_determine_installed_package_version")
+        return None
+
+    _print_result("workspace_integrity_autofix=ATTEMPT")
+    _print_result(f"workspace_integrity_autofix_project_root={project_root}")
+    _print_result(f"workspace_integrity_autofix_venv={venv_dir}")
+    _print_result(f"workspace_integrity_autofix_package=ngksdevfabeco=={package_version}")
+
+    try:
+        project_root.mkdir(parents=True, exist_ok=True)
+
+        if not venv_python.exists():
+            create_venv = subprocess.run(
+                [sys.executable, "-m", "venv", str(venv_dir)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if int(create_venv.returncode) != 0:
+                _print_result("workspace_integrity_autofix=FAIL")
+                _print_result("workspace_integrity_autofix_step=create_venv")
+                _print_result(f"workspace_integrity_autofix_exit={create_venv.returncode}")
+                return None
+
+        install_cmds = [
+            [str(venv_python), "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"],
+            [str(venv_python), "-m", "pip", "install", "--upgrade", f"ngksdevfabeco=={package_version}"],
+        ]
+        for cmd in install_cmds:
+            proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            if int(proc.returncode) != 0:
+                _print_result("workspace_integrity_autofix=FAIL")
+                _print_result("workspace_integrity_autofix_step=install")
+                _print_result(f"workspace_integrity_autofix_exit={proc.returncode}")
+                return None
+
+        rerun_env = dict(os.environ)
+        rerun_env["NGKS_VENV_BOOTSTRAP_ATTEMPTED"] = "1"
+        rerun = subprocess.run(
+            [str(venv_python), "-m", "ngksdevfabric.ngk_fabric.main", *effective_argv],
+            check=False,
+            env=rerun_env,
+        )
+        _print_result("workspace_integrity_autofix=HANDOFF")
+        _print_result(f"workspace_integrity_autofix_exit={int(rerun.returncode)}")
+        return int(rerun.returncode)
+    except Exception as exc:
+        _print_result("workspace_integrity_autofix=FAIL")
+        _print_result(f"workspace_integrity_autofix_exception={exc}")
+        return None
+
+
 def _enforce_graph_state_automation(
     *,
     project_root: Path,
@@ -1917,6 +1990,81 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     backup_root = _resolve_backup_root(args, project)
     pf = _resolve_pf(args, project, "doctor")
     code = doctor_toolchain(project, pf)
+
+    # --- VS Code terminal profile: report issues (and optionally fix) ---
+    import json as _json
+    try:
+        _report = _json.loads((pf / "toolchain_report.json").read_text(encoding="utf-8"))
+        _vsc_audit = _report.get("vscode_vsdevcmd_audit", {})
+        _term_audit = _report.get("vscode_terminal_activation_audit", {})
+    except Exception:
+        _report = {}
+        _vsc_audit = {}
+        _term_audit = {}
+
+    _fix_vscode = getattr(args, "fix_vscode", False)
+
+    if _fix_vscode:
+        _real_vsdevcmd = _report.get("vsdevcmd_path", "") if "_report" in dir() else ""
+        from ngksdevfabric.ngk_fabric.runwrap import fix_workspace_terminal_activation
+
+        _ws_fix_res = fix_workspace_terminal_activation(project)
+        if _ws_fix_res.get("error"):
+            _print_result(f"vscode_workspace_fix=ERROR({_ws_fix_res['error']})")
+        else:
+            _print_result(
+                f"vscode_workspace_fix={'UPDATED' if _ws_fix_res.get('updated') else 'NO_CHANGES'}"
+            )
+            _print_result(f"vscode_workspace_settings={_ws_fix_res.get('settings_path', '')}")
+            if _ws_fix_res.get("backup_path"):
+                _print_result(f"vscode_workspace_fix_backup={_ws_fix_res['backup_path']}")
+            for _chg in _ws_fix_res.get("changes", []):
+                _print_result(
+                    f"vscode_workspace_key_updated={_chg['key']} "
+                    f"old={_chg['old']!r} new={_chg['new']!r}"
+                )
+
+        if _real_vsdevcmd:
+            from ngksdevfabric.ngk_fabric.runwrap import fix_vscode_vsdevcmd_profiles
+            _fix_res = fix_vscode_vsdevcmd_profiles(_real_vsdevcmd)
+            if _fix_res.get("error"):
+                _print_result(f"vscode_fix=ERROR({_fix_res['error']})")
+            else:
+                _print_result(f"vscode_fix=OK fixed_count={_fix_res['fixed_count']}")
+                if _fix_res.get("backup_path"):
+                    _print_result(f"vscode_fix_backup={_fix_res['backup_path']}")
+                for _chg in _fix_res.get("changes", []):
+                    _print_result(
+                        f"vscode_fixed_profile={_chg['profile']} "
+                        f"flags={_chg['split_flags']}"
+                    )
+                if _fix_res["fixed_count"] == 0:
+                    _print_result("vscode_fix=no_changes_needed")
+        else:
+            _print_result("vscode_fix=SKIPPED(vsdevcmd_path_unknown)")
+    elif _vsc_audit.get("status") == "issues_found":
+        _print_result("vscode_vsdevcmd_audit=ISSUES_FOUND")
+        for _p in _vsc_audit.get("profiles_with_issues", []):
+            _print_result(
+                f"  broken_profile={_p['profile_name']} "
+                f"path={_p['extracted_path']!r}"
+            )
+        _print_result("  hint: run 'ngksdevfabric doctor . --fix-vscode' to auto-correct")
+    elif _vsc_audit.get("status") == "ok":
+        _print_result("vscode_vsdevcmd_audit=OK")
+
+    if _term_audit.get("status") == "issues_found":
+        _print_result("vscode_terminal_activation_audit=ISSUES_FOUND")
+        _print_result(
+            f"  effective_default_profile_windows={_term_audit.get('effective_default_profile_windows', '<unknown>')}"
+        )
+        _print_result(
+            f"  python_terminal_activate_environment={_term_audit.get('python_terminal_activate_environment')}"
+        )
+        _print_result("  hint: run 'ngksdevfabric doctor . --fix-vscode' to auto-correct")
+    elif _term_audit.get("status") == "ok":
+        _print_result("vscode_terminal_activation_audit=OK")
+
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _register_bundle_safely(pf)
@@ -4188,6 +4336,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Backup root for mirrored proof output. If omitted, backup mirroring is disabled.",
     )
     doctor_parser.add_argument("--no-prompt", action="store_true", help="Do not prompt for backup-root fixes when an invalid backup root is provided.")
+    doctor_parser.add_argument(
+        "--fix-vscode",
+        action="store_true",
+        default=False,
+        dest="fix_vscode",
+        help=(
+            "Auto-fix VS Code terminal profiles whose VsDevCmd.bat path is wrong or "
+            "uses a badly-quoted combined-arg format, and write workspace-local shell/"
+            "Python activation settings that prevent cmd/PowerShell startup mismatch. "
+            "Makes timestamped backups before writing when settings files already exist."
+        ),
+    )
     doctor_parser.set_defaults(func=cmd_doctor)
 
     run_parser = sub.add_parser("run")
@@ -4667,6 +4827,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if not _enforce_workspace_integrity(pf=None, scope="cli_startup"):
         project_root = _resolve_project_root(_project_path_from_argv(effective_argv))
+        bootstrap_exit = _bootstrap_repo_venv_and_rerun(project_root=project_root, effective_argv=effective_argv)
+        if bootstrap_exit is not None:
+            return int(bootstrap_exit)
+
         pf = _default_pf(project_root, "startup_integrity_failure")
         _run_root_cause_analysis(
             project_root=project_root,
