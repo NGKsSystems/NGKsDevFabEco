@@ -51,6 +51,7 @@ from ngksgraph.proof import (
     current_proof_run_dir,
     gather_git_metadata,
     new_proof_run,
+    resolve_proof_root,
     resolve_proof_work_root,
     resolve_repo_root,
     write_summary,
@@ -227,43 +228,327 @@ def _print_drift_text_report(repo_root: Path, config_path: Path, report: dict[st
         print("- No undeclared targets remain. Drift is clean for this repository.")
 
 
-def _sync_refusal_lines(
+def _review_trail_root(project_root: Path) -> Path:
+    review_root = (resolve_proof_root(project_root) / "review_workflow").resolve()
+    (review_root / "runs").mkdir(parents=True, exist_ok=True)
+    (review_root / "latest").mkdir(parents=True, exist_ok=True)
+    return review_root
+
+
+def _review_run_id(kind: str) -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
+    return f"{stamp}_{kind}"
+
+
+def _write_json_file(path: Path, payload: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+
+
+def _load_json_file(path: Path) -> dict[str, object] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            return payload
+    except Exception:
+        return None
+    return None
+
+
+def _undeclared_names(report: dict[str, object]) -> list[str]:
+    names: list[str] = []
+    for entry in list(report.get("entries", [])):
+        if entry.get("status") != "undeclared":
+            continue
+        discovered = dict(entry.get("discovered", {}) or {})
+        name = str(discovered.get("name", "")).strip()
+        if name:
+            names.append(name)
+    return sorted(set(names))
+
+
+def _sync_refusal_records(
     selected_names: list[str],
     undeclared_by_name: dict[str, dict[str, object]],
     declared_names: list[str],
     min_confidence: float,
-) -> list[str]:
-    lines: list[str] = []
+    proposed_names: set[str] | None = None,
+) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    proposed_set = set(proposed_names or set())
     if selected_names:
         for selected_name in selected_names:
+            if selected_name in proposed_set:
+                continue
             if selected_name in declared_names:
-                lines.append(f"- {selected_name}: already declared; no manifest change needed.")
+                records.append(
+                    {
+                        "target": selected_name,
+                        "kind": "already_declared",
+                        "message": f"{selected_name}: already declared; no manifest change needed.",
+                    }
+                )
                 continue
             entry = undeclared_by_name.get(selected_name)
             if entry is None:
-                lines.append(f"- {selected_name}: not detected in drift output; Graph refused to guess.")
+                records.append(
+                    {
+                        "target": selected_name,
+                        "kind": "not_detected",
+                        "message": f"{selected_name}: not detected in drift output; Graph refused to guess.",
+                    }
+                )
                 continue
             disc = dict(entry.get("discovered", {}) or {})
             confidence = float(disc.get("confidence", 0.0))
             if confidence < min_confidence:
-                lines.append(
-                    f"- {selected_name}: detected at confidence {confidence:.2f} ({_confidence_band(confidence)}), below threshold {min_confidence:.2f}; no auto-sync proposal generated."
+                records.append(
+                    {
+                        "target": selected_name,
+                        "kind": "below_threshold",
+                        "confidence": confidence,
+                        "threshold": min_confidence,
+                        "message": (
+                            f"{selected_name}: detected at confidence {confidence:.2f} ({_confidence_band(confidence)}), "
+                            f"below threshold {min_confidence:.2f}; no auto-sync proposal generated."
+                        ),
+                    }
                 )
             else:
-                lines.append(f"- {selected_name}: no proposal generated for an unknown reason; inspect drift report before retrying.")
-        return lines
+                records.append(
+                    {
+                        "target": selected_name,
+                        "kind": "no_proposal_generated",
+                        "message": (
+                            f"{selected_name}: no proposal generated for an unknown reason; inspect drift report before retrying."
+                        ),
+                    }
+                )
+        return records
 
     if undeclared_by_name:
         for name, entry in undeclared_by_name.items():
             disc = dict(entry.get("discovered", {}) or {})
             confidence = float(disc.get("confidence", 0.0))
             if confidence < min_confidence:
-                lines.append(
-                    f"- {name}: detected but held back at confidence {confidence:.2f} ({_confidence_band(confidence)}), below threshold {min_confidence:.2f}."
+                records.append(
+                    {
+                        "target": name,
+                        "kind": "below_threshold",
+                        "confidence": confidence,
+                        "threshold": min_confidence,
+                        "message": (
+                            f"{name}: detected but held back at confidence {confidence:.2f} ({_confidence_band(confidence)}), "
+                            f"below threshold {min_confidence:.2f}."
+                        ),
+                    }
                 )
     else:
-        lines.append("- No undeclared targets were available for sync.")
-    return lines
+        records.append(
+            {
+                "target": "",
+                "kind": "none_available",
+                "message": "No undeclared targets were available for sync.",
+            }
+        )
+    return records
+
+
+def _build_drift_comparison(previous_report: dict[str, object] | None, current_report: dict[str, object]) -> dict[str, object]:
+    previous = previous_report or {}
+    previous_undeclared = set(_undeclared_names(previous))
+    current_undeclared = set(_undeclared_names(current_report))
+    added = sorted(current_undeclared - previous_undeclared)
+    resolved = sorted(previous_undeclared - current_undeclared)
+    unchanged = sorted(previous_undeclared & current_undeclared)
+    return {
+        "previous_undeclared_count": len(previous_undeclared),
+        "current_undeclared_count": len(current_undeclared),
+        "added_undeclared": added,
+        "resolved_undeclared": resolved,
+        "unchanged_undeclared": unchanged,
+    }
+
+
+def _build_sync_comparison(previous_summary: dict[str, object] | None, current_summary: dict[str, object]) -> dict[str, object]:
+    previous = previous_summary or {}
+    prev_proposals = set(str(v) for v in previous.get("proposal_names", []) or [])
+    curr_proposals = set(str(v) for v in current_summary.get("proposal_names", []) or [])
+    prev_applied = set(str(v) for v in previous.get("applied_names", []) or [])
+    curr_applied = set(str(v) for v in current_summary.get("applied_names", []) or [])
+    prev_refused = set(str(v) for v in previous.get("refused_names", []) or [])
+    curr_refused = set(str(v) for v in current_summary.get("refused_names", []) or [])
+    return {
+        "previous_mode": str(previous.get("mode", "unknown")),
+        "current_mode": str(current_summary.get("mode", "unknown")),
+        "new_proposals": sorted(curr_proposals - prev_proposals),
+        "resolved_proposals": sorted(prev_proposals - curr_proposals),
+        "new_applied": sorted(curr_applied - prev_applied),
+        "resolved_applied": sorted(prev_applied - curr_applied),
+        "new_refusals": sorted(curr_refused - prev_refused),
+        "resolved_refusals": sorted(prev_refused - curr_refused),
+    }
+
+
+def _update_review_index(review_root: Path) -> Path:
+    latest_dir = review_root / "latest"
+    drift_latest = _load_json_file(latest_dir / "drift_latest.json") or {}
+    sync_latest = _load_json_file(latest_dir / "sync_latest.json") or {}
+
+    drift_report = dict(drift_latest.get("report", {}) or {})
+    drift_undeclared = _undeclared_names(drift_report)
+    sync_summary = dict(sync_latest.get("summary", {}) or {})
+
+    lines = [
+        "# NGKsGraph Review Index",
+        "",
+        f"- generated_utc: {datetime.now(timezone.utc).isoformat()}",
+        f"- review_root: {review_root}",
+        "",
+        "## Latest Drift",
+        f"- run_id: {drift_latest.get('run_id', 'none')}",
+        f"- undeclared_count: {drift_report.get('undeclared_count', 0)}",
+        f"- drift_artifact: {drift_latest.get('artifact_path', 'none')}",
+        f"- comparison_artifact: {drift_latest.get('comparison_path', 'none')}",
+        "",
+        "## Latest Sync",
+        f"- run_id: {sync_latest.get('run_id', 'none')}",
+        f"- mode: {sync_summary.get('mode', 'none')}",
+        f"- sync_outcome: {sync_summary.get('sync_outcome', 'none')}",
+        f"- proposals_generated: {sync_summary.get('proposals_generated', 0)}",
+        f"- applied_count: {len(sync_summary.get('applied_names', []) or [])}",
+        f"- refusal_count: {len(sync_summary.get('refusal_records', []) or [])}",
+        f"- sync_artifact: {sync_latest.get('artifact_path', 'none')}",
+        f"- comparison_artifact: {sync_latest.get('comparison_path', 'none')}",
+        "",
+        "## Pending Review Targets",
+    ]
+    if drift_undeclared:
+        for name in drift_undeclared:
+            lines.append(f"- {name}")
+    else:
+        lines.append("- none")
+
+    index_path = review_root / "review_index.md"
+    index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return index_path
+
+
+def _persist_drift_review(
+    repo_root: Path,
+    config_path: Path,
+    report: dict[str, object],
+    report_path: Path,
+) -> dict[str, Path]:
+    review_root = _review_trail_root(repo_root)
+    run_id = _review_run_id("drift")
+    run_dir = review_root / "runs" / run_id
+    run_dir.mkdir(parents=True, exist_ok=False)
+
+    latest_path = review_root / "latest" / "drift_latest.json"
+    previous = _load_json_file(latest_path)
+    previous_report = dict((previous or {}).get("report", {}) or {})
+    comparison = _build_drift_comparison(previous_report if previous else None, report)
+
+    payload = {
+        "kind": "drift",
+        "run_id": run_id,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "repo_root": str(repo_root),
+        "config_path": str(config_path),
+        "cli_report_path": str(report_path),
+        "report": report,
+    }
+    artifact_path = run_dir / "drift_report.json"
+    comparison_path = run_dir / "run_comparison.json"
+    _write_json_file(artifact_path, payload)
+    _write_json_file(comparison_path, comparison)
+
+    latest_payload = {
+        "kind": "drift",
+        "run_id": run_id,
+        "timestamp_utc": payload["timestamp_utc"],
+        "artifact_path": str(artifact_path),
+        "comparison_path": str(comparison_path),
+        "report": report,
+    }
+    _write_json_file(latest_path, latest_payload)
+    index_path = _update_review_index(review_root)
+    return {
+        "review_root": review_root,
+        "artifact_path": artifact_path,
+        "comparison_path": comparison_path,
+        "index_path": index_path,
+    }
+
+
+def _persist_sync_review(
+    repo_root: Path,
+    summary_payload: dict[str, object],
+) -> dict[str, Path]:
+    review_root = _review_trail_root(repo_root)
+    run_id = _review_run_id("sync")
+    run_dir = review_root / "runs" / run_id
+    run_dir.mkdir(parents=True, exist_ok=False)
+
+    latest_path = review_root / "latest" / "sync_latest.json"
+    previous = _load_json_file(latest_path)
+    previous_summary = dict((previous or {}).get("summary", {}) or {})
+    comparison = _build_sync_comparison(previous_summary if previous else None, summary_payload)
+
+    artifact_path = run_dir / "sync_summary.json"
+    comparison_path = run_dir / "run_comparison.json"
+    _write_json_file(artifact_path, summary_payload)
+    _write_json_file(comparison_path, comparison)
+
+    refusal_path: Path | None = None
+    refusal_records = list(summary_payload.get("refusal_records", []) or [])
+    if refusal_records:
+        refusal_path = run_dir / "refusal_summary.json"
+        _write_json_file(
+            refusal_path,
+            {
+                "kind": "sync_refusal_summary",
+                "run_id": run_id,
+                "timestamp_utc": summary_payload.get("timestamp_utc", datetime.now(timezone.utc).isoformat()),
+                "repo_root": summary_payload.get("repo_root", str(repo_root)),
+                "selected_targets": summary_payload.get("selected_targets", []),
+                "refusal_records": refusal_records,
+            },
+        )
+
+    latest_payload = {
+        "kind": "sync",
+        "run_id": run_id,
+        "timestamp_utc": summary_payload.get("timestamp_utc", datetime.now(timezone.utc).isoformat()),
+        "artifact_path": str(artifact_path),
+        "comparison_path": str(comparison_path),
+        "refusal_path": str(refusal_path) if refusal_path else "",
+        "summary": summary_payload,
+    }
+    _write_json_file(latest_path, latest_payload)
+    index_path = _update_review_index(review_root)
+    result: dict[str, Path] = {
+        "review_root": review_root,
+        "artifact_path": artifact_path,
+        "comparison_path": comparison_path,
+        "index_path": index_path,
+    }
+    if refusal_path is not None:
+        result["refusal_path"] = refusal_path
+    return result
+
+
+def _sync_refusal_lines(
+    selected_names: list[str],
+    undeclared_by_name: dict[str, dict[str, object]],
+    declared_names: list[str],
+    min_confidence: float,
+) -> list[str]:
+    records = _sync_refusal_records(selected_names, undeclared_by_name, declared_names, min_confidence, set())
+    return [f"- {str(item.get('message', '')).strip()}" for item in records if str(item.get("message", "")).strip()]
 
 
 def _print_sync_summary(
@@ -1209,6 +1494,12 @@ def cmd_drift(args: argparse.Namespace) -> int:
         else:
             _print_drift_text_report(repo_root, config_path, report)
 
+        review_paths = _persist_drift_review(repo_root, config_path, report, report_path)
+        print(f"REVIEW_ROOT={review_paths['review_root']}")
+        print(f"REVIEW_DRIFT_REPORT={review_paths['artifact_path']}")
+        print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+        print(f"REVIEW_INDEX={review_paths['index_path']}")
+
         if report.get("undeclared_count", 0) > 0:
             print(f"DRIFT_DETECTED=true undeclared_count={report.get('undeclared_count')}")
             print(f"REPORT={report_path}")
@@ -1275,8 +1566,54 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
         apply_changes = bool(getattr(args, "apply", False))
         original_target_count = len(getattr(cfg, "targets", []) or [])
+        entries = list(report.get("entries", []))
+        declared_names = [
+            str(entry.get("declared"))
+            for entry in entries
+            if entry.get("status") == "declared" and entry.get("declared")
+        ]
+        undeclared_by_name = {
+            str((entry.get("discovered", {}) or {}).get("name", "")): entry
+            for entry in entries
+            if entry.get("status") == "undeclared"
+        }
+        proposed_name_set = {
+            str(proposal.get("name", ""))
+            for proposal in proposals
+            if str(proposal.get("name", "")).strip()
+        }
+        refusal_records = _sync_refusal_records(
+            selected_names,
+            undeclared_by_name,
+            declared_names,
+            min_confidence,
+            proposed_name_set,
+        )
+
+        def _persist_sync_summary(sync_outcome: str, added_names: list[str] | None = None) -> dict[str, Path]:
+            summary_payload: dict[str, object] = {
+                "kind": "sync_summary",
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                "repo_root": str(repo_root),
+                "config_path": str(config_path),
+                "mode": "apply" if apply_changes else "dry-run",
+                "min_confidence": min_confidence,
+                "selected_targets": selected_names,
+                "undeclared_detected": len(undeclared_by_name),
+                "proposals_generated": len(proposals),
+                "proposal_names": [str(p.get("name", "")) for p in proposals if str(p.get("name", "")).strip()],
+                "refusal_records": refusal_records,
+                "refused_names": [str(item.get("target", "")) for item in refusal_records if str(item.get("target", "")).strip()],
+                "applied_names": list(added_names or []),
+                "sync_outcome": sync_outcome,
+                "proposal_path": str(proposal_path),
+                "repaired_from_backup": repaired_from_backup,
+                "backup_path": str(backup_path) if backup_path.exists() else "",
+            }
+            return _persist_sync_review(repo_root, summary_payload)
 
         if not proposals:
+            review_paths = _persist_sync_summary("noop")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
@@ -1290,6 +1627,12 @@ def cmd_sync(args: argparse.Namespace) -> int:
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            print(f"REVIEW_ROOT={review_paths['review_root']}")
+            print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
+            print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            if "refusal_path" in review_paths:
+                print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
+            print(f"REVIEW_INDEX={review_paths['index_path']}")
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=no_high_confidence_undeclared_targets")
@@ -1297,6 +1640,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
             return 0
 
         if not apply_changes:
+            review_paths = _persist_sync_summary("pending")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
@@ -1310,6 +1654,12 @@ def cmd_sync(args: argparse.Namespace) -> int:
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            print(f"REVIEW_ROOT={review_paths['review_root']}")
+            print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
+            print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            if "refusal_path" in review_paths:
+                print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
+            print(f"REVIEW_INDEX={review_paths['index_path']}")
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print(f"SYNC_PROPOSAL={proposal_path}")
@@ -1318,6 +1668,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
         added = detector.apply_sync_to_toml(config_path, proposals)
         if not added:
+            review_paths = _persist_sync_summary("noop")
             _print_sync_summary(
                 repo_root=repo_root,
                 config_path=config_path,
@@ -1331,12 +1682,19 @@ def cmd_sync(args: argparse.Namespace) -> int:
                 backup_path=backup_path,
                 original_target_count=original_target_count,
             )
+            print(f"REVIEW_ROOT={review_paths['review_root']}")
+            print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
+            print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+            if "refusal_path" in review_paths:
+                print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
+            print(f"REVIEW_INDEX={review_paths['index_path']}")
             if repaired_from_backup:
                 print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
             print("SYNC_NOOP=already_declared")
             print(f"SYNC_PROPOSAL={proposal_path}")
             return 0
 
+        review_paths = _persist_sync_summary("applied", added)
         _print_sync_summary(
             repo_root=repo_root,
             config_path=config_path,
@@ -1351,6 +1709,12 @@ def cmd_sync(args: argparse.Namespace) -> int:
             added=added,
             original_target_count=original_target_count,
         )
+        print(f"REVIEW_ROOT={review_paths['review_root']}")
+        print(f"REVIEW_SYNC_SUMMARY={review_paths['artifact_path']}")
+        print(f"REVIEW_COMPARISON={review_paths['comparison_path']}")
+        if "refusal_path" in review_paths:
+            print(f"REVIEW_REFUSAL_SUMMARY={review_paths['refusal_path']}")
+        print(f"REVIEW_INDEX={review_paths['index_path']}")
         if repaired_from_backup:
             print(f"SYNC_REPAIRED_FROM_BACKUP={backup_path}")
         print(f"SYNC_APPLIED count={len(added)} names={','.join(added)}")
