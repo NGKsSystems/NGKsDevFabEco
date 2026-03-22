@@ -973,6 +973,216 @@ def fix_workspace_terminal_activation(project_path: Path) -> dict:
     return result
 
 
+_NGKS_PACKAGE_NAMES: tuple[str, ...] = (
+    "ngksdevfabeco",
+    "ngksdevfabric",
+    "ngksgraph",
+    "ngksbuildcore",
+    "ngksenvcapsule",
+    "ngkslibrary",
+)
+
+
+def _parse_ngks_exact_requirements(requirements: list[str] | None) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    if not requirements:
+        return parsed
+    for req in requirements:
+        token = str(req).strip().split(";", 1)[0].strip()
+        m = re.match(r"^([A-Za-z0-9_.-]+)==([A-Za-z0-9_.-]+)$", token)
+        if not m:
+            continue
+        pkg = m.group(1).lower()
+        ver = m.group(2)
+        if pkg in _NGKS_PACKAGE_NAMES:
+            parsed[pkg] = ver
+    return parsed
+
+
+def _site_packages_paths() -> list[Path]:
+    import site
+
+    paths: list[Path] = []
+    for p in list(site.getsitepackages()) + [site.getusersitepackages()]:
+        try:
+            cp = Path(str(p)).resolve()
+        except Exception:
+            continue
+        if cp.exists() and cp not in paths:
+            paths.append(cp)
+    return paths
+
+
+def _collect_ngks_expected_specs() -> list[str]:
+    import importlib.metadata as ilm
+
+    expected: dict[str, str] = {}
+
+    try:
+        expected.update(_parse_ngks_exact_requirements(ilm.requires("ngksdevfabric")))
+    except Exception:
+        pass
+    try:
+        expected.update(_parse_ngks_exact_requirements(ilm.requires("ngksdevfabeco")))
+    except Exception:
+        pass
+
+    # Pin currently-running core package versions as expected anchors.
+    for pkg in ("ngksdevfabric", "ngksdevfabeco"):
+        try:
+            expected[pkg] = str(ilm.version(pkg)).strip()
+        except Exception:
+            pass
+
+    # If requirements metadata was incomplete, fall back to installed versions.
+    for pkg in _NGKS_PACKAGE_NAMES:
+        if pkg in expected:
+            continue
+        try:
+            expected[pkg] = str(ilm.version(pkg)).strip()
+        except Exception:
+            pass
+
+    order = list(_NGKS_PACKAGE_NAMES)
+    return [f"{pkg}=={expected[pkg]}" for pkg in order if pkg in expected and expected[pkg].strip()]
+
+
+def scan_ngks_package_state() -> dict:
+    """Inspect NGKS package metadata health in current Python environment."""
+    import importlib.metadata as ilm
+
+    site_paths = _site_packages_paths()
+    expected_specs = _collect_ngks_expected_specs()
+    expected_map: dict[str, str] = {}
+    for spec in expected_specs:
+        p, v = spec.split("==", 1)
+        expected_map[p] = v
+
+    installed_versions: dict[str, str] = {}
+    for pkg in _NGKS_PACKAGE_NAMES:
+        try:
+            installed_versions[pkg] = str(ilm.version(pkg)).strip()
+        except Exception:
+            continue
+
+    duplicate_dist_info: list[dict[str, Any]] = []
+    mismatched_dist_info: list[dict[str, Any]] = []
+
+    for pkg in _NGKS_PACKAGE_NAMES:
+        expected_ver = expected_map.get(pkg, "")
+        for sp in site_paths:
+            matches = sorted(
+                [d.name for d in sp.glob(f"{pkg}-*.dist-info") if d.is_dir()],
+                key=lambda s: s.lower(),
+            )
+            if len(matches) > 1:
+                duplicate_dist_info.append(
+                    {
+                        "package": pkg,
+                        "site_packages": str(sp),
+                        "dist_info_dirs": matches,
+                        "expected_version": expected_ver,
+                    }
+                )
+            elif len(matches) == 1 and expected_ver:
+                expected_name = f"{pkg}-{expected_ver}.dist-info".lower()
+                if matches[0].lower() != expected_name:
+                    mismatched_dist_info.append(
+                        {
+                            "package": pkg,
+                            "site_packages": str(sp),
+                            "actual_dist_info": matches[0],
+                            "expected_dist_info": expected_name,
+                        }
+                    )
+
+    issues_found = bool(duplicate_dist_info or mismatched_dist_info)
+    return {
+        "status": "issues_found" if issues_found else "ok",
+        "python_executable": sys.executable,
+        "site_packages": [str(p) for p in site_paths],
+        "expected_specs": expected_specs,
+        "installed_versions": installed_versions,
+        "duplicate_dist_info": duplicate_dist_info,
+        "mismatched_dist_info": mismatched_dist_info,
+        "hint": (
+            "Run 'ngksdevfabric repair-package-state' or 'ngksdevfabric doctor . --repair-packages' to auto-correct."
+            if issues_found else ""
+        ),
+    }
+
+
+def repair_ngks_package_state(*, python_executable: str) -> dict:
+    """Repair stale/duplicate NGKS dist-info metadata and reinstall exact specs."""
+    pre = scan_ngks_package_state()
+    if pre.get("status") == "ok":
+        return {
+            "status": "ok",
+            "repaired": False,
+            "pre_audit": pre,
+            "removed_paths": [],
+            "pip_cmd": [],
+            "pip_exit_code": 0,
+            "post_audit": pre,
+        }
+
+    expected_specs = list(pre.get("expected_specs") or [])
+    if not expected_specs:
+        return {
+            "status": "error",
+            "repaired": False,
+            "error": "No expected NGKS package specs could be resolved.",
+            "pre_audit": pre,
+        }
+
+    removed_paths: list[str] = []
+
+    # Remove stale dist-info directories for problematic packages.
+    bad_pkgs = {
+        str(x.get("package", "")).strip().lower()
+        for x in (pre.get("duplicate_dist_info") or []) + (pre.get("mismatched_dist_info") or [])
+        if str(x.get("package", "")).strip()
+    }
+    for sp in pre.get("site_packages") or []:
+        site_path = Path(str(sp))
+        if not site_path.exists():
+            continue
+        for pkg in sorted(bad_pkgs):
+            for d in site_path.glob(f"{pkg}-*.dist-info"):
+                try:
+                    shutil.rmtree(d)
+                    removed_paths.append(str(d))
+                except Exception:
+                    pass
+
+    pip_cmd = [
+        python_executable,
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "--force-reinstall",
+        "--no-cache-dir",
+        "--no-deps",
+        *expected_specs,
+    ]
+    proc = subprocess.run(pip_cmd, capture_output=True, text=True, check=False)
+
+    post = scan_ngks_package_state()
+    success = int(proc.returncode) == 0 and post.get("status") == "ok"
+    return {
+        "status": "ok" if success else "error",
+        "repaired": bool(success),
+        "pre_audit": pre,
+        "removed_paths": removed_paths,
+        "pip_cmd": pip_cmd,
+        "pip_exit_code": int(proc.returncode),
+        "pip_stdout": (proc.stdout or "")[-4000:],
+        "pip_stderr": (proc.stderr or "")[-4000:],
+        "post_audit": post,
+    }
+
+
 def doctor_toolchain(project_path: Path, pf: Path) -> int:
     """
     Writes a FULL toolchain_report.json (toolchain snapshot + doctor summary).
@@ -1184,6 +1394,15 @@ def doctor_toolchain(project_path: Path, pf: Path) -> int:
         report["vscode_terminal_activation_audit"] = scan_workspace_terminal_activation(project_path)
     except Exception as _exc:
         report["vscode_terminal_activation_audit"] = {
+            "status": "error",
+            "error": str(_exc),
+        }
+
+    # --- NGKS package metadata health audit (advisory, not a hard fail) ---
+    try:
+        report["ngks_package_state_audit"] = scan_ngks_package_state()
+    except Exception as _exc:
+        report["ngks_package_state_audit"] = {
             "status": "error",
             "error": str(_exc),
         }

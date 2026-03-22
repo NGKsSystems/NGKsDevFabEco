@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ngksdevfabeco"
-version = "1.3.2"
+version = "1.3.3"
 description = "NGKsDevFabEco local meta-package"
 readme = "NGKsDevFabEco_Comprehensive_Capabilities_Document.md"
 requires-python = ">=3.11"
@@ -13,7 +13,7 @@ dependencies = [
   "ngksenvcapsule==0.2.0",
   "ngkslibrary==0.2.0",
   "ngksgraph==0.2.0",
-  "ngksdevfabric==1.3.2",
+  "ngksdevfabric==1.3.3",
 ]
 
 [tool.setuptools]

@@ -48,7 +48,12 @@ from .devfabeco_orchestrator import (
 from .graph_state_monitor import start_background_graph_monitor
 from .connector_transport import run_connector_transport
 from .profile import init_profile
-from .runwrap import doctor_toolchain, run_build
+from .runwrap import (
+    doctor_toolchain,
+    repair_ngks_package_state,
+    run_build,
+    scan_ngks_package_state,
+)
 from .workspace_integrity import run_workspace_integrity_check
 from .project_health import collect_project_health, format_project_health_console
 from .graph_state_manager import ensure_graph_state_fresh
@@ -1991,18 +1996,21 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     pf = _resolve_pf(args, project, "doctor")
     code = doctor_toolchain(project, pf)
 
-    # --- VS Code terminal profile: report issues (and optionally fix) ---
+    # --- VS Code terminal profile + package-state audits/fixes ---
     import json as _json
     try:
         _report = _json.loads((pf / "toolchain_report.json").read_text(encoding="utf-8"))
         _vsc_audit = _report.get("vscode_vsdevcmd_audit", {})
         _term_audit = _report.get("vscode_terminal_activation_audit", {})
+        _pkg_audit = _report.get("ngks_package_state_audit", {})
     except Exception:
         _report = {}
         _vsc_audit = {}
         _term_audit = {}
+        _pkg_audit = {}
 
     _fix_vscode = getattr(args, "fix_vscode", False)
+    _repair_packages = bool(getattr(args, "repair_packages", False))
 
     if _fix_vscode:
         _real_vsdevcmd = _report.get("vsdevcmd_path", "") if "_report" in dir() else ""
@@ -2065,6 +2073,23 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     elif _term_audit.get("status") == "ok":
         _print_result("vscode_terminal_activation_audit=OK")
 
+    if _repair_packages:
+        _repair = repair_ngks_package_state(python_executable=sys.executable)
+        if _repair.get("status") == "ok":
+            if _repair.get("repaired"):
+                _print_result("ngks_package_state_repair=REPAIRED")
+                _print_result(f"ngks_package_state_removed_paths={len(_repair.get('removed_paths', []))}")
+            else:
+                _print_result("ngks_package_state_repair=NO_CHANGES")
+        else:
+            _print_result("ngks_package_state_repair=ERROR")
+            _print_result(f"ngks_package_state_repair_pip_exit={_repair.get('pip_exit_code', -1)}")
+    elif _pkg_audit.get("status") == "issues_found":
+        _print_result("ngks_package_state_audit=ISSUES_FOUND")
+        _print_result("  hint: run 'ngksdevfabric doctor . --repair-packages' to auto-correct")
+    elif _pkg_audit.get("status") == "ok":
+        _print_result("ngks_package_state_audit=OK")
+
     if code == 0 and backup_root is not None:
         _mirror_docs_to_backup(project, backup_root, pf)
     _register_bundle_safely(pf)
@@ -2079,6 +2104,36 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if int(code) == 0:
         _print_project_health_hint(project)
     return int(code)
+
+
+def cmd_repair_package_state(args: argparse.Namespace) -> int:
+    pf = _resolve_pf(args, _resolve_project_root("."), "repair_package_state")
+    dry_run = bool(getattr(args, "dry_run", False))
+
+    if dry_run:
+        audit = scan_ngks_package_state()
+        _write_json(pf / "ngks_package_state_audit.json", dict(audit))
+        _print_result(f"proof_dir={pf}")
+        _print_result(f"ngks_package_state_audit_file={pf / 'ngks_package_state_audit.json'}")
+        _print_result(f"ngks_package_state_audit={audit.get('status', 'unknown').upper()}")
+        return 0 if audit.get("status") == "ok" else 2
+
+    result = repair_ngks_package_state(python_executable=sys.executable)
+    _write_json(pf / "ngks_package_state_repair.json", dict(result))
+    _print_result(f"proof_dir={pf}")
+    _print_result(f"ngks_package_state_repair_file={pf / 'ngks_package_state_repair.json'}")
+
+    if result.get("status") == "ok":
+        if result.get("repaired"):
+            _print_result("ngks_package_state_repair=REPAIRED")
+            _print_result(f"removed_paths={len(result.get('removed_paths', []))}")
+        else:
+            _print_result("ngks_package_state_repair=NO_CHANGES")
+        return 0
+
+    _print_result("ngks_package_state_repair=ERROR")
+    _print_result(f"pip_exit_code={result.get('pip_exit_code', -1)}")
+    return 2
 
 
 def cmd_certification_status(args: argparse.Namespace) -> int:
@@ -4348,7 +4403,25 @@ def build_parser() -> argparse.ArgumentParser:
             "Makes timestamped backups before writing when settings files already exist."
         ),
     )
+    doctor_parser.add_argument(
+        "--repair-packages",
+        action="store_true",
+        default=False,
+        dest="repair_packages",
+        help=(
+            "Detect and repair stale/duplicate NGKS package metadata in the current "
+            "Python environment, then force-reinstall exact pinned NGKS versions."
+        ),
+    )
     doctor_parser.set_defaults(func=cmd_doctor)
+
+    repair_pkg_parser = sub.add_parser(
+        "repair-package-state",
+        help="Repair stale/duplicate NGKS package metadata in current Python environment.",
+    )
+    repair_pkg_parser.add_argument("--pf", required=False)
+    repair_pkg_parser.add_argument("--dry-run", action="store_true", default=False)
+    repair_pkg_parser.set_defaults(func=cmd_repair_package_state)
 
     run_parser = sub.add_parser("run")
     run_parser.add_argument("--project", required=False, default=".")
