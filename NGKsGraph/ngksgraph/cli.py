@@ -385,10 +385,10 @@ def _policy_profiles() -> dict[str, dict[str, object]]:
         "balanced": {
             "name": "balanced",
             "apply_threshold": 0.90,
-            "proposal_threshold": 0.80,
+            "proposal_threshold": 0.70,
             "refuse_ambiguous": True,
             "ambiguity_similarity_min": 0.60,
-            "description": "Default safety posture; high confidence can apply, moderate confidence proposes.",
+            "description": "Default safety posture; high confidence can apply, lower-confidence evidence proposes, ambiguity still refuses.",
         },
         "aggressive": {
             "name": "aggressive",
@@ -683,6 +683,372 @@ def _write_policy_profiles_file(review_root: Path) -> Path:
     path = review_root / "policy_profiles.json"
     _write_json_file(path, {"profiles": _policy_profiles()})
     return path
+
+
+def _extract_output_value(text: str, key: str) -> str:
+    match = re.search(rf"(?m)^{re.escape(key)}=(.+)$", text)
+    return match.group(1).strip() if match else ""
+
+
+def _ngksgraph_cli_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _sha256_file(path: Path) -> str:
+    if not path.exists():
+        return ""
+    digest = hashlib.sha256()
+    digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def _repo_state_from_sync_summary(sync_summary_payload: dict[str, object]) -> str:
+    governance = dict(sync_summary_payload.get("governance", {}) or {})
+    decision_counts = dict(governance.get("decision_counts", {}) or {})
+    apply_count = int(decision_counts.get("apply", 0) or 0)
+    propose_count = int(decision_counts.get("propose", 0) or 0)
+    refuse_count = int(decision_counts.get("refuse", 0) or 0)
+    if apply_count > 0:
+        return "committed"
+    if refuse_count > 0 and propose_count == 0:
+        return "refused"
+    return "unchanged"
+
+
+def _write_transaction_policy_md(path: Path, *, mode: str, stop_on_no_apply: bool) -> None:
+    lines = [
+        "# NGKsGraph Batch Transaction Policy",
+        "",
+        f"- mode: {mode}",
+        f"- stop_on_no_apply: {stop_on_no_apply}",
+        "",
+        "Contracts:",
+        "- fail-closed on fatal repo step errors while running apply mode.",
+        "- all-or-nothing mode rolls back all repos already committed in current batch.",
+        "- final repo state is explicit: committed, rolled_back, unchanged, or refused.",
+        "- dry-run mode never mutates manifests.",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def cmd_batch_sync(args: argparse.Namespace) -> int:
+    projects = [str(item) for item in (getattr(args, "project", []) or []) if str(item).strip()]
+    if not projects:
+        print("BATCH_SYNC_REQUIRES_AT_LEAST_ONE_PROJECT")
+        return 1
+
+    policy_name = str(getattr(args, "policy", "balanced"))
+    apply_changes = bool(getattr(args, "apply", False))
+    min_confidence_override = getattr(args, "min_confidence", None)
+    transaction_mode = str(getattr(args, "transaction_mode", "all-or-nothing"))
+    stop_on_no_apply = bool(getattr(args, "stop_on_no_apply", False))
+
+    if getattr(args, "out", None):
+        batch_out_path = Path(str(getattr(args, "out"))).resolve()
+    elif current_proof_run_dir():
+        batch_out_path = (Path(current_proof_run_dir()) / "batch_governance.json").resolve()
+    else:
+        batch_out_path = Path("batch_governance.json").resolve()
+    batch_out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    transaction_root = batch_out_path.parent / f"{batch_out_path.stem}_transaction"
+    snapshot_root = transaction_root / "snapshots"
+    transaction_root.mkdir(parents=True, exist_ok=True)
+    snapshot_root.mkdir(parents=True, exist_ok=True)
+
+    transaction_policy_path = transaction_root / "transaction_policy.md"
+    _write_transaction_policy_md(
+        transaction_policy_path,
+        mode=transaction_mode,
+        stop_on_no_apply=stop_on_no_apply,
+    )
+
+    batch_transaction_path = transaction_root / "batch_transaction.json"
+    repo_state_transitions_path = transaction_root / "repo_state_transitions.json"
+    rollback_summary_path = transaction_root / "rollback_summary.json"
+
+    repo_results: list[dict[str, object]] = []
+    decisions: list[dict[str, object]] = []
+    repo_state_transitions: list[dict[str, object]] = []
+    had_error = False
+    fatal_error: dict[str, object] | None = None
+    committed_snapshots: list[dict[str, object]] = []
+    rolled_back_repos: list[str] = []
+    rollback_failures: list[dict[str, object]] = []
+    stop_after_index = len(projects)
+
+    run_started_utc = datetime.now(timezone.utc).isoformat()
+
+    for idx, project in enumerate(projects):
+        repo_root = _resolve_project_root(project)
+        config_path = _config_path(repo_root)
+        proposal_path = batch_out_path.parent / f"{repo_root.name}_batch_sync_proposal.json"
+
+        state_row: dict[str, object] = {
+            "order": idx + 1,
+            "repo_root": str(repo_root),
+            "config_path": str(config_path),
+            "state": "unchanged",
+            "staged": False,
+            "staged_backup_path": "",
+            "pre_hash": "",
+            "post_hash": "",
+            "rollback_hash": "",
+            "rollback_applied": False,
+            "fatal_error": False,
+            "failure_reason": "",
+        }
+
+        if apply_changes and config_path.exists():
+            state_row["staged"] = True
+            state_row["pre_hash"] = _sha256_file(config_path)
+            staged_backup_path = snapshot_root / f"{idx + 1:02d}_{repo_root.name}_ngksgraph.toml.before"
+            staged_backup_path.write_bytes(config_path.read_bytes())
+            state_row["staged_backup_path"] = str(staged_backup_path)
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "ngksgraph",
+            "sync",
+            "--project",
+            str(repo_root),
+            "--policy",
+            policy_name,
+            "--out",
+            str(proposal_path),
+        ]
+        if apply_changes:
+            cmd.append("--apply")
+        if min_confidence_override is not None:
+            cmd.extend(["--min-confidence", str(float(min_confidence_override))])
+
+        proc = subprocess.run(
+            cmd,
+            cwd=_ngksgraph_cli_root(),
+            capture_output=True,
+            text=True,
+            shell=False,
+        )
+        output_text = ((proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")).strip()
+        sync_summary_path_text = _extract_output_value(output_text, "REVIEW_SYNC_SUMMARY")
+        sync_summary_payload: dict[str, object] = {}
+        if sync_summary_path_text:
+            summary_path = Path(sync_summary_path_text)
+            if summary_path.exists():
+                sync_summary_payload = _load_json_file(summary_path) or {}
+
+        if config_path.exists():
+            state_row["post_hash"] = _sha256_file(config_path)
+
+        governance = dict(sync_summary_payload.get("governance", {}) or {})
+        repo_decisions = list(governance.get("decisions", []) or [])
+        for item in repo_decisions:
+            enriched = dict(item)
+            enriched["repo_root"] = str(repo_root)
+            decisions.append(enriched)
+
+        state_row["state"] = _repo_state_from_sync_summary(sync_summary_payload)
+
+        repo_result = {
+            "repo_root": str(repo_root),
+            "exit_code": proc.returncode,
+            "output": output_text,
+            "proposal_path": str(proposal_path),
+            "sync_summary_path": sync_summary_path_text,
+            "decision_counts": dict(governance.get("decision_counts", {}) or {}),
+            "final_state": state_row["state"],
+        }
+        repo_results.append(repo_result)
+        repo_state_transitions.append(state_row)
+
+        if str(state_row["state"]) == "committed" and str(state_row["staged_backup_path"]):
+            committed_snapshots.append(
+                {
+                    "repo_root": str(repo_root),
+                    "config_path": str(config_path),
+                    "staged_backup_path": str(state_row["staged_backup_path"]),
+                }
+            )
+
+        failure_reason = ""
+        is_fatal = False
+        if proc.returncode not in (0, 1):
+            is_fatal = True
+            failure_reason = f"SYNC_PROCESS_EXIT_{proc.returncode}"
+        elif apply_changes and transaction_mode == "all-or-nothing" and not sync_summary_path_text:
+            is_fatal = True
+            failure_reason = "MISSING_SYNC_SUMMARY"
+        elif apply_changes and transaction_mode == "all-or-nothing" and stop_on_no_apply:
+            undeclared_detected = int(sync_summary_payload.get("undeclared_detected", 0) or 0)
+            applied_names = list(sync_summary_payload.get("applied_names", []) or [])
+            if undeclared_detected > 0 and not applied_names:
+                is_fatal = True
+                failure_reason = "STOP_ON_NO_APPLY_TRIGGERED"
+
+        if is_fatal:
+            state_row["fatal_error"] = True
+            state_row["failure_reason"] = failure_reason
+            fatal_error = {
+                "repo_root": str(repo_root),
+                "order": idx + 1,
+                "reason": failure_reason,
+                "exit_code": proc.returncode,
+            }
+            stop_after_index = idx + 1
+            had_error = True
+            break
+
+    if stop_after_index < len(projects):
+        for idx in range(stop_after_index, len(projects)):
+            repo_root = _resolve_project_root(projects[idx])
+            config_path = _config_path(repo_root)
+            repo_results.append(
+                {
+                    "repo_root": str(repo_root),
+                    "exit_code": None,
+                    "output": "",
+                    "proposal_path": "",
+                    "sync_summary_path": "",
+                    "decision_counts": {},
+                    "final_state": "unchanged",
+                    "skipped": True,
+                }
+            )
+            repo_state_transitions.append(
+                {
+                    "order": idx + 1,
+                    "repo_root": str(repo_root),
+                    "config_path": str(config_path),
+                    "state": "unchanged",
+                    "staged": False,
+                    "staged_backup_path": "",
+                    "pre_hash": "",
+                    "post_hash": _sha256_file(config_path) if config_path.exists() else "",
+                    "rollback_hash": "",
+                    "rollback_applied": False,
+                    "fatal_error": False,
+                    "failure_reason": "SKIPPED_AFTER_FATAL_ERROR",
+                }
+            )
+
+    if apply_changes and transaction_mode == "all-or-nothing" and fatal_error:
+        transition_by_repo = {str(item.get("repo_root", "")): item for item in repo_state_transitions}
+        for item in reversed(committed_snapshots):
+            repo_root_text = str(item.get("repo_root", ""))
+            config_path = Path(str(item.get("config_path", "")))
+            staged_backup_path = Path(str(item.get("staged_backup_path", "")))
+            try:
+                if not staged_backup_path.exists():
+                    raise FileNotFoundError(f"STAGED_BACKUP_NOT_FOUND: {staged_backup_path}")
+                config_path.write_bytes(staged_backup_path.read_bytes())
+                transition = transition_by_repo.get(repo_root_text)
+                if transition is not None:
+                    transition["state"] = "rolled_back"
+                    transition["rollback_applied"] = True
+                    transition["rollback_hash"] = _sha256_file(config_path)
+                rolled_back_repos.append(repo_root_text)
+            except Exception as exc:
+                rollback_failures.append(
+                    {
+                        "repo_root": repo_root_text,
+                        "config_path": str(config_path),
+                        "error": str(exc),
+                    }
+                )
+                had_error = True
+
+    distribution = {
+        "apply": sum(1 for item in decisions if str(item.get("decision_class", "")) == "apply"),
+        "propose": sum(1 for item in decisions if str(item.get("decision_class", "")) == "propose"),
+        "refuse": sum(1 for item in decisions if str(item.get("decision_class", "")) == "refuse"),
+    }
+
+    if apply_changes:
+        if fatal_error:
+            transaction_outcome = "rollback_incomplete" if rollback_failures else "rolled_back"
+        elif distribution["apply"] > 0:
+            transaction_outcome = "committed"
+        else:
+            transaction_outcome = "no_mutation"
+    else:
+        transaction_outcome = "no_mutation"
+
+    transaction_payload = {
+        "kind": "batch_sync_transaction",
+        "run_started_utc": run_started_utc,
+        "run_finished_utc": datetime.now(timezone.utc).isoformat(),
+        "policy": policy_name,
+        "mode": "apply" if apply_changes else "dry-run",
+        "transaction_mode": transaction_mode,
+        "stop_on_no_apply": stop_on_no_apply,
+        "projects": projects,
+        "fatal_error": fatal_error,
+        "rollback_performed": bool(rolled_back_repos),
+        "rolled_back_repos": rolled_back_repos,
+        "rollback_failures": rollback_failures,
+        "final_outcome": transaction_outcome,
+        "repo_state_transitions": repo_state_transitions,
+    }
+    _write_json_file(batch_transaction_path, transaction_payload)
+    _write_json_file(repo_state_transitions_path, {"repos": repo_state_transitions})
+    _write_json_file(
+        rollback_summary_path,
+        {
+            "rollback_performed": bool(rolled_back_repos),
+            "rolled_back_repos": rolled_back_repos,
+            "rollback_failures": rollback_failures,
+            "fatal_error": fatal_error,
+        },
+    )
+
+    batch_payload = {
+        "kind": "batch_sync_governance",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "policy": policy_name,
+        "mode": "apply" if apply_changes else "dry-run",
+        "transaction_mode": transaction_mode,
+        "stop_on_no_apply": stop_on_no_apply,
+        "transaction_outcome": transaction_outcome,
+        "batch_transaction_path": str(batch_transaction_path),
+        "repo_state_transitions_path": str(repo_state_transitions_path),
+        "rollback_summary_path": str(rollback_summary_path),
+        "transaction_policy_path": str(transaction_policy_path),
+        "projects": projects,
+        "repo_results": repo_results,
+        "decision_distribution": distribution,
+        "decisions": decisions,
+    }
+    _write_json_file(batch_out_path, batch_payload)
+
+    print("BATCH SYNC SUMMARY")
+    print(f"Policy:              {policy_name}")
+    print(f"Mode:                {'apply' if apply_changes else 'dry-run'}")
+    print(f"Projects processed:  {len(projects)}")
+    print(f"Decision apply:      {distribution['apply']}")
+    print(f"Decision propose:    {distribution['propose']}")
+    print(f"Decision refuse:     {distribution['refuse']}")
+    print(f"Transaction mode:    {transaction_mode}")
+    print(f"Transaction outcome: {transaction_outcome}")
+    print()
+    for repo_result in repo_results:
+        print(f"REPO={repo_result['repo_root']}")
+        print(f"EXIT={repo_result['exit_code']}")
+        print(f"SUMMARY={repo_result['sync_summary_path']}")
+        print(f"COUNTS={json.dumps(repo_result['decision_counts'], sort_keys=True)}")
+        print(f"STATE={repo_result['final_state']}")
+    if fatal_error:
+        print(f"TRANSACTION_FATAL={json.dumps(fatal_error, sort_keys=True)}")
+    if rolled_back_repos:
+        print(f"TRANSACTION_ROLLED_BACK={','.join(rolled_back_repos)}")
+    if rollback_failures:
+        print(f"TRANSACTION_ROLLBACK_FAILURES={json.dumps(rollback_failures, sort_keys=True)}")
+    print(f"BATCH_TRANSACTION={batch_transaction_path}")
+    print(f"REPO_STATE_TRANSITIONS={repo_state_transitions_path}")
+    print(f"ROLLBACK_SUMMARY={rollback_summary_path}")
+    print(f"TRANSACTION_POLICY={transaction_policy_path}")
+    print(f"BATCH_SYNC_SUMMARY={batch_out_path}")
+    return 1 if had_error else 0
 
 
 def _build_drift_comparison(previous_report: dict[str, object] | None, current_report: dict[str, object]) -> dict[str, object]:
@@ -2653,6 +3019,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument("--min-confidence", type=float, default=None)
     p_sync.add_argument("--target-name", action="append", default=[])
     p_sync.set_defaults(func=cmd_sync)
+
+    p_batch_sync = sub.add_parser("batch-sync", help="Run sync governance across multiple projects in one execution")
+    p_batch_sync.add_argument("--project", action="append", default=[])
+    p_batch_sync.add_argument("--out", default=None)
+    p_batch_sync.add_argument("--apply", action="store_true", default=False)
+    p_batch_sync.add_argument("--policy", default="balanced", choices=["conservative", "balanced", "aggressive"])
+    p_batch_sync.add_argument("--min-confidence", type=float, default=None)
+    p_batch_sync.add_argument("--transaction-mode", default="all-or-nothing", choices=["all-or-nothing", "continue-on-error"])
+    p_batch_sync.add_argument("--stop-on-no-apply", action="store_true", default=False)
+    p_batch_sync.set_defaults(func=cmd_batch_sync)
 
     p_graph = sub.add_parser("graph", help="Export build graph as JSON")
     p_graph.add_argument("--json", action="store_true", default=True)
