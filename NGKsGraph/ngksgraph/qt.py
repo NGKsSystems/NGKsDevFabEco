@@ -82,8 +82,10 @@ def _qt_modules_from_libs(libs: list[str]) -> list[str]:
         if not item:
             continue
         item = item[:-4] if item.lower().endswith(".lib") else item
-        if item.startswith("Qt6"):
+        if item.startswith("Qt6") or item.startswith("Qt5"):
             mod = item[3:]
+            if mod.endswith("d"):
+                mod = mod[:-1]
             if mod:
                 modules.add(mod)
     return sorted(modules)

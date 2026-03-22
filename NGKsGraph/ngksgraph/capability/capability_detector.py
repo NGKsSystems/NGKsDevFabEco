@@ -20,6 +20,41 @@ def _record(name: str, provider: str, version: str, status: str, metadata: dict[
     )
 
 
+def _normalize_qt_module_token(token: str) -> str:
+    normalized = str(token or "").strip()
+    if not normalized:
+        return ""
+    if normalized.lower().startswith("qt6") or normalized.lower().startswith("qt5"):
+        normalized = normalized[3:]
+    if normalized.lower().endswith(".lib"):
+        normalized = normalized[:-4]
+    # MSVC debug Qt libs append lowercase 'd' (Qt6Guid.lib -> Qt6Gui semantics).
+    if normalized.endswith("d"):
+        normalized = normalized[:-1]
+    return normalized.lower().strip()
+
+
+def _qt_include_dir_name(module: str) -> str:
+    key = str(module or "").strip().lower()
+    mapping = {
+        "printsupport": "PrintSupport",
+        "quickcontrols2": "QuickControls2",
+        "openglwidgets": "OpenGLWidgets",
+        "multimediawidgets": "MultimediaWidgets",
+        "websockets": "WebSockets",
+        "webchannel": "WebChannel",
+        "webengine": "WebEngine",
+        "webenginecore": "WebEngineCore",
+        "webenginewidgets": "WebEngineWidgets",
+        "webenginequick": "WebEngineQuick",
+    }
+    if key in mapping:
+        return mapping[key]
+    if not key:
+        return ""
+    return key[0].upper() + key[1:]
+
+
 def detect_compiler_capabilities(target: Target) -> list[CapabilityRecord]:
     tool_paths = resolve_msvc_toolchain_paths(None)
     records: list[CapabilityRecord] = []
@@ -118,17 +153,17 @@ def detect_qt_capabilities(config: Config, target: Target) -> list[CapabilityRec
         if not item:
             continue
         if item.lower().startswith("qt"):
-            normalized = item[:-4] if item.lower().endswith(".lib") else item
-            if normalized.lower().startswith("qt6"):
-                normalized = normalized[3:]
-            required_modules.add(normalized.lower())
+            normalized = _normalize_qt_module_token(item)
+            if normalized:
+                required_modules.add(normalized)
 
     declared_modules = {str(module).strip().lower() for module in list(config.qt.modules) if str(module).strip()}
     required_modules |= declared_modules
 
     include_root = qt_root / "include" if qt_root is not None else None
     for module in sorted(required_modules):
-        candidate_dir = (include_root / f"Qt{module.capitalize()}") if include_root is not None else None
+        module_dir_name = _qt_include_dir_name(module)
+        candidate_dir = (include_root / f"Qt{module_dir_name}") if include_root is not None else None
         available = bool(candidate_dir and candidate_dir.exists())
         qt_records.append(
             _record(

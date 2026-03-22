@@ -25,6 +25,103 @@ _SKIP_DIRS = {
     "artifacts",
 }
 
+_QT_MODULE_CANONICAL = {
+    "core": "Core",
+    "gui": "Gui",
+    "widgets": "Widgets",
+    "network": "Network",
+    "sql": "Sql",
+    "concurrent": "Concurrent",
+    "svg": "Svg",
+    "printsupport": "PrintSupport",
+    "qml": "Qml",
+    "quick": "Quick",
+    "quickcontrols2": "QuickControls2",
+    "test": "Test",
+    "testlib": "Test",
+    "xml": "Xml",
+    "xmlpatterns": "XmlPatterns",
+    "opengl": "OpenGL",
+    "openglwidgets": "OpenGLWidgets",
+    "multimedia": "Multimedia",
+    "multimediawidgets": "MultimediaWidgets",
+    "websockets": "WebSockets",
+    "webchannel": "WebChannel",
+    "webengine": "WebEngine",
+    "webenginecore": "WebEngineCore",
+    "webenginewidgets": "WebEngineWidgets",
+    "webenginequick": "WebEngineQuick",
+}
+
+_QT_MODULE_ORDER = [
+    "Core",
+    "Gui",
+    "Widgets",
+    "Network",
+    "Sql",
+    "Concurrent",
+    "Svg",
+    "PrintSupport",
+]
+
+_QT_CLASS_PREFIX_MODULES = [
+    ("QNetwork", "Network"),
+    ("QSql", "Sql"),
+    ("QSvg", "Svg"),
+    ("QPrinter", "PrintSupport"),
+    ("QPrint", "PrintSupport"),
+    ("QtConcurrent", "Concurrent"),
+    ("QFuture", "Concurrent"),
+    ("QThread", "Concurrent"),
+    ("QWidget", "Widgets"),
+    ("QMainWindow", "Widgets"),
+    ("QApplication", "Gui"),
+    ("QGuiApplication", "Gui"),
+]
+
+
+def _canonical_qt_module_name(name: str) -> str:
+    token = str(name or "").strip()
+    if not token:
+        return ""
+    if token.lower().startswith("qt6") or token.lower().startswith("qt5"):
+        token = token[3:]
+    if token.lower().startswith("qt") and token.lower() not in _QT_MODULE_CANONICAL:
+        token = token[2:]
+    if token.lower().endswith(".lib"):
+        token = token[:-4]
+    key = token.strip().lower()
+    if not key:
+        return ""
+    if key not in _QT_MODULE_CANONICAL and token.endswith("d"):
+        token = token[:-1]
+        key = token.strip().lower()
+        if not key:
+            return ""
+    if key in _QT_MODULE_CANONICAL:
+        return _QT_MODULE_CANONICAL[key]
+    return token[0].upper() + token[1:]
+
+
+def _infer_module_from_q_include(include_token: str) -> str:
+    token = str(include_token or "").strip()
+    if not token:
+        return ""
+    if token.startswith("Qt") and "/" in token:
+        return _canonical_qt_module_name(token.split("/", 1)[0])
+    if not token.startswith("Q"):
+        return ""
+    for prefix, module in _QT_CLASS_PREFIX_MODULES:
+        if token.startswith(prefix):
+            return module
+    return ""
+
+
+def _sort_qt_modules(modules: set[str]) -> list[str]:
+    ordered: list[str] = [module for module in _QT_MODULE_ORDER if module in modules]
+    extras = sorted(module for module in modules if module not in _QT_MODULE_ORDER)
+    return ordered + extras
+
 
 @dataclass(frozen=True)
 class RepoClassification:
@@ -207,6 +304,7 @@ def _count_juce_signals(repo_root: Path) -> int:
 
 def _collect_text_signals(repo_root: Path) -> dict[str, object]:
     source_files: list[Path] = []
+    config_files: list[Path] = []
     ui_files = 0
     qrc_files = 0
     pro_files = 0
@@ -216,6 +314,8 @@ def _collect_text_signals(repo_root: Path) -> dict[str, object]:
         suffix = path.suffix.lower()
         if suffix in _SCAN_SUFFIXES:
             source_files.append(path)
+        elif path.name in {"CMakeLists.txt", "meson.build"} or suffix in {".cmake", ".pro", ".pri"}:
+            config_files.append(path)
         elif suffix == ".ui":
             ui_files += 1
         elif suffix == ".qrc":
@@ -235,9 +335,14 @@ def _collect_text_signals(repo_root: Path) -> dict[str, object]:
     widgets_headers = 0
     gui_headers = 0
     core_headers = 0
+    qt_modules_detected: set[str] = set()
 
     entrypoint_re = re.compile(r"\b(?:main|wmain|WinMain|wWinMain)\s*\(")
     qt_include_re = re.compile(r"#\s*include\s*<\s*Q[A-Za-z0-9_/:.]+\s*>")
+    include_token_re = re.compile(r"#\s*include\s*<\s*([A-Za-z0-9_/:.]+)\s*>")
+    qt_ns_module_re = re.compile(r"\bQt(?:5|6)::([A-Za-z0-9_]+)\b")
+    qt_lib_module_re = re.compile(r"\bQt(?:5|6)([A-Za-z0-9_]+)\.lib\b", flags=re.IGNORECASE)
+    cmake_components_re = re.compile(r"find_package\s*\(\s*Qt(?:5|6)\s+COMPONENTS\s+([^)]+)\)", flags=re.IGNORECASE)
 
     for source_path in source_files:
         try:
@@ -246,6 +351,18 @@ def _collect_text_signals(repo_root: Path) -> dict[str, object]:
             continue
 
         include_qt += len(qt_include_re.findall(text))
+        for include_token in include_token_re.findall(text):
+            module = _infer_module_from_q_include(include_token)
+            if module:
+                qt_modules_detected.add(module)
+        for module_token in qt_ns_module_re.findall(text):
+            module = _canonical_qt_module_name(module_token)
+            if module:
+                qt_modules_detected.add(module)
+        for module_token in qt_lib_module_re.findall(text):
+            module = _canonical_qt_module_name(module_token)
+            if module:
+                qt_modules_detected.add(module)
         q_object += text.count("Q_OBJECT")
         q_application += text.count("QApplication") + text.count("QGuiApplication")
         q_mainwindow += text.count("QMainWindow")
@@ -257,6 +374,24 @@ def _collect_text_signals(repo_root: Path) -> dict[str, object]:
         widgets_headers += low.count("qlineedit") + low.count("qwidget") + low.count("qpushbutton")
         gui_headers += low.count("qwindow") + low.count("qguiapplication")
         core_headers += low.count("qobject") + low.count("qstring") + low.count("qbytearray")
+
+    for config_path in config_files:
+        text = _read_text_if_exists(config_path)
+        if not text:
+            continue
+        for match in cmake_components_re.findall(text):
+            for token in re.split(r"[\s;]+", match):
+                module = _canonical_qt_module_name(token)
+                if module:
+                    qt_modules_detected.add(module)
+        for module_token in qt_ns_module_re.findall(text):
+            module = _canonical_qt_module_name(module_token)
+            if module:
+                qt_modules_detected.add(module)
+        for module_token in qt_lib_module_re.findall(text):
+            module = _canonical_qt_module_name(module_token)
+            if module:
+                qt_modules_detected.add(module)
 
     return {
         "ui_files": ui_files,
@@ -273,26 +408,38 @@ def _collect_text_signals(repo_root: Path) -> dict[str, object]:
         "widgets_headers": widgets_headers,
         "gui_headers": gui_headers,
         "core_headers": core_headers,
+        "qt_modules_detected": _sort_qt_modules(qt_modules_detected),
     }
 
 
 def _infer_qt_modules(signals: dict[str, object]) -> list[str]:
-    modules: list[str] = []
+    modules = [
+        _canonical_qt_module_name(str(module))
+        for module in list(signals.get("qt_modules_detected", []))
+        if _canonical_qt_module_name(str(module))
+    ]
     if int(signals["core_headers"]) > 0 or int(signals["include_qt"]) > 0 or int(signals["q_object"]) > 0:
-        modules.append("Core")
+        if "Core" not in modules:
+            modules.append("Core")
     if int(signals["gui_headers"]) > 0 or int(signals["q_application"]) > 0:
         if "Core" not in modules:
             modules.append("Core")
-        modules.append("Gui")
+        if "Gui" not in modules:
+            modules.append("Gui")
     if int(signals["widgets_headers"]) > 0 or int(signals["q_mainwindow"]) > 0:
         if "Core" not in modules:
             modules.append("Core")
         if "Gui" not in modules:
             modules.append("Gui")
-        modules.append("Widgets")
+        if "Widgets" not in modules:
+            modules.append("Widgets")
+    if modules and "Core" not in modules:
+        modules.insert(0, "Core")
+    if "Widgets" in modules and "Gui" not in modules:
+        modules.insert(1 if "Core" in modules else 0, "Gui")
     if not modules:
         modules = ["Core", "Gui", "Widgets"]
-    return modules
+    return _sort_qt_modules(set(modules))
 
 
 def _detect_qt_root() -> str:

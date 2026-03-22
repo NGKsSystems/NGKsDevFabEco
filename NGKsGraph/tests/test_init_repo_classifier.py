@@ -74,6 +74,27 @@ def test_init_autodetects_qt_when_ui_and_qobject_signals_present(tmp_path: Path,
     assert 'rcc_path = "' in cfg_text
 
 
+def test_init_autodetects_extended_qt_modules_from_includes(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "src").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "src" / "main.cpp").write_text(
+        "#include <QApplication>\n"
+        "#include <QWidget>\n"
+        "#include <QtNetwork/QNetworkAccessManager>\n"
+        "#include <QtSql/QSqlDatabase>\n"
+        "#include <QtConcurrent/QtConcurrent>\n"
+        "#include <QtSvg/QSvgRenderer>\n"
+        "#include <QtPrintSupport/QPrinter>\n"
+        "int main(int argc, char** argv){QApplication app(argc, argv); QWidget w; w.show(); return 0;}\n",
+        encoding="utf-8",
+    )
+
+    assert main(["init"]) == 0
+    cfg_text = (tmp_path / "ngksgraph.toml").read_text(encoding="utf-8")
+
+    assert 'modules = ["Core", "Gui", "Widgets", "Network", "Sql", "Concurrent", "Svg", "PrintSupport"]' in cfg_text
+
+
 def test_init_filevisionary_style_qlineedit_signal_not_misclassified(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "src").mkdir(parents=True, exist_ok=True)

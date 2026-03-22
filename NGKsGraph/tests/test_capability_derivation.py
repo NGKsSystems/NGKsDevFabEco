@@ -145,6 +145,20 @@ def test_normalization_dotlib_suffix_stripped() -> None:
     assert "qt.core.lib" not in caps
 
 
+def test_normalization_debug_qt_lib_suffix_stripped() -> None:
+    """MSVC Qt debug suffix 'd' must normalize to canonical qt.<module> capability names."""
+    target = _make_target(libs=["Qt6Cored.lib", "Qt6Guid.lib", "Qt6Widgetsd.lib", "Qt6Sqld.lib"])
+    caps = _required_capabilities(target)
+    assert "qt.core" in caps
+    assert "qt.gui" in caps
+    assert "qt.widgets" in caps
+    assert "qt.sql" in caps
+    assert "qt.cored" not in caps
+    assert "qt.guid" not in caps
+    assert "qt.widgetsd" not in caps
+    assert "qt.sqld" not in caps
+
+
 def test_normalization_cxx_standard_included() -> None:
     """cxx.standard:<N> required capability must reflect the target's cxx_std."""
     target17 = _make_target(libs=[], cxx_std=17)

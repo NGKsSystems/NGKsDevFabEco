@@ -33,6 +33,20 @@ def _entrypoints(sources: list[str]) -> list[str]:
 _LINK_ONLY_QT_LIBS: frozenset[str] = frozenset({"entrypoint"})
 
 
+def _normalize_qt_module_token(token: str) -> str:
+    module_name = str(token or "").strip()
+    if not module_name:
+        return ""
+    if module_name.lower().startswith("qt6") or module_name.lower().startswith("qt5"):
+        module_name = module_name[3:]
+    if module_name.lower().endswith(".lib"):
+        module_name = module_name[:-4]
+    # MSVC debug Qt libs append a lowercase 'd' suffix (Qt6Cored.lib -> Qt6Core.lib semantics).
+    if module_name.endswith("d"):
+        module_name = module_name[:-1]
+    return module_name.lower().strip()
+
+
 def _required_capabilities(target: Target) -> list[str]:
     required = [
         "cxx.compiler",
@@ -40,15 +54,16 @@ def _required_capabilities(target: Target) -> list[str]:
         "windows.sdk",
         "msvc.linker",
     ]
-    qt_modules = sorted({str(lib).strip() for lib in target.libs if str(lib).strip().lower().startswith("qt")})
-    for module in qt_modules:
-        module_name = module
-        if module_name.lower().startswith("qt6"):
-            module_name = module_name[3:]
-        if module_name.lower().endswith(".lib"):
-            module_name = module_name[:-4]
-        if module_name and module_name.lower() not in _LINK_ONLY_QT_LIBS:
-            required.append(f"qt.{module_name.lower()}")
+    qt_modules = sorted(
+        {
+            _normalize_qt_module_token(str(lib))
+            for lib in target.libs
+            if str(lib).strip().lower().startswith("qt")
+        }
+    )
+    for module_name in qt_modules:
+        if module_name and module_name not in _LINK_ONLY_QT_LIBS:
+            required.append(f"qt.{module_name}")
     return sorted(set(required), key=lambda x: x)
 
 
