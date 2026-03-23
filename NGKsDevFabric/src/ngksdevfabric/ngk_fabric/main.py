@@ -885,6 +885,10 @@ def _detect_build_inputs(project_root: Path) -> tuple[bool, str, str]:
     if flutter_signal is not None:
         return True, "flutter", str(flutter_signal.relative_to(project_root).as_posix())
 
+    ngksgraph_signal = _find_first_signal(project_root, ["ngksgraph.toml"])
+    if ngksgraph_signal is not None:
+        return True, "ngksgraph", str(ngksgraph_signal.relative_to(project_root).as_posix())
+
     dotnet_signal = _find_first_signal(project_root, ["*.sln", "*.csproj"])
     if dotnet_signal is not None:
         return True, "dotnet", str(dotnet_signal.relative_to(project_root).as_posix())
@@ -1286,6 +1290,47 @@ def _resolve_detected_build_root(project_root: Path, build_detect_reason: str) -
         return detected_root
 
     return project_root
+
+
+def _resolve_ngksgraph_plan_target(project_root: Path, requested_target: str) -> str:
+    target = str(requested_target or "").strip()
+    if not target:
+        return ""
+
+    if target.lower() not in {"build", "all", "default"}:
+        return target
+
+    config_path = project_root / "ngksgraph.toml"
+    if not config_path.is_file():
+        return ""
+
+    try:
+        payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+
+    if isinstance(payload, dict):
+        build_section = payload.get("build")
+        if isinstance(build_section, dict):
+            default_target = str(build_section.get("default_target", "")).strip()
+            if default_target:
+                return default_target
+
+        target_entries = payload.get("targets")
+        if isinstance(target_entries, list):
+            names = [
+                str(entry.get("name", "")).strip()
+                for entry in target_entries
+                if isinstance(entry, dict)
+            ]
+            names = [name for name in names if name]
+            if names:
+                project_name = str(payload.get("name", "")).strip()
+                if project_name and project_name in names:
+                    return project_name
+                return names[0]
+
+    return ""
 
 
 def _apply_node_package_manager_to_plan(plan_file: Path, package_manager: str) -> tuple[bool, str]:
@@ -2992,8 +3037,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     ]
     if args.profile:
         graph_tail_args.extend(["--profile", str(args.profile)])
-    if args.target:
-        graph_tail_args.extend(["--target", str(args.target)])
+    requested_graph_target = str(args.target or "").strip()
+    resolved_graph_target = requested_graph_target
+    if build_system == "ngksgraph":
+        resolved_graph_target = _resolve_ngksgraph_plan_target(build_root, requested_graph_target)
+    if resolved_graph_target:
+        graph_tail_args.extend(["--target", resolved_graph_target])
 
     stage = _run_stage_with_resolver(
         stage="20_graph",

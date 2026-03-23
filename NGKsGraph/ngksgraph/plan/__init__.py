@@ -560,6 +560,78 @@ def create_ecosystem_build_plan(
     graph: BuildGraph | None,
     env_capsule_hash: str,
 ) -> dict[str, Any]:
+    if graph is not None:
+        buildcore_payload, _warnings = create_buildcore_plan(
+            repo_root,
+            selected_target=selected_target,
+            graph=graph,
+        )
+        raw_nodes = buildcore_payload.get("nodes", []) if isinstance(buildcore_payload, dict) else []
+        nodes = [node for node in raw_nodes if isinstance(node, dict)]
+
+        actions: list[dict[str, Any]] = []
+        for node in sorted(nodes, key=lambda item: str(item.get("id", ""))):
+            node_id = str(node.get("id", ""))
+            inputs = sorted({_to_rel_or_norm(str(v), repo_root) for v in (node.get("inputs", []) or []) if str(v).strip()})
+            outputs = sorted({_to_rel_or_norm(str(v), repo_root) for v in (node.get("outputs", []) or []) if str(v).strip()})
+            deps = sorted({str(v) for v in (node.get("deps", []) or []) if str(v).strip()})
+            cwd_value = str(node.get("cwd", "") or "").strip()
+            cwd = _to_rel_or_norm(cwd_value, repo_root) if cwd_value else "."
+
+            actions.append(
+                {
+                    "id": node_id,
+                    "type": _action_type_from_node_id(node_id),
+                    "inputs": inputs,
+                    "outputs": outputs,
+                    "deps": deps,
+                    "argv": _parse_argv(str(node.get("cmd", "") or "")),
+                    "cwd": cwd,
+                }
+            )
+
+        artifacts: set[str] = set()
+        for action in actions:
+            if str(action.get("type", "")) == "link":
+                for output in action.get("outputs", []) or []:
+                    if str(output).strip():
+                        artifacts.add(str(output))
+
+        compilers: set[str] = set()
+        linkers: set[str] = set()
+        cxx_stds: set[str] = set()
+        for target in graph.targets.values():
+            compilers.add(str(target.toolchain.get("compiler", "cl")))
+            linkers.add(str(target.toolchain.get("linker", "link")))
+            cxx_stds.add(str(target.cxx_std))
+
+        return {
+            "schema_version": 1,
+            "project_root": ".",
+            "profile": str(profile),
+            "target": str(selected_target),
+            "generated_utc": datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "env_capsule_hash": str(env_capsule_hash),
+            "requirements": {
+                "language": "c++",
+                "cxx_std": sorted(cxx_stds),
+            },
+            "toolchains": {
+                "msvc": {
+                    "compiler": sorted(compilers),
+                    "linker": sorted(linkers),
+                }
+            },
+            "runtimes": {
+                "python": {
+                    "major": sys.version_info.major,
+                    "minor": sys.version_info.minor,
+                }
+            },
+            "actions": actions,
+            "artifacts": sorted(artifacts),
+        }
+
     node_plan = _create_node_ecosystem_plan(
         repo_root,
         profile=profile,
@@ -577,80 +649,7 @@ def create_ecosystem_build_plan(
     )
     if flutter_plan is not None:
         return flutter_plan
-
-    if graph is None:
-        raise ValueError("ECOSYSTEM_GRAPH_REQUIRED_FOR_NON_NODE_PLANS")
-
-    buildcore_payload, _warnings = create_buildcore_plan(
-        repo_root,
-        selected_target=selected_target,
-        graph=graph,
-    )
-    raw_nodes = buildcore_payload.get("nodes", []) if isinstance(buildcore_payload, dict) else []
-    nodes = [node for node in raw_nodes if isinstance(node, dict)]
-
-    actions: list[dict[str, Any]] = []
-    for node in sorted(nodes, key=lambda item: str(item.get("id", ""))):
-        node_id = str(node.get("id", ""))
-        inputs = sorted({_to_rel_or_norm(str(v), repo_root) for v in (node.get("inputs", []) or []) if str(v).strip()})
-        outputs = sorted({_to_rel_or_norm(str(v), repo_root) for v in (node.get("outputs", []) or []) if str(v).strip()})
-        deps = sorted({str(v) for v in (node.get("deps", []) or []) if str(v).strip()})
-        cwd_value = str(node.get("cwd", "") or "").strip()
-        cwd = _to_rel_or_norm(cwd_value, repo_root) if cwd_value else "."
-
-        actions.append(
-            {
-                "id": node_id,
-                "type": _action_type_from_node_id(node_id),
-                "inputs": inputs,
-                "outputs": outputs,
-                "deps": deps,
-                "argv": _parse_argv(str(node.get("cmd", "") or "")),
-                "cwd": cwd,
-            }
-        )
-
-    artifacts: set[str] = set()
-    for action in actions:
-        if str(action.get("type", "")) == "link":
-            for output in action.get("outputs", []) or []:
-                if str(output).strip():
-                    artifacts.add(str(output))
-
-    compilers: set[str] = set()
-    linkers: set[str] = set()
-    cxx_stds: set[str] = set()
-    for target in graph.targets.values():
-        compilers.add(str(target.toolchain.get("compiler", "cl")))
-        linkers.add(str(target.toolchain.get("linker", "link")))
-        cxx_stds.add(str(target.cxx_std))
-
-    return {
-        "schema_version": 1,
-        "project_root": ".",
-        "profile": str(profile),
-        "target": str(selected_target),
-        "generated_utc": datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "env_capsule_hash": str(env_capsule_hash),
-        "requirements": {
-            "language": "c++",
-            "cxx_std": sorted(cxx_stds),
-        },
-        "toolchains": {
-            "msvc": {
-                "compiler": sorted(compilers),
-                "linker": sorted(linkers),
-            }
-        },
-        "runtimes": {
-            "python": {
-                "major": sys.version_info.major,
-                "minor": sys.version_info.minor,
-            }
-        },
-        "actions": actions,
-        "artifacts": sorted(artifacts),
-    }
+    raise ValueError("ECOSYSTEM_GRAPH_REQUIRED_FOR_NON_NODE_PLANS")
 
 
 def write_ecosystem_build_plan(repo_root: Path, plan: dict[str, Any]) -> tuple[Path, Path, str]:

@@ -2,7 +2,7 @@ param(
     [string]$WheelhousePath,
     [switch]$ForceRecreateVenv,
     [switch]$UserInstall,
-    [string]$Version = '1.3.3',
+    [string]$Version = '1.3.4',
     [switch]$CleanupInvalidUserDistributions,
     [switch]$PersistUserScriptsPath,
     [ValidateSet('auto', 'wheelhouse', 'pypi')]

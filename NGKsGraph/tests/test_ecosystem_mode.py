@@ -111,7 +111,7 @@ def test_ecosystem_build_emits_build_plan_and_hash(tmp_path: Path) -> None:
     assert isinstance(payload.get("actions"), list) and payload["actions"]
 
 
-def test_ecosystem_build_prefers_node_plan_when_package_json_present(tmp_path: Path) -> None:
+def test_ecosystem_build_prefers_graph_plan_when_ngksgraph_config_present(tmp_path: Path) -> None:
     project = _make_project(tmp_path)
     (project / "package.json").write_text(
         json.dumps({"name": "app", "scripts": {"build": "vite build", "dev": "vite"}}),
@@ -141,10 +141,10 @@ def test_ecosystem_build_prefers_node_plan_when_package_json_present(tmp_path: P
 
     assert rc == 0
     payload = json.loads((project / "build_plan.json").read_text(encoding="utf-8"))
-    assert payload["requirements"]["language"] == "node"
-    assert payload["target"] == "build"
-    assert payload["actions"][0]["id"] == "node:script:build"
-    assert payload["actions"][0]["argv"][:3] == ["npm", "run", "build"]
+    assert payload["requirements"]["language"] == "c++"
+    assert payload["target"] == "app"
+    assert payload["actions"]
+    assert any(":compile:" in str(action.get("id", "")) for action in payload["actions"])
 
 
 def test_ecosystem_plan_works_without_ngksgraph_toml_for_node(tmp_path: Path) -> None:
