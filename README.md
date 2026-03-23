@@ -36,6 +36,23 @@ It is MSVC-native and especially powerful for Windows C++ development involving 
 
 ---
 
+## Scope & Chain Of Custody (Critical)
+
+NGKsDevFabEco is the authoritative execution chain for this ecosystem:
+
+1. **NGKsEnvCapsule** resolves and locks environment state
+2. **NGKsGraph** detects and plans deterministic build intent
+3. **NGKsBuildCore** executes the approved DAG
+4. **NGKsLibrary / NGKsDevFabric** assemble proof and enforce certification policy
+
+The chain of custody is valid only when this chain is preserved end-to-end.
+
+**Important:** detection of external tools (for example `build.ninja`, CMake cache files, or foreign generated metadata) does **not** make those tools authoritative. They are treated as foreign context unless explicitly imported under policy.
+
+If a downstream repository replaces NGKsBuildCore execution with external executors (Ninja, ad-hoc scripts, direct CMake driver runs, etc.), that run is out-of-contract and should be treated as **chain-of-custody broken** for DevFabEco certification and audit claims.
+
+---
+
 ## Modules
 
 | Module              | Role                                   | Key Capabilities |
@@ -60,6 +77,7 @@ All modules share a unified proof directory system and JSON contracts.
 **Mobile & Game**: GDScript, Unity, Unreal Engine markers, Flutter  
 
 **Build Systems Detected**: CMake, MSBuild, Ninja, Gradle, Maven, Bazel, Meson, QMake, etc.  
+Detection is for intelligence and compatibility analysis. Detection alone does not grant execution authority inside the DevFabEco proof chain.
 **Frameworks**: Qt5/Qt6 (full moc/uic/rcc support), JUCE, Electron, PySide6, Django, React.
 
 ---
@@ -75,113 +93,169 @@ cd NGKsDevFabEco
 
 # Run the official installer (creates .venv by default, full proof logging)
 .\install_ngksdevfabeco.ps1
-If you run `-UserInstall` outside a venv, the installer now prompts:
+```
+
+If you run `-UserInstall` outside a virtual environment, the installer prompts:
+
 `You are not in a virtual environment. Create and activate .venv now? [Y/N]`
+
 After installation:
 
-Activate: .\.venv\Scripts\Activate.ps1
-Or use -UserInstall for PATH-wide install
+- Activate venv: `.\.venv\Scripts\Activate.ps1`
+- Or use `-UserInstall` for PATH-wide install
 
-Alternative (pip)
-PowerShellpip install ngksdevfabeco
+### Alternative (pip)
 
-Quick Start
-PowerShell# 1. Initialize a project
+```powershell
+pip install ngksdevfabeco
+```
+
+---
+
+## Authoritative Workflow (Chain-Of-Custody Safe)
+
+Use this sequence when you need DevFabEco certification-grade traceability:
+
+```powershell
+# 1) Initialize and detect project intent
+ngksgraph init
+ngksgraph configure --profile debug
+
+# 2) Lock and verify environment state
+ngksenvcapsule resolve
+ngksenvcapsule lock
+ngksenvcapsule verify
+
+# 3) Execute approved deterministic plan
+ngksgraph build --profile debug --msvc-auto
+
+# 4) Perform forensic checks
+ngksgraph why build\debug\bin\app.exe --profile debug
+ngksgraph rebuild-cause build\debug\bin\app.exe --profile debug
+ngksgraph trace src\main.cpp --profile debug
+
+# 5) Generate certification artifacts
+ngksdevfabric certify-gate
+ngksdevfabric predict-risk
+```
+
+### Out-Of-Contract Patterns
+
+The following patterns break DevFabEco chain-of-custody claims for certification/audit:
+
+- Replacing `ngksbuildcore run` with direct Ninja execution
+- Running ad-hoc external build scripts outside declared DevFabEco orchestration
+- Treating foreign generated artifacts (`build.ninja`, cache files, stale compdb) as authoritative execution inputs
+
+---
+
+## Quick Start (General)
+
+```powershell
+# 1. Initialize a project
 ngksgraph init
 
-# 2. Scan & configure (auto-detects MSVC, Qt, languages, requirements)
+# 2. Scan and configure
 ngksgraph configure --profile debug
 
 # 3. Build with full determinism
 ngksgraph build --profile debug --msvc-auto
 
-# 4. Forensic analysis
-ngksgraph why build\debug\bin\app.exe --profile debug
-ngksgraph rebuild-cause build\debug\bin\app.exe --profile debug
-ngksgraph trace src\main.cpp --profile debug
-
-# 5. Create reproducible capsule
+# 4. Create reproducible capsule
 ngksgraph freeze --profile debug
-Environment commands
-PowerShellngksenvcapsule doctor
-ngksenvcapsule lock
-ngksenvcapsule verify
-Certification
-PowerShellngksdevfabric certify-gate
-ngksdevfabric predict-risk
-Run ngksgraph --help, ngksenvcapsule --help, or ngksdevfabric --help for full options.
+```
 
-Key CLI Commands
-NGKsGraph (main intelligence tool)
+Useful help commands:
 
-init • scan • configure • build • plan • explain
-why • rebuild-cause • diff • trace • freeze • thaw
-doctor • clean • graph
+- `ngksgraph --help`
+- `ngksenvcapsule --help`
+- `ngksdevfabric --help`
 
-NGKsEnvCapsule
+---
 
-doctor • resolve • lock • verify
+## Key CLI Commands
 
-NGKsDevFabric (certification & workflows)
+### NGKsGraph (main intelligence tool)
 
-certify • certify-gate • certify-target-check
-predict-risk • plan-validation • run-validation-and-certify
+`init` • `scan` • `configure` • `build` • `plan` • `explain`  
+`why` • `rebuild-cause` • `diff` • `trace` • `freeze` • `thaw`  
+`doctor` • `clean` • `graph`
 
-Others
+### NGKsEnvCapsule
 
-ngksbuildcore run • ngkslibrary assemble
+`doctor` • `resolve` • `lock` • `verify`
 
+### NGKsDevFabric (certification and workflows)
 
-Unique Value
+`certify` • `certify-gate` • `certify-target-check`  
+`predict-risk` • `plan-validation` • `run-validation-and-certify`
 
-Reproducibility Capsules — Freeze entire build state (ZIP + hashes) and thaw anywhere
-Build Forensics — Deep “why” analysis and rebuild classification
-Certification Ledger — Immutable proof artifacts for every run
-MSVC Auto-Discovery — Automatic Visual Studio environment bootstrapping
-Proof Artifacts — events.jsonl, commands.jsonl, environment.txt, git_status.txt, tool_versions.txt, etc.
+### Other
 
-Every operation is logged with full audit trail — perfect for CI/CD and compliance.
+`ngksbuildcore run` • `ngkslibrary assemble`
 
-Roadmap (Post-v1.2.0)
-Next milestone (recommended now):
+---
 
-Full Transport/Delivery Layer (GitHub, Jira, webhooks, email)
+## Unique Value
 
-Deferred (see DEFERRED_ITEMS.md):
+- Reproducibility Capsules: freeze entire build state (ZIP + hashes) and thaw anywhere
+- Build Forensics: deep "why" analysis and rebuild classification
+- Certification Ledger: immutable proof artifacts for every run
+- MSVC Auto-Discovery: automatic Visual Studio environment bootstrapping
+- Proof Artifacts: `events.jsonl`, `commands.jsonl`, `environment.txt`, `git_status.txt`, `tool_versions.txt`, and more
 
-Dashboard UX
-Proof-root cleanup & retention policy
-Organization/team ownership mapping
-Dry-run vs live-send policies
+Every operation is logged with full audit trail for CI/CD and compliance.
 
+---
 
-Project Status
+## Roadmap (Post-v1.2.0)
 
-Phase: Wiring & stabilization complete (39 requirements validated)
-Platform: Windows-first (MSVC native)
-Testing: Extensive (fixtures + validation suite)
-Releases: Meta-package ready (dist folders present)
+Next milestone:
 
+- Full transport/delivery layer (GitHub, Jira, webhooks, email)
 
-Documentation
+Deferred (see `DEFERRED_ITEMS.md`):
 
-Comprehensive Capabilities & Validation Document
-Certification Workflow
-Release Notes
-DEFERRED_ITEMS.md
+- Dashboard UX
+- Proof-root cleanup and retention policy
+- Organization/team ownership mapping
+- Dry-run vs live-send policies
 
+---
 
-Contributing
-Contributions welcome!
+## Project Status
 
-New language detectors
-Additional connectors
-Documentation improvements
-Bug reports / feature requests
+- Phase: wiring and stabilization complete (39 requirements validated)
+- Platform: Windows-first (MSVC native)
+- Testing: extensive (fixtures + validation suite)
+- Releases: meta-package ready (dist folders present)
 
-Open an issue or PR — we’re in the wiring phase and open to collaboration.
+---
 
-License
-This project is licensed under the MIT License (add a LICENSE file if you haven’t yet).
+## Documentation
+
+- `NGKsDevFabEco_Comprehensive_Capabilities_Document.md`
+- `certification_workflow.md`
+- `RELEASE_NOTES_1.2.0.md`
+- `DEFERRED_ITEMS.md`
+
+---
+
+## Contributing
+
+Contributions welcome:
+
+- New language detectors
+- Additional connectors
+- Documentation improvements
+- Bug reports and feature requests
+
+Open an issue or PR.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
 
 Built with precision by NGKsSystems

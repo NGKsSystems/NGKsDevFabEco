@@ -4,6 +4,25 @@
 
 This workflow integrates target capability validation, baseline comparison, compatibility preflight, certification decision policy, and decision validation into the normal DevFabEco command surface.
 
+## Chain Of Custody Contract (Critical)
+
+Certification and audit claims are valid only when the authoritative DevFabEco chain is preserved end-to-end:
+
+1. NGKsEnvCapsule resolves, locks, and verifies environment state.
+2. NGKsGraph generates deterministic build intent and plan artifacts.
+3. NGKsBuildCore executes the approved plan.
+4. NGKsLibrary and NGKsDevFabric emit proof, decision, and gate artifacts.
+
+Detected external tooling (for example Ninja, CMake cache metadata, or foreign generated compdb files) may be used as context signals, but is not authoritative execution input for certification.
+
+Out-of-contract behavior that breaks chain of custody:
+
+- Replacing NGKsBuildCore plan execution with direct Ninja execution.
+- Running unmanaged external build scripts outside declared DevFabEco orchestration.
+- Treating foreign generated artifacts as authoritative gate evidence.
+
+When out-of-contract behavior occurs, runs must be treated as non-certifiable for DevFabEco release gating.
+
 ## Target Capability Front Door
 
 Certification commands validate the project target contract before compare/gate logic.
