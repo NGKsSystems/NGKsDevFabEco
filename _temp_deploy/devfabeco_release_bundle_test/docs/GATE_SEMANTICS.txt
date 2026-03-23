@@ -1,0 +1,145 @@
+================================================================================
+GATE SEMANTICS: What PASS and FAIL Mean
+================================================================================
+
+When you run the bundle and see the result, here's what it means:
+
+PASS RESULT:
+════════════
+Symbol: ✓
+Exit code: 0
+Meaning: ALL certification gates passed. You are cleared to ship.
+
+What was checked (PASS means all passed):
+  ✓ Environment state is locked and consistent
+  ✓ Project structure is valid
+  ✓ Build completed without errors
+  ✓ Tests/checks passed (if configured)
+  ✓ Certification policy satisfied
+  ✓ No regressions detected
+  ✓ Proof artifacts complete
+
+ACTION: Ship your code. PASS is your approval.
+
+FAIL RESULT:
+════════════
+Symbol: ✗
+Exit code: nonzero (usually 1)
+Meaning: At least one certification gate failed. Do NOT ship.
+
+Common reasons for FAIL:
+  ✗ Build compilation errors
+  ✗ Environment prerequisites missing
+  ✗ Test failures
+  ✗ Regression detected (vs. baseline)
+  ✗ Out-of-custody execution (external tools used)
+  ✗ Proof artifacts incomplete
+
+ACTION: 
+  1. See the dashboard for which gate failed
+  2. See FAILURE_GUIDE.txt for troubleshooting
+  3. Fix the underlying issue
+  4. Re-run: .\run.ps1
+  5. Once PASS: Then ship
+
+GATE HIERARCHY (in order of strictness):
+═══════════════════════════════════════
+
+1. ENVIRONMENT GATE
+   Status: Environment variables locked, consistent
+   On FAIL: "Environment cannot be locked for build"
+   Action: Fix Python, MSVC, Qt paths; see PREREQS.txt
+
+2. BUILD GATE
+   Status: Project builds without errors
+   On FAIL: "Compilation failed" (error details in proof)
+   Action: Fix source code; re-run
+
+3. TEST GATE (if configured)
+   Status: Tests execute and pass
+   On FAIL: "Tests failed" (details in proof)
+   Action: Investigate test failures; re-run
+
+4. REGRESSION GATE
+   Status: No regressions vs. baseline
+   On FAIL: "Regression detected" (comparison details in proof)
+   Action: Investigate changes; adjust baseline if intentional; re-run
+
+5. CERTIFICATION GATE
+   Status: All gates above passed + policy satisfied
+   On FAIL: "Policy violation" (policy details in proof)
+   Action: Review certification_workflow.md; see FAILURE_GUIDE.txt
+
+DASHBOARD LAYOUT (after PASS):
+═════════════════════════════
+
+✓ Overall Status:  PASS
+  Build Gate:      ✓ passed
+  Test Gate:       ✓ passed
+  Regression Gate: ✓ stable
+  Certification:   ✓ approved
+
+Proof Location: _proof/devfabric_run_20260323_141500/
+Artifacts:
+  - 00_run_header.txt         (start info)
+  - 20_graph/                 (planning details)
+  - 30_buildcore/             (execution details)
+  - 40_library/               (proof index)
+  - 99_summary.txt            (human-readable summary)
+
+DASHBOARD LAYOUT (after FAIL):
+══════════════════════════════
+
+✗ Overall Status:  FAIL
+  Build Gate:      ✗ FAILED (linker error in main.obj)
+  
+Failure Summary:
+  Link failed: undefined reference to_foo
+
+Next Steps:
+  1. Check source code for missing definitions
+  2. Verify all dependencies are linked
+  3. Re-run: run.ps1
+
+Proof Location: _proof/devfabric_run_20260323_141501/
+Error Details: See _proof/.../99_summary.txt
+
+WHEN TO TRUST THE RESULT:
+═════════════════════════
+
+Trust a PASS when:
+  ✓ Dashboard shows "Overall Status: PASS"
+  ✓ Proof folder exists and is complete
+  ✓ 99_summary.txt confirms completion
+  ✓ Exit code to run.ps1 is 0
+
+Trust a FAIL when:
+  ✓ Dashboard shows "Overall Status: FAIL"
+  ✓ Error details are clear in dashboard/proof
+  ✓ Exit code to run.ps1 is nonzero
+  ✓ It's reproducible (re-run = same result)
+
+WHAT IF I DISAGREE WITH THE RESULT?
+════════════════════════════════════
+
+If you think PASS is wrong (false positive):
+  □ This should not happen (gates are fail-closed)
+  □ Review docs/CUSTODY_POLICY.txt
+  □ Check proof folder for unexpected behavior
+  □ Contact your DevFabEco maintainer
+
+If you think FAIL is wrong (false negative):
+  □ This can happen if gates are too strict
+  □ Review the specific gate that failed (see dashboard)
+  □ Fix the underlying issue (build error, missing dep, etc.)
+  □ If the issue is policy-related: see certification_workflow.md
+
+YOU DECIDE WHAT TO DO WITH THE RESULT:
+
+✓ PASS = You can confidently ship (custody verified, gates passed)
+✗ FAIL = You must fix the issue (debug, adjust, re-run)
+
+No human override. Gates are facts, not opinions.
+
+See: certification_workflow.md (in repository root)
+================================================================================

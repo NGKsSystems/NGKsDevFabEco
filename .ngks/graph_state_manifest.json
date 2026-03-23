@@ -1,10 +1,136 @@
 {
-  "generated_at": "2026-03-16T04:29:35.315262+00:00",
+  "generated_at": "2026-03-23T09:00:11.353100+00:00",
   "project_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco",
-  "manifest_hash": "64dc05452b975cdc0d8cfd0e5dac56689c5cff9fa5e314260aba05f6d4793595",
-  "tracked_file_count": 1208,
+  "manifest_hash": "4e963f6d3e677f5455ddf1a7af732e7943a46a41bf1680a9b905e824800e2ca5",
+  "tracked_file_count": 1545,
   "changed_since_last": true,
   "rows": [
+    {
+      "path": ".baseline_v1_20260318_194000/baseline_governance.md",
+      "size": 5161,
+      "mtime_ns": 1773899586978665600,
+      "sha256": "c5960577c268c7cdf96995fa08d87705b89a33052f4d284349566d6be0644e23"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/baseline_matrix.md",
+      "size": 2263,
+      "mtime_ns": 1773899586960391100,
+      "sha256": "63407331f37fd6522194bdf4b4d61822cd6f12a95426281c5d6086fe3bf16882"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/baseline_summary.md",
+      "size": 4458,
+      "mtime_ns": 1773899586957396100,
+      "sha256": "8c413598f9e11c66c31558c3bef60df71c5a7cc915bca028f7eea6f59653c0f5"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/certification_tiers.md",
+      "size": 5116,
+      "mtime_ns": 1773899586980661400,
+      "sha256": "1addc9d34d69a4e508ea608a5da3999866dc11be23cb6c89c9a4b795428c9e27"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/package_manifest.json",
+      "size": 1198,
+      "mtime_ns": 1773857927309721000,
+      "sha256": "f4f0a21c7738beeaf591a31ef81b70ca468c43c114075b2a129cd32dd9c80242"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/release_gate.md",
+      "size": 6357,
+      "mtime_ns": 1773899586989843100,
+      "sha256": "31d916476e63880bddeb416cef6dbb781aa005b0bc12ee1604b8a094ee0d7aae"
+    },
+    {
+      "path": ".baseline_v1_20260318_194000/repo_manifest.json",
+      "size": 7874,
+      "mtime_ns": 1773925598700808500,
+      "sha256": "758789e6dbcba5aea8f7652a48b7613860249976ab1e767e9f8f2197a92d8e72"
+    },
+    {
+      "path": ".cert_pf.txt",
+      "size": 88,
+      "mtime_ns": 1773829832442888100,
+      "sha256": "e5b4285d9a3a21946d90168dd170ad33cba029f0883a8df5901fde21ca7977c0"
+    },
+    {
+      "path": ".cert_work.txt",
+      "size": 77,
+      "mtime_ns": 1773829368865179600,
+      "sha256": "c3b3f3b836075f19770b0601cf248fcf134a437aaf42f8dd9b9205945ea0904e"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/00_pwd.txt",
+      "size": 54,
+      "mtime_ns": 1773844809523509200,
+      "sha256": "97127476289f1a89641583e9f5a0f01e6d3704798f886e977125f48d17c2b6b3"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/01_git_status.txt",
+      "size": 256,
+      "mtime_ns": 1773844809920850200,
+      "sha256": "50317167e837cfedd281f2c3816d66f22ccf92174a8c038249c8946d3b7695ef"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/02_git_head.txt",
+      "size": 44,
+      "mtime_ns": 1773844810249711900,
+      "sha256": "1dd4c4c1002784a04ab3ab0ff50f770ec087c9e461db8755300d7a12c9bbf4d4"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/03_python_executable.txt",
+      "size": 86,
+      "mtime_ns": 1773844839320613300,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/04_ngksdevfabric_version.txt",
+      "size": 715,
+      "mtime_ns": 1773844821243750700,
+      "sha256": "931991921505e16dc8713e1822a9a5988ed1c754621502c3f2f591ba71737cc4"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/05_ngksgraph_version.txt",
+      "size": 27,
+      "mtime_ns": 1773844839717142100,
+      "sha256": "c2c431586c6340b6c19c147a6178a58f218096a90dbf1259dffb4107ccc33d5f"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/06_compiler_discovery.txt",
+      "size": 56,
+      "mtime_ns": 1773844840845062700,
+      "sha256": "b59f05f044686de513f2bc2bdb501dbbf9954a5b4a466c37e54634d91b786c6b"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/10_probe.txt",
+      "size": 536,
+      "mtime_ns": 1773844892754475000,
+      "sha256": "5b5da55c1e7b31b6906855d7c5c461429802e234bbb3d8e42de26b972389b764"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/11_doctor.txt",
+      "size": 784,
+      "mtime_ns": 1773844911938053900,
+      "sha256": "daa4f0aa2f127e3ad3523353021637e33a108d929fb6841a4b5e8999f9389f26"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/12_configure_debug.txt",
+      "size": 206,
+      "mtime_ns": 1773844929179766900,
+      "sha256": "e7eca2d2cbe542e08a80ba2fb619f6bac2760a4ecdbab964d01ae92d0092d5c3"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/13_build_debug.txt",
+      "size": 402,
+      "mtime_ns": 1773844940625962600,
+      "sha256": "6009c21e955e5a57ac355036d47e0f013100f7ba942fb25df0c6ceef883d5b9e"
+    },
+    {
+      "path": ".fvisionary_cert_20260318_174003/phase5_report.txt",
+      "size": 1485,
+      "mtime_ns": 1773847627776765500,
+      "sha256": "e1145ad72f5fa7c6171afb3166c8a47014d677a4bc22f0b30c827de3088f14e7"
+    },
     {
       "path": ".github/workflows/ngksgraph-windows-smoke.yml",
       "size": 1336,
@@ -13,9 +139,153 @@
     },
     {
       "path": ".graph_state/graph_state.json",
-      "size": 663,
-      "mtime_ns": 1773635348085927300,
-      "sha256": "cbadbf4d942c751a86a900bd369bee26beb5b4d39edc0a6f27783b41ecb00471"
+      "size": 643,
+      "mtime_ns": 1774256264024954200,
+      "sha256": "687801af31771db3e3a7b9ee2a57c7566095736c0a333639c1c493f43d92c733"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/00_audit_env.txt",
+      "size": 388,
+      "mtime_ns": 1773849209862892800,
+      "sha256": "97fead4285f8e3121d06cf3bf867540d57260a812014eba27f6ffca9708363e9"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/40_certification_matrix.md",
+      "size": 1776,
+      "mtime_ns": 1773854270397217900,
+      "sha256": "4390dd18560d1075bb196d504226a84c16d8f54bb3f7722373302fd914504d5c"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/50_gap_analysis.md",
+      "size": 1833,
+      "mtime_ns": 1773854270399233500,
+      "sha256": "5067a0420f41684829def98423f11c80a700c6fba4f6eba2d949983c0e9e72bc"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/60_capability_model_notes.md",
+      "size": 4743,
+      "mtime_ns": 1773854270399233500,
+      "sha256": "c9c1646d4cf78c308e0360fe57e1e920cb181d63ffe5c4c77725eb6821aa47bf"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/cert_results.txt",
+      "size": 1686,
+      "mtime_ns": 1773851780655496200,
+      "sha256": "a3802bbfb37dc63f8b993b3d6b13e9e59e0a172eafb8012f48fbf5974764f491"
+    },
+    {
+      "path": ".hardening_cert_20260318_185306/run_certification.ps1",
+      "size": 4376,
+      "mtime_ns": 1773854270397217900,
+      "sha256": "1a298421a4a034160547b50b49808f8888bdaa0e1e5bb12b3e57e06628e90567"
+    },
+    {
+      "path": ".migration_final_pf.txt",
+      "size": 99,
+      "mtime_ns": 1773811829290617700,
+      "sha256": "745e050ee88a65b9ed54bd5bd8330d7e5cc01b6ae4cf1d84d467e77b6847d234"
+    },
+    {
+      "path": ".migration_pf.txt",
+      "size": 93,
+      "mtime_ns": 1773808606982080200,
+      "sha256": "a8427eb5e1cb00045350c90b62a87353dbfcbf95ad85efc22ddc4a588ba29086"
+    },
+    {
+      "path": ".profile_contract_work.txt",
+      "size": 89,
+      "mtime_ns": 1773831271729508500,
+      "sha256": "56f25795f0cc4366fbc1a33fde3476c711130a4d151f0f45ef33717d01d3e8b4"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/00_pwd.txt",
+      "size": 66,
+      "mtime_ns": 1773831271734843600,
+      "sha256": "5977802adce278304b313df521a2b82b1987c2186e3789d7eb4bb37084b17db0"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/01_git_status.txt",
+      "size": 308,
+      "mtime_ns": 1773831271825966800,
+      "sha256": "78e13280bbd17dbcd2a372cd37279c1cea49eb80db4adb493f60877e2c1a6b52"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/02_git_head.txt",
+      "size": 42,
+      "mtime_ns": 1773831271889724100,
+      "sha256": "babf222073cefd2629d8e083de7c18da36e59dcaae376bdbc319f223ed6e59d2"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/03_python_executable.txt",
+      "size": 86,
+      "mtime_ns": 1773831271996418600,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/04_ngksgraph_import_path.txt",
+      "size": 82,
+      "mtime_ns": 1773831272106931900,
+      "sha256": "00c693225eeba29f53c3bb7d56436a338c60719cad989796573bbb9fcfbeccc2"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/05_ngksdevfabric_version.txt",
+      "size": 713,
+      "mtime_ns": 1773831273059588700,
+      "sha256": "03f93c70ba297483ad204fc0a60da1246eb8ee2bfbf351e2280bea068bf729e3"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/06_ngksgraph_version.txt",
+      "size": 153,
+      "mtime_ns": 1773831273674659200,
+      "sha256": "0dfee006c6594a50f153215fb50d38f98231575b1af8c2742610716a6139453a"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/10_profile_contract_discovery.md",
+      "size": 1860,
+      "mtime_ns": 1773831552102176000,
+      "sha256": "abd34bc53630930e4092dbf13bcc6bf5cc1d60fa4f26bc25a035b8762cb18a48"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/11_repo_profile_inventory.json",
+      "size": 2220,
+      "mtime_ns": 1773831552097176800,
+      "sha256": "aee5a12873eee058bcbe340817e28308807874f64f906b59397aa839eabc35c5"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/30_repo_normalization_actions.md",
+      "size": 910,
+      "mtime_ns": 1773836281119380500,
+      "sha256": "d855eaacd308cd3a3f496ea1141ad5065a1af5cea950668be28cf720421d64f9"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/40_profile_contract_tests.txt",
+      "size": 108,
+      "mtime_ns": 1773832280051073800,
+      "sha256": "7080812a675ecef211aeac284cbe654df1add334330e6f4d4b5e100c88a140bb"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/41_recert_results.json",
+      "size": 25475,
+      "mtime_ns": 1773833009869266500,
+      "sha256": "923d8173d93b68c513ac770f9c8d1ee13998e4eadcbb6574758a8bb95b3526b7"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/42_recert_matrix.md",
+      "size": 414,
+      "mtime_ns": 1773833009870269400,
+      "sha256": "2b8da37165b704cee27214cc0ce2a166236b8ad5cfd58ec1a1edb4db2dc9e39b"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/50_remaining_gaps.md",
+      "size": 1864,
+      "mtime_ns": 1773833095493389900,
+      "sha256": "404ca04fb43493db2acb7eab48df48d54e43f15f53b18ace8373d3009ac2ac63"
+    },
+    {
+      "path": ".profile_contract_work_20260318_135431/99_final_status.json",
+      "size": 768,
+      "mtime_ns": 1773836281119380500,
+      "sha256": "8fc0e6ba300f3893b6473969a4703fb196cc7b87a80611627503cdce097194e7"
     },
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/ngksbuildcore-0.1.4.dist-info/top_level.txt",
@@ -1598,7 +1868,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_internal/operations/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435372428294000,
+      "mtime_ns": 1773435372428000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -1688,7 +1958,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_internal/resolution/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435372462048200,
+      "mtime_ns": 1773435372462000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -1700,7 +1970,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_internal/resolution/legacy/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435372464740300,
+      "mtime_ns": 1773435372464000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -1712,7 +1982,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_internal/resolution/resolvelib/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435372469569500,
+      "mtime_ns": 1773435372469000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -1772,7 +2042,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_internal/utils/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435372482213500,
+      "mtime_ns": 1773435372482000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -3290,7 +3560,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_vendor/urllib3/contrib/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435373697435500,
+      "mtime_ns": 1773435373697000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -3302,7 +3572,7 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_vendor/urllib3/contrib/_securetransport/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435373708953500,
+      "mtime_ns": 1773435373708000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -3374,13 +3644,13 @@
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_vendor/urllib3/packages/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435373711953300,
+      "mtime_ns": 1773435373711000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "path": ".pypi_smoke_venv/Lib/site-packages/pip/_vendor/urllib3/packages/backports/__init__.py",
       "size": 0,
-      "mtime_ns": 1773435373713953500,
+      "mtime_ns": 1773435373713000000,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
@@ -3516,10 +3786,712 @@
       "sha256": "eb8ce20f580877d300c4fed60a7f36daa18715d35c50bb3596d6995d023b4ffe"
     },
     {
+      "path": ".release_dist_dir.txt",
+      "size": 79,
+      "mtime_ns": 1773812971712284200,
+      "sha256": "5b25c09993bdc7a46fd791633589b2483e1fd7b4894be5fecfe2e474ac39d8d5"
+    },
+    {
+      "path": ".repair_pf.txt",
+      "size": 94,
+      "mtime_ns": 1773806465441805900,
+      "sha256": "4028eb881d013cb3f5c1f4ecf1de9d0987e4849aab68941a3671310615562254"
+    },
+    {
+      "path": ".targeted_repair_work.txt",
+      "size": 88,
+      "mtime_ns": 1773840533247093400,
+      "sha256": "b2d427f09587c674a5131b583a4838b492cea6e424e75e63fbcb2f9f4bd250b9"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/00_pwd.txt",
+      "size": 66,
+      "mtime_ns": 1773840677146707400,
+      "sha256": "5977802adce278304b313df521a2b82b1987c2186e3789d7eb4bb37084b17db0"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/01_git_status_short.txt",
+      "size": 661,
+      "mtime_ns": 1773840677279887700,
+      "sha256": "3adf5768066e2847deba979fae69e5b1cb87b73e57d996ab4d861bf5fbdfcd81"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/02_git_head.txt",
+      "size": 42,
+      "mtime_ns": 1773840677347593000,
+      "sha256": "babf222073cefd2629d8e083de7c18da36e59dcaae376bdbc319f223ed6e59d2"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/03_python_executable.txt",
+      "size": 75,
+      "mtime_ns": 1773840677545667100,
+      "sha256": "a11a5ef99cda4766284019514bd647749c807d0bbee21f5d6427cee22ac83685"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/04_ngksdevfabric_paths.txt",
+      "size": 195,
+      "mtime_ns": 1773840824980540200,
+      "sha256": "0ce4fb5175e779cb39cb68e426ea5467dc1e8615c6ab46cbf13be86956ca925d"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/05_ngksgraph_paths.txt",
+      "size": 159,
+      "mtime_ns": 1773840825358479400,
+      "sha256": "d6b55830581aaaa1518ed607a55c4e5624cbc302a93824f64d96b9c8193dadbe"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/20_playernative_root_handoff_fix.md",
+      "size": 2428,
+      "mtime_ns": 1773844531784300900,
+      "sha256": "ec8b0fd687c84cc55566e985120cc888721eb5fcf1f8cad67670a6e3d74234f3"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/21_medialab_source_fix.md",
+      "size": 1521,
+      "mtime_ns": 1773844531784300900,
+      "sha256": "f95aea82d29650a4e12adb6c484d41f2abcdb2a23b11c4bed90181bbf86ba4e0"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/22_ngksgraph_source_fix.md",
+      "size": 2048,
+      "mtime_ns": 1773844531787299200,
+      "sha256": "40627b97c882276b38ece4784b4c377122ee892e29517cf40756b95b29139a3b"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/40_focused_revalidation_matrix.md",
+      "size": 1949,
+      "mtime_ns": 1773844783398233300,
+      "sha256": "fa9164f0e628d6fe74394b8f9f0abfeb7ab285417f86e13326104c8d14270558"
+    },
+    {
+      "path": ".targeted_repair_work_20260318_162853/50_remaining_blockers.md",
+      "size": 1356,
+      "mtime_ns": 1773844783400235400,
+      "sha256": "04302b940d482eca99571e644bd92fea6d2d190c15349a60268b9d769e89c1ec"
+    },
+    {
+      "path": ".triage_work.txt",
+      "size": 79,
+      "mtime_ns": 1773836699502361800,
+      "sha256": "83c453928fcd663817a452d2ce0109656b7b5c983f25b662102b01274f57c630"
+    },
+    {
+      "path": ".triage_work_20260318_152459/20_NGKsFileVisionary_buildcore_analysis.md",
+      "size": 1911,
+      "mtime_ns": 1773840290825604200,
+      "sha256": "da1935a615192efb3194edbf387fc8986922011aea466a056fa8c24d1a904f3a"
+    },
+    {
+      "path": ".triage_work_20260318_152459/20_NGKsGraph_buildcore_analysis.md",
+      "size": 1602,
+      "mtime_ns": 1773840290825604200,
+      "sha256": "ecb81f289060bcc16435ca94397dea29e30044d4c3c3d9c066c145355b5afc02"
+    },
+    {
+      "path": ".triage_work_20260318_152459/20_NGKsMediaLab_buildcore_analysis.md",
+      "size": 853,
+      "mtime_ns": 1773837072446639000,
+      "sha256": "ed549ad874d8d0570305ac56b08b9ff76b250a0c9cc0dc93c55a7ce331f47d46"
+    },
+    {
+      "path": ".triage_work_20260318_152459/20_NGKsPlayerNative_buildcore_analysis.md",
+      "size": 1868,
+      "mtime_ns": 1773840290825604200,
+      "sha256": "41c25e1af562ea24f60a399806613c5debfa63db49e7a404363b3fd2f0d88208"
+    },
+    {
+      "path": ".triage_work_20260318_152459/20_NGKsUI_Runtime_buildcore_analysis.md",
+      "size": 959,
+      "mtime_ns": 1773837043708047800,
+      "sha256": "8e4e33e6acac1b109e98516bd4561c387de9414b98e2ad950b71ab7da1db8cbd"
+    },
+    {
+      "path": ".triage_work_20260318_152459/21_NGKsGraph_sources_analysis.md",
+      "size": 3410,
+      "mtime_ns": 1773837205852063400,
+      "sha256": "0e90eb8d6135fd3abab2352a2accbdc4b342f68e5215f3400743514fcbe3ddc3"
+    },
+    {
+      "path": ".triage_work_20260318_152459/21_NGKsMediaLab_sources_analysis.md",
+      "size": 1295,
+      "mtime_ns": 1773837074115503900,
+      "sha256": "30b22b849d411f4d6f110899a437835db73f709217c75c8f5c4db8c6655d818e"
+    },
+    {
+      "path": ".triage_work_20260318_152459/30_triage_rows.json",
+      "size": 9644,
+      "mtime_ns": 1773837205852063400,
+      "sha256": "842594940ec2d5fb2ca3de26f714a6559998f2d1001b9c5c9ead77a5ab5a6dc4"
+    },
+    {
+      "path": ".triage_work_20260318_152459/40_buildcore_root_causes.md",
+      "size": 2723,
+      "mtime_ns": 1773840290825604200,
+      "sha256": "ebb95570b7030acbd5cf31487adcc807767d5d4ef3791a32c350613ad81bb7a4"
+    },
+    {
+      "path": ".triage_work_20260318_152459/41_sources_root_causes.md",
+      "size": 1543,
+      "mtime_ns": 1773837205866599200,
+      "sha256": "a3a3bf93ce70e9ff543a3db305393685fc581d4900bdced3bb8d7a3820eeac49"
+    },
+    {
+      "path": ".triage_work_20260318_152459/50_minimal_fix_plan.md",
+      "size": 948,
+      "mtime_ns": 1773840290827603700,
+      "sha256": "d3d86c56eeaa4f4c106118c580df447fe7d7de5bf7d34a462d7ec2b2d8437120"
+    },
+    {
+      "path": ".triage_work_20260318_152459/60_triage_summary.json",
+      "size": 161,
+      "mtime_ns": 1773840290827603700,
+      "sha256": "b5334078130bc2bfa601e0ab5321bffd9b400aeaace230c37ff47bbc356487ef"
+    },
+    {
+      "path": ".triage_work_20260318_152459/99_pf_path.txt",
+      "size": 97,
+      "mtime_ns": 1773837743361486800,
+      "sha256": "11ca25809d2ee7af3e473da7711d8730fba83e8fd99a4c9b9b411c99658144a7"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsFileVisionary/00_env_snapshot.json",
+      "size": 3256,
+      "mtime_ns": 1773837074116443600,
+      "sha256": "433024c6aff8e209ee3406ae9125bcd4042b09c0ba9f431b6bee52b5b64f7a81"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsFileVisionary/10_configure.json",
+      "size": 829,
+      "mtime_ns": 1773837074751771000,
+      "sha256": "22f1f3f2d19fe38d6fc1db124b88f017e4ff1180a5cc95bd97f0ccd80599a557"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsFileVisionary/20_build.json",
+      "size": 3073,
+      "mtime_ns": 1773837172389852500,
+      "sha256": "d4bfb68a525c492b97ccbd94e8ec499536866c856963d344353362b25d6eaa64"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsGraph/00_env_snapshot.json",
+      "size": 3256,
+      "mtime_ns": 1773837195574922700,
+      "sha256": "433024c6aff8e209ee3406ae9125bcd4042b09c0ba9f431b6bee52b5b64f7a81"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsGraph/10_configure.json",
+      "size": 1843,
+      "mtime_ns": 1773837196518909000,
+      "sha256": "b44918416563c3a650dce87b6b1ff11575c6e574461a27b4daa8ad7d250a80b7"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsGraph/20_build.json",
+      "size": 2987,
+      "mtime_ns": 1773837204929136500,
+      "sha256": "f6fa7c8d1748d437e9195c2b9405e3e4457c19a5f2eb32a191398c3050a65c5f"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsMediaLab/00_env_snapshot.json",
+      "size": 3256,
+      "mtime_ns": 1773837043709382500,
+      "sha256": "433024c6aff8e209ee3406ae9125bcd4042b09c0ba9f431b6bee52b5b64f7a81"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsMediaLab/10_configure.json",
+      "size": 1139,
+      "mtime_ns": 1773837047517686700,
+      "sha256": "329d2c93368f50d8ffd0c672eb3565c4c688f698702f9e9c2b03ad4a421c4b4f"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsMediaLab/20_build.json",
+      "size": 2642,
+      "mtime_ns": 1773837072443641200,
+      "sha256": "5a0c706fda9b4d46fb57536f4292bde33369bb1ff3a8af069d71bf208c5a1332"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsPlayerNative/00_env_snapshot.json",
+      "size": 3256,
+      "mtime_ns": 1773837172393972200,
+      "sha256": "433024c6aff8e209ee3406ae9125bcd4042b09c0ba9f431b6bee52b5b64f7a81"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsPlayerNative/10_configure.json",
+      "size": 823,
+      "mtime_ns": 1773837173113989100,
+      "sha256": "e8ce1586e072188f6372efe7ae3fa27021d3e0d4c4ca466666647a78583cb5d3"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsPlayerNative/20_build.json",
+      "size": 3064,
+      "mtime_ns": 1773837195572924100,
+      "sha256": "46afe3a8e7547b3684d337fb9e1283af62c8acaeb93127b00859b329d5a7e6df"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsUI_Runtime/00_env_snapshot.json",
+      "size": 3256,
+      "mtime_ns": 1773837013080517600,
+      "sha256": "433024c6aff8e209ee3406ae9125bcd4042b09c0ba9f431b6bee52b5b64f7a81"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsUI_Runtime/10_configure.json",
+      "size": 811,
+      "mtime_ns": 1773837013839379300,
+      "sha256": "62b94ebcb61a2b8f1bff8876e732659c835d93f0969252ceacb7261bfae6c3fe"
+    },
+    {
+      "path": ".triage_work_20260318_152459/raw/NGKsUI_Runtime/20_build.json",
+      "size": 2696,
+      "mtime_ns": 1773837043701800100,
+      "sha256": "2eac0af29104a70f6989e0d6c5ada99bfac08a3cd8a4a1e10ef45ded873ae0b5"
+    },
+    {
+      "path": ".triage_work_20260318_152459/run_triage.py",
+      "size": 16393,
+      "mtime_ns": 1773837012767233400,
+      "sha256": "a09c98c88dd27cccdc1f047f85baaf8f20d5d87575701fde4d1d08a0c80a1153"
+    },
+    {
+      "path": "_artifacts/widget_sandbox_clean/capture_20260321_174447/metadata.json",
+      "size": 740,
+      "mtime_ns": 1774104287655394400,
+      "sha256": "c56736d8d9ce7631a90743508d816269621b2a9325159ab698b260d0444cbb24"
+    },
+    {
+      "path": "_artifacts/widget_sandbox_clean/capture_20260321_180416/metadata.json",
+      "size": 658,
+      "mtime_ns": 1774105456479824200,
+      "sha256": "e3a9483138e7631518feaf213343ea061b308a7c1f9a199971e04e4875389769"
+    },
+    {
+      "path": "_artifacts/widget_sandbox_clean/capture_20260321_182306/metadata.json",
+      "size": 670,
+      "mtime_ns": 1774106586372927000,
+      "sha256": "2ff61acfb86d01b1c45ec695363027b1a6f6d5fe123b2c533a3a472846e43d16"
+    },
+    {
+      "path": "_artifacts/widget_sandbox_clean/latest/metadata.json",
+      "size": 670,
+      "mtime_ns": 1774106586374431500,
+      "sha256": "2ff61acfb86d01b1c45ec695363027b1a6f6d5fe123b2c533a3a472846e43d16"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/00_pwd.txt",
+      "size": 66,
+      "mtime_ns": 1773819290485491300,
+      "sha256": "5977802adce278304b313df521a2b82b1987c2186e3789d7eb4bb37084b17db0"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/01_git_status.txt",
+      "size": 150,
+      "mtime_ns": 1773819290638869000,
+      "sha256": "37e5682e1cad89e9f2ac2d1ca396085f9604ae1e1dbb9c6ce26936741f187a3f"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/02_git_head.txt",
+      "size": 42,
+      "mtime_ns": 1773819291166134100,
+      "sha256": "babf222073cefd2629d8e083de7c18da36e59dcaae376bdbc319f223ed6e59d2"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/03_python_executable.txt",
+      "size": 86,
+      "mtime_ns": 1773819291410137000,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/04_pip_list.txt",
+      "size": 1152,
+      "mtime_ns": 1773819292123772800,
+      "sha256": "3db281cd78cb922e9a801147c803a41e7a2fdc9d41177704ee417296f767525e"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/05_ngksdevfabric_version.txt",
+      "size": 713,
+      "mtime_ns": 1773819293068316900,
+      "sha256": "b752bc3879e916d6ca111ee718753a08f85c93392eb032a871b8a90d8f54027d"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/06_ngksgraph_version.txt",
+      "size": 153,
+      "mtime_ns": 1773819293991527900,
+      "sha256": "aceff2cd2fafcbad1b1fb61815d68a676ad98049645563b27fc4bc2a7134e27e"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/07_ngksbuildcore_version.txt",
+      "size": 121,
+      "mtime_ns": 1773819294137087800,
+      "sha256": "bc043efe7034c59f14d8b1d5f5415b54201e95cf8fada7123844efeb2597ef63"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/10_repo_discovery.json",
+      "size": 11279,
+      "mtime_ns": 1773819341130018900,
+      "sha256": "9f9dc36efb75f1bac26b5606e47fda11b6c7799c55cd19be4906fc72e6edd98f"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/10_repo_discovery_table.txt",
+      "size": 1660,
+      "mtime_ns": 1773819341155286100,
+      "sha256": "4bb0772b9aae37bd6de5f16efce5ff35543419bfb06cf60dcbd4fbc0074ebacb"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/11_repo_selection.md",
+      "size": 966,
+      "mtime_ns": 1773819423940809400,
+      "sha256": "896306e23e5a971b13c012582982b2f59935777262a68bf20eb3f32697812a7a"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/12_repo_env_and_profiles.txt",
+      "size": 526,
+      "mtime_ns": 1773819424018900900,
+      "sha256": "06d7d841c55e500eddf0bb2c1c589f3de8d8d526441cf115d3b4126139e47b75"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/00_repo.txt",
+      "size": 239,
+      "mtime_ns": 1773819471882880300,
+      "sha256": "7b1151a716c9e4623782acfd9cd372ad097762dd9d2b8f4401547a661c55c9af"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/10_probe.meta.txt",
+      "size": 13,
+      "mtime_ns": 1773819472755374500,
+      "sha256": "00db55c466f831d5cf863cc60450efc132248f112690685a2752d33a2d6dbd27"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/10_probe.stderr.txt",
+      "size": 432,
+      "mtime_ns": 1773819472753374300,
+      "sha256": "d7fc08073c1bcfe5e78ff426dc8a3e14630178c76296b1b51689b4768bde693e"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/10_probe.stdout.txt",
+      "size": 286,
+      "mtime_ns": 1773819472751320300,
+      "sha256": "f89b513331fbe2aabe932e53057f69267c729b35a2c151889d971c580d776562"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/20_doctor.meta.txt",
+      "size": 13,
+      "mtime_ns": 1773819473522742400,
+      "sha256": "00db55c466f831d5cf863cc60450efc132248f112690685a2752d33a2d6dbd27"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/20_doctor.stderr.txt",
+      "size": 432,
+      "mtime_ns": 1773819473521741200,
+      "sha256": "d7fc08073c1bcfe5e78ff426dc8a3e14630178c76296b1b51689b4768bde693e"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/20_doctor.stdout.txt",
+      "size": 286,
+      "mtime_ns": 1773819473521741200,
+      "sha256": "25c08cfee0a4f825ae20ea15b217ead6af0df17599cf065c9b228f6027dfac78"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/30_configure.meta.txt",
+      "size": 13,
+      "mtime_ns": 1773819474215927100,
+      "sha256": "00db55c466f831d5cf863cc60450efc132248f112690685a2752d33a2d6dbd27"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/30_configure.stderr.txt",
+      "size": 388,
+      "mtime_ns": 1773819474215927100,
+      "sha256": "addf61390b10f5b576ba952ff2eb5c8944c699201a475fead1d85544e5e1327a"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/30_configure.stdout.txt",
+      "size": 2,
+      "mtime_ns": 1773819474215927100,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "_cert_work/cross_repo_cert_20260318_103450/NGKsUI_Runtime/40_build.meta.txt",
+      "size": 28,
+      "mtime_ns": 1773819474220348700,
+      "sha256": "71c5450521cf4b4dc056c7360413850453aaa363e9c180981e4020ee0e23b203"
+    },
+    {
+      "path": "_cert_work_20260318_104116/00_pwd.txt",
+      "size": 66,
+      "mtime_ns": 1773819676748785500,
+      "sha256": "5977802adce278304b313df521a2b82b1987c2186e3789d7eb4bb37084b17db0"
+    },
+    {
+      "path": "_cert_work_20260318_104116/01_git_status.txt",
+      "size": 182,
+      "mtime_ns": 1773819676806756900,
+      "sha256": "472f61bc522a023483f9c0781b60176b027044ddcfdacd33ad488aec321ad70f"
+    },
+    {
+      "path": "_cert_work_20260318_104116/02_git_head.txt",
+      "size": 42,
+      "mtime_ns": 1773819676853974200,
+      "sha256": "babf222073cefd2629d8e083de7c18da36e59dcaae376bdbc319f223ed6e59d2"
+    },
+    {
+      "path": "_cert_work_20260318_104116/03_python_executable.txt",
+      "size": 86,
+      "mtime_ns": 1773819676927488100,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": "_cert_work_20260318_104116/04_pip_list.txt",
+      "size": 1152,
+      "mtime_ns": 1773819677316744300,
+      "sha256": "3db281cd78cb922e9a801147c803a41e7a2fdc9d41177704ee417296f767525e"
+    },
+    {
+      "path": "_cert_work_20260318_104116/05_ngksdevfabric_version.txt",
+      "size": 713,
+      "mtime_ns": 1773819677750796700,
+      "sha256": "ef4798a2e610399a0ea5738e64b610c5971acc40be3b9af2af2838b98aa366c3"
+    },
+    {
+      "path": "_cert_work_20260318_104116/06_ngksgraph_version.txt",
+      "size": 153,
+      "mtime_ns": 1773819678350487100,
+      "sha256": "2250cc67d4bf1663d73fc8c4164ce58a8343aad6dad51740a355647408e8f0ee"
+    },
+    {
+      "path": "_cert_work_20260318_110011/00_pwd.txt",
+      "size": 66,
+      "mtime_ns": 1773820811273553700,
+      "sha256": "5977802adce278304b313df521a2b82b1987c2186e3789d7eb4bb37084b17db0"
+    },
+    {
+      "path": "_cert_work_20260318_110011/01_git_status.txt",
+      "size": 214,
+      "mtime_ns": 1773820811358463600,
+      "sha256": "122d4b805da31ce57d920040070933085c5d3c4c25a2281168a7c2d6f02de10b"
+    },
+    {
+      "path": "_cert_work_20260318_110011/02_git_head.txt",
+      "size": 42,
+      "mtime_ns": 1773820811426868800,
+      "sha256": "babf222073cefd2629d8e083de7c18da36e59dcaae376bdbc319f223ed6e59d2"
+    },
+    {
+      "path": "_cert_work_20260318_110011/03_python_executable.txt",
+      "size": 86,
+      "mtime_ns": 1773820811796674300,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": "_cert_work_20260318_110011/04_pip_list.txt",
+      "size": 1152,
+      "mtime_ns": 1773820814468415500,
+      "sha256": "3db281cd78cb922e9a801147c803a41e7a2fdc9d41177704ee417296f767525e"
+    },
+    {
+      "path": "_cert_work_20260318_110011/05_ngksdevfabric_version.txt",
+      "size": 713,
+      "mtime_ns": 1773820815262683100,
+      "sha256": "772dc513678225368f62d7de79835d81ea543e8c1ac166cd7c88eeaeec55c449"
+    },
+    {
+      "path": "_cert_work_20260318_110011/06_ngksgraph_version.txt",
+      "size": 153,
+      "mtime_ns": 1773820816581304900,
+      "sha256": "5ec751992ee85965bc5d4a358471dec7d3381fcb343199044d5a34c2e4da890a"
+    },
+    {
+      "path": "_cert_work_20260318_110011/07_ngksbuildcore_version.txt",
+      "size": 81,
+      "mtime_ns": 1773820836537182200,
+      "sha256": "9d1ccca70a927473875502f6b9cc0b30b2192e6d91c69c3157a01644f9bd3d7c"
+    },
+    {
+      "path": "_cert_work_20260318_110011/07b_ngksbuildcore_module_version.txt",
+      "size": 118,
+      "mtime_ns": 1773820836629816400,
+      "sha256": "24cb2be407d501b9aeced2d7a309421b4ed36e7bae9706259e20c87f145f3874"
+    },
+    {
+      "path": "_cert_work_20260318_110011/10_repo_discovery.json",
+      "size": 6203,
+      "mtime_ns": 1773820908542670400,
+      "sha256": "44bcf37caa47af4cba7c97024a0ee4e507fd70eb74ccb598ca1bdceee9c2be55"
+    },
+    {
+      "path": "_cert_work_20260318_110011/11_repo_selection.md",
+      "size": 1080,
+      "mtime_ns": 1773820908545672600,
+      "sha256": "0f11654c70d09df5338844a5cea9aa91113c61c9b85768c55d7461bad6dd4508"
+    },
+    {
+      "path": "_cert_work_20260318_110011/12_selected_repos.json",
+      "size": 1291,
+      "mtime_ns": 1773820908546674300,
+      "sha256": "1c7f0a0acf791b03ec8b165d329723cc614da4cecbd2b09138ff7d32b388c41a"
+    },
+    {
+      "path": "_cert_work_20260318_110011/41_certification_matrix.md",
+      "size": 1627,
+      "mtime_ns": 1773821896983549800,
+      "sha256": "41a1a8ac9b9e893de60b3775e70135667f6d23b616cbe0c6f655ebabd5baa3ca"
+    },
+    {
+      "path": "_cert_work_20260318_110011/42_certification_results.json",
+      "size": 2663,
+      "mtime_ns": 1773821795782971200,
+      "sha256": "a273b0f0a5c216974cd854bab69e10209f9569534703aa5677a3b585d044a085"
+    },
+    {
+      "path": "_cert_work_20260318_110011/50_global_gap_list.md",
+      "size": 668,
+      "mtime_ns": 1773821795784982500,
+      "sha256": "3df0a8ce493dce01b6c323c00be6302c17683bc66c0a23158339244b8543dac4"
+    },
+    {
+      "path": "_cert_work_20260318_110011/51_global_summary.md",
+      "size": 537,
+      "mtime_ns": 1773821897002127300,
+      "sha256": "fb6658ffb7cd53c9ea71857fd6c9ee482f481a2508351a6220c0a8546e4b5169"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports/NGKsFileVisionary/report.md",
+      "size": 1124,
+      "mtime_ns": 1773821037730185200,
+      "sha256": "9c66adc1c994ae65ae67d2cf616ed92a9d863a6b1fd4c14ffebb7fdc2df63414"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports/NGKsGraph/report.md",
+      "size": 1108,
+      "mtime_ns": 1773821039241172400,
+      "sha256": "177466ec2422a1557b1a65d0d318f2bffe45287833c9e1d83ead95e5adf3549c"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports/NGKsMediaLab/report.md",
+      "size": 1114,
+      "mtime_ns": 1773821040009831500,
+      "sha256": "3f3b797525b2fa9ae131bb9aab01a6f86d187dab07765c43619fbac514992beb"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports/NGKsPlayerNative/report.md",
+      "size": 1122,
+      "mtime_ns": 1773821040784106000,
+      "sha256": "ee4412d8e69f252d81e7cec8469304c522f1e5bddb794d2acacc80be037ab192"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports/NGKsUI_Runtime/report.md",
+      "size": 1117,
+      "mtime_ns": 1773821042197131600,
+      "sha256": "6d9267f0adfc0b212d248d85bf488a07ca46492745a02c1635bea96cf00ea6c2"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports_pass2/NGKsFileVisionary/report.md",
+      "size": 2489,
+      "mtime_ns": 1773821502307866400,
+      "sha256": "1a7795c80c40677ac5a276b9f437e367f69f57c1aea98919d225857bec52939f"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports_pass2/NGKsGraph/report.md",
+      "size": 2380,
+      "mtime_ns": 1773821506728702300,
+      "sha256": "aa0cd8131a94949db9e7c32744993e443ce141348b5e60cb857cff27a874c3a7"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports_pass2/NGKsMediaLab/report.md",
+      "size": 2641,
+      "mtime_ns": 1773821511356430900,
+      "sha256": "b792421dc43ce4c419ee25a95a54bfcc075476a4fe8dea7aecbeb40ca049dbb5"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports_pass2/NGKsPlayerNative/report.md",
+      "size": 2475,
+      "mtime_ns": 1773821514936373600,
+      "sha256": "56799b75938078316224458ac25b78eae96afc81966076d26509dad3d92342a6"
+    },
+    {
+      "path": "_cert_work_20260318_110011/repo_reports_pass2/NGKsUI_Runtime/report.md",
+      "size": 2451,
+      "mtime_ns": 1773821518227940500,
+      "sha256": "43f26859640ea2da992dd3d11c43002242385f5571c868be75f74beacde0c28b"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/docs/CUSTODY_POLICY.txt",
+      "size": 2718,
+      "mtime_ns": 1774253942819219400,
+      "sha256": "3c07fb012b27a5b1c67ef9ee997c0fcace8d6d9cb4b5fa322576108774e0bcd3"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/docs/GATE_SEMANTICS.txt",
+      "size": 5081,
+      "mtime_ns": 1774253942819219400,
+      "sha256": "0c3996e084bba1aef2b9e6e032241edeea0b49fd825cc3c694ddc1e3d3fee46e"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/docs/PROOF_LIFECYCLE.txt",
+      "size": 5678,
+      "mtime_ns": 1774253942819219400,
+      "sha256": "033abe28c1aaffb480b3f13b5332ac88834d06a5022a9ff3c5bb7085df6d18fd"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/FAILURE_GUIDE.txt",
+      "size": 5267,
+      "mtime_ns": 1774253942819219400,
+      "sha256": "21b8d26a0bea9cf3c320fd08e2ee13e085d083914ab48b2c0f934178ec85b5c6"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/PREREQS.txt",
+      "size": 2988,
+      "mtime_ns": 1774253942818222600,
+      "sha256": "84dfe330b8f358034f62c021d2f5d9a10da151d85b15bb59ca98f77e9df77632"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/QUICKSTART.txt",
+      "size": 2506,
+      "mtime_ns": 1774253942817220100,
+      "sha256": "98237171ddfb14f874abe9f00f71e2846f04c19d8f191edad4cd3d92ec6e71b3"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/README.txt",
+      "size": 2695,
+      "mtime_ns": 1774253942817220100,
+      "sha256": "c63a500636b60d3930f572ca9ffb70c2ce61c09471adc331ff266a99739f6d5e"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/run.ps1",
+      "size": 12647,
+      "mtime_ns": 1774253942820223500,
+      "sha256": "50c41f1fdaeaa40f962151ecdb0d10e84f31d957109da1fec29b2dde4600c732"
+    },
+    {
+      "path": "_temp_deploy/devfabeco_release_bundle_test/tools/check_prereqs.ps1",
+      "size": 1706,
+      "mtime_ns": 1774253942820223500,
+      "sha256": "3c737a3874eb1cd6952287ce0ac794a59fa9a6281cd2553cd5d2bfdf808cf7b1"
+    },
+    {
       "path": "Canonical_Decision_Envelope_Spec_Lock_Answers.md",
       "size": 11130,
       "mtime_ns": 1773580911566949400,
       "sha256": "895aa6828fc2cfe496e1e55c0c6b04d08afebeaf5a63e3369f44cd8b19c107cb"
+    },
+    {
+      "path": "certification/baseline_v1/baseline_manifest.json",
+      "size": 366,
+      "mtime_ns": 1773656451675649400,
+      "sha256": "5aee847eb37fa33b7ae473ba8aa788433b949803fd6637c4c170e6005d571158"
+    },
+    {
+      "path": "certification/baseline_v1/baseline_matrix.json",
+      "size": 551,
+      "mtime_ns": 1773656451677512300,
+      "sha256": "49375ba47a18ab48c22b1401cf552483884ba8f2b38569fd325abd918d2e2857"
+    },
+    {
+      "path": "certification/baseline_v1/diagnostic_metrics.json",
+      "size": 345,
+      "mtime_ns": 1773656451677512300,
+      "sha256": "84bb3480401c508b40b72f9086a51092ba724261c586c7e0074f24fd83112abc"
+    },
+    {
+      "path": "certification/scenario_index.json",
+      "size": 450,
+      "mtime_ns": 1773656451675649400,
+      "sha256": "e01213dc1eb379d2b4d49bdbad6dc51152615cff6e973c912008ae6c44d5f4f3"
     },
     {
       "path": "certification_gate_policy.json",
@@ -3528,10 +4500,16 @@
       "sha256": "cbbb2e1cde3200861238de827da7af76dab29a7b85891f8531a0f0eff30fb881"
     },
     {
+      "path": "certification_target.json",
+      "size": 615,
+      "mtime_ns": 1773656451675649400,
+      "sha256": "e95c5ce4f855aec02e4e033c25b0dce746fe4aaa9f2cfb0721e42c256890b565"
+    },
+    {
       "path": "certification_workflow.md",
-      "size": 4344,
-      "mtime_ns": 1773381450823087300,
-      "sha256": "d5163de5b678bb650ff45bfb55fcf99d8834247ab871f32fd44b7e35e73d7f0f"
+      "size": 5361,
+      "mtime_ns": 1774251387681696200,
+      "sha256": "174eed9e9a34b7e88a79a41f09ceaeb7a4585678e8011ea7bf68810d9dd0a58d"
     },
     {
       "path": "ci_pipeline_snippet.ps1",
@@ -3546,46 +4524,628 @@
       "sha256": "d5564942e0929fa4959a3b2eda929eb4fca775764bb689ab29e110c306ff864d"
     },
     {
-      "path": "DEFERRED_ITEMS.md",
+      "path": "dataset/current_state_check.txt",
+      "size": 14536,
+      "mtime_ns": 1773924814646402300,
+      "sha256": "5d657c902d977ad1ce14d1bab44f0cbbb377e4c14d09903a3cc080bfbe1c4337"
+    },
+    {
+      "path": "dataset/s6_baseline_test.json",
+      "size": 2181,
+      "mtime_ns": 1773918528395783600,
+      "sha256": "1865f1f5d359bad83be9c6009e3a123215673fa34dbae642fc703636c0ef2123"
+    },
+    {
+      "path": "dataset/scenario_001_baseline_stable/change_description.txt",
+      "size": 894,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "ee9c2d3ee4638665328111011946f2887ec5bbe5acbeaa7ddc498ec16620690f"
+    },
+    {
+      "path": "dataset/scenario_001_baseline_stable/commands.txt",
+      "size": 480,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "7f0575425188d237d1d3f672977b91eb2aaefe782f11cae6ae71f7111cce89a9"
+    },
+    {
+      "path": "dataset/scenario_001_baseline_stable/result.json",
+      "size": 484,
+      "mtime_ns": 1773918878159994100,
+      "sha256": "d45fddc52a856a8774117ca33e26c63455ffed57a087b2a021c241b8f99d6d45"
+    },
+    {
+      "path": "dataset/scenario_001_baseline_stable/scenario.json",
+      "size": 481,
+      "mtime_ns": 1773918878159994100,
+      "sha256": "a9aff77eb0359c8492d81680f4dcfd9abd1eefc1172a7a26e1436df0a2c3b1ce"
+    },
+    {
+      "path": "dataset/scenario_002_break_src_glob/change_description.txt",
+      "size": 1447,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "1e3c12ad1fbadfc5ce964d8cb2359947105ebe2672be688bfa77095c7ecd52f3"
+    },
+    {
+      "path": "dataset/scenario_002_break_src_glob/commands.txt",
+      "size": 778,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "d49b10ee26e0dcadc1d19cc9dd4475ac052f10fe4ece9ef5a08dde516e569d4c"
+    },
+    {
+      "path": "dataset/scenario_002_break_src_glob/result.json",
+      "size": 594,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "d2b061bbe70587a65c761396ec965c3bbb78c569a20d28d6ea2d6f45fc2d039f"
+    },
+    {
+      "path": "dataset/scenario_002_break_src_glob/scenario.json",
+      "size": 868,
+      "mtime_ns": 1773918878283709900,
+      "sha256": "49394cfb42a3aeee271a04b8db37808676bb9594fb708dfda169080150dda313"
+    },
+    {
+      "path": "dataset/scenario_003_missing_qt_capability/change_description.txt",
+      "size": 1534,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "5a845f205190d683a2d28e1ae4f53776715b4f23eabce131201c449d951f2936"
+    },
+    {
+      "path": "dataset/scenario_003_missing_qt_capability/commands.txt",
+      "size": 778,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "e2d5492378a096b4e864876876d347eb4959fc81f468d85818fe56b15a38422d"
+    },
+    {
+      "path": "dataset/scenario_003_missing_qt_capability/result.json",
+      "size": 613,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "043cc5ec7b613044c6df39b9f8f3267d3bc8267f0b4e3e68b30d33890cd19e63"
+    },
+    {
+      "path": "dataset/scenario_003_missing_qt_capability/scenario.json",
+      "size": 821,
+      "mtime_ns": 1773918878284710800,
+      "sha256": "98b802c96ed5cd3387d132e79d267341d25b30d7fd5dc46abd7ad3561435bbe1"
+    },
+    {
+      "path": "dataset/scenario_004_invalid_profile/change_description.txt",
+      "size": 1881,
+      "mtime_ns": 1773918878290710500,
+      "sha256": "aed12e8d9ca1dd99741c36404d76f204755c520be5386c67580add60db5e6b45"
+    },
+    {
+      "path": "dataset/scenario_004_invalid_profile/commands.txt",
+      "size": 871,
+      "mtime_ns": 1773918878291711200,
+      "sha256": "1b82a70f998a2a810a381036160a36defe7cc1706e943c2862d99b424903c871"
+    },
+    {
+      "path": "dataset/scenario_004_invalid_profile/result.json",
+      "size": 573,
+      "mtime_ns": 1773931560722398000,
+      "sha256": "e3a048e174dae4006c548e72e372c221c2271277de49c84ff1341da3163cec85"
+    },
+    {
+      "path": "dataset/scenario_004_invalid_profile/scenario.json",
+      "size": 765,
+      "mtime_ns": 1773931560722398000,
+      "sha256": "228d99b3750b17b252db9f879963f8eec76a6be088a811326bcf3cad982c2c75"
+    },
+    {
+      "path": "dataset/scenario_005_external_repo_stable/change_description.txt",
+      "size": 1666,
+      "mtime_ns": 1773918878291711200,
+      "sha256": "8c895e02b9c3054d34ab0393a96746b199d610fa94c554c385ec3f249d2b9429"
+    },
+    {
+      "path": "dataset/scenario_005_external_repo_stable/commands.txt",
+      "size": 794,
+      "mtime_ns": 1773918878292712800,
+      "sha256": "1ecc4d5937d67c4f7616591a3d5580477a55df412f6f29fc9bb59350465e440b"
+    },
+    {
+      "path": "dataset/scenario_005_external_repo_stable/result.json",
+      "size": 600,
+      "mtime_ns": 1773918878291711200,
+      "sha256": "dcaf6a882fae50b4665602ff7163b2af9c4225e37be67f3fd8683600143c09f5"
+    },
+    {
+      "path": "dataset/scenario_005_external_repo_stable/scenario.json",
+      "size": 792,
+      "mtime_ns": 1773918878291711200,
+      "sha256": "b28358291fac406c6adcce15860104fc3e7521889aea99662a907c63da042f4b"
+    },
+    {
+      "path": "dataset/scenario_006_profile_missing/_raw_output.txt",
+      "size": 1477,
+      "mtime_ns": 1773925091351444800,
+      "sha256": "a5a455b6c1bb4bf7cfff695571707d4313c3bbe1f3968df4f8314da52b1b8530"
+    },
+    {
+      "path": "dataset/scenario_006_profile_missing/change_description.txt",
+      "size": 990,
+      "mtime_ns": 1773926083018436100,
+      "sha256": "08b78de8828255681088b9410b3a0fd2d4504de9c83c43d6e4dce66867de7179"
+    },
+    {
+      "path": "dataset/scenario_006_profile_missing/commands.txt",
+      "size": 1146,
+      "mtime_ns": 1773926083018436100,
+      "sha256": "d16bf926b667c8f69ab8ce57c70b2e55d957bc6e2549f3cfdc8ae9ad6481c0d8"
+    },
+    {
+      "path": "dataset/scenario_006_profile_missing/result.json",
+      "size": 764,
+      "mtime_ns": 1773931560723394700,
+      "sha256": "83e4d4ab2ba631dc0ddea2afe465c113c69e613ce592c48d14eb52308117a483"
+    },
+    {
+      "path": "dataset/scenario_006_profile_missing/scenario.json",
+      "size": 879,
+      "mtime_ns": 1773931560723394700,
+      "sha256": "0cdbb4446960863868caac03a3025a58246fecd4f94267ddd1b5d1997c84b8b4"
+    },
+    {
+      "path": "dataset/scenario_007_improvement_detection/_raw_output.txt",
+      "size": 2232,
+      "mtime_ns": 1773925158737246600,
+      "sha256": "34ebf6fa1c7727b363cf45f0e123a8dbf426eb58e8eaa31172fc9f954cdf6186"
+    },
+    {
+      "path": "dataset/scenario_007_improvement_detection/change_description.txt",
+      "size": 1102,
+      "mtime_ns": 1773926083029438700,
+      "sha256": "8c28623061e3acff36228436fa5828481f931916b07963772b4f258465827f30"
+    },
+    {
+      "path": "dataset/scenario_007_improvement_detection/commands.txt",
+      "size": 1154,
+      "mtime_ns": 1773926083063440400,
+      "sha256": "2b582fba2c5309f71147b78f583baee80a1dd01a9125484fac0562a753585d4f"
+    },
+    {
+      "path": "dataset/scenario_007_improvement_detection/result.json",
+      "size": 788,
+      "mtime_ns": 1773926083102440800,
+      "sha256": "62780183fa21ef5aae3fdbf84bcc08153c3ad786d9de348278f875a2808c77ff"
+    },
+    {
+      "path": "dataset/scenario_007_improvement_detection/scenario.json",
+      "size": 993,
+      "mtime_ns": 1773926083018436100,
+      "sha256": "7a792e61dbd291189a998372dfa2f8a9ade9b57b068c146758b4758a58d6dab4"
+    },
+    {
+      "path": "dataset/scenario_008_tier_contract_violation/_raw_output.txt",
+      "size": 2250,
+      "mtime_ns": 1773925528944826400,
+      "sha256": "4597473fd21e550b72db240f5b31c9fc90651dfdcd0e88af5199b4ede4524d39"
+    },
+    {
+      "path": "dataset/scenario_008_tier_contract_violation/change_description.txt",
+      "size": 1100,
+      "mtime_ns": 1773926941367232100,
+      "sha256": "67a73665253c43dcf545b33c10b828aacd3032b0d2a4ff25ea833fbf39e6fc07"
+    },
+    {
+      "path": "dataset/scenario_008_tier_contract_violation/commands.txt",
+      "size": 1230,
+      "mtime_ns": 1773926941367232100,
+      "sha256": "9b7dc16528d6b1c1075ca149175dd3a03403d22a5c3a0a7ae5ee785998c33639"
+    },
+    {
+      "path": "dataset/scenario_008_tier_contract_violation/result.json",
+      "size": 864,
+      "mtime_ns": 1773931560723394700,
+      "sha256": "b43a11779b201323cf23ae4da1dfea00adc82d92c47bbb9db130855ae471b2d4"
+    },
+    {
+      "path": "dataset/scenario_008_tier_contract_violation/scenario.json",
+      "size": 1030,
+      "mtime_ns": 1773931560723394700,
+      "sha256": "a2f1184c336957004fd8feca8aac5926ed9f740de1574bb4c84f46080850e836"
+    },
+    {
+      "path": "dataset/scenario_009_tier1_configure_na/_raw_output.txt",
+      "size": 2251,
+      "mtime_ns": 1773925568297622100,
+      "sha256": "70e546bbef516a8a7c6be410cd4ad62381e7aa8acd81ee0f9e1749f8802256df"
+    },
+    {
+      "path": "dataset/scenario_009_tier1_configure_na/change_description.txt",
+      "size": 1131,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "640f7fabae4f8ca356e518e043267768c20d6dfaee11f5d427417d39f5f79ddf"
+    },
+    {
+      "path": "dataset/scenario_009_tier1_configure_na/commands.txt",
+      "size": 1260,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "e72d80c6f251403a10b64a789de8ab76c4b733a9c548797c59fc53f616f2a12c"
+    },
+    {
+      "path": "dataset/scenario_009_tier1_configure_na/result.json",
+      "size": 594,
+      "mtime_ns": 1773931560724397100,
+      "sha256": "e581281fef780005a019197bc1199884e48a9b29e19fa481ae3064e28a17f512"
+    },
+    {
+      "path": "dataset/scenario_009_tier1_configure_na/scenario.json",
+      "size": 968,
+      "mtime_ns": 1773931560724397100,
+      "sha256": "1d8f101a06e6d18d92eaf549b32df5bea638476c5d5be16ba075c97b3dad0565"
+    },
+    {
+      "path": "dataset/scenario_010_external_dependency_version_bump/_raw_output.txt",
+      "size": 797,
+      "mtime_ns": 1773925670013919300,
+      "sha256": "f9a2cdabd93249407f86f90a100485d0db6966ac5d6f463db20ddde2f413e298"
+    },
+    {
+      "path": "dataset/scenario_010_external_dependency_version_bump/change_description.txt",
+      "size": 1182,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "b64c8b1a06190f3a8ec3c5f654b98ce7e12f814a95feee8caea786ca32aba681"
+    },
+    {
+      "path": "dataset/scenario_010_external_dependency_version_bump/commands.txt",
+      "size": 1033,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "82871234a1de75b10f6daa3e06b0d7a67b4529db2f5502ffcd7609441b5da88b"
+    },
+    {
+      "path": "dataset/scenario_010_external_dependency_version_bump/result.json",
+      "size": 660,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "174f66ebd42a6741600104ecda69a4b7739c105fe6c27393a93f4b22e227ec87"
+    },
+    {
+      "path": "dataset/scenario_010_external_dependency_version_bump/scenario.json",
+      "size": 850,
+      "mtime_ns": 1773926941373880400,
+      "sha256": "71782f2627cb40b11515a83afb8f4d598737a8c27bd150df6b682d8b5e8fb66c"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/change_description.txt",
+      "size": 517,
+      "mtime_ns": 1773931560726393600,
+      "sha256": "85b05957afb4914526805636bfc4f358511d1b652ac1d5384eafe15ca709f742"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/commands.txt",
+      "size": 630,
+      "mtime_ns": 1773931560726393600,
+      "sha256": "d3da828090ea07674a52df5dd8b83e8cb9efebbcb1a4de2cfcde1f70d5d94112"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/consistency_summary.txt",
+      "size": 89,
+      "mtime_ns": 1773930683431143500,
+      "sha256": "6b9646f84ddcf684f68d9f5ab6e7aa8b2c8c3451aec8116cbce66ea0b31b551d"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/result.json",
+      "size": 433,
+      "mtime_ns": 1773931560726393600,
+      "sha256": "a26a2f8c137f38c8d29ca79c974fcd7d088d8e4f27579895065775cc57d39665"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/run1_raw.txt",
+      "size": 799,
+      "mtime_ns": 1773930562398896100,
+      "sha256": "89fa93dacb3e282905a41283e47c1697ec1f603cd10d5f77e24f8d44df670169"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/run2_raw.txt",
+      "size": 799,
+      "mtime_ns": 1773930633995512000,
+      "sha256": "6cbe25a9aeac6b763d0ace714f260d708197d8bbe68beb66346e54c23be7226b"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/run3_raw.txt",
+      "size": 799,
+      "mtime_ns": 1773930488940079500,
+      "sha256": "46407356e1fb7ef45ae928612ed72be772b21d8775886de5e5af89503007c5fd"
+    },
+    {
+      "path": "dataset/scenario_011_repeatability/scenario.json",
+      "size": 563,
+      "mtime_ns": 1773931560724397100,
+      "sha256": "071b09675975aee98362bab479f0cc2319e924a24d2a43a5ad8b558205a16b14"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/_raw_output.txt",
+      "size": 9834,
+      "mtime_ns": 1773930735135456500,
+      "sha256": "1a396223e2147c243c09f8f66d1cab3f7d4418f8f24e3cdf335dae2e269160e1"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/change_description.txt",
+      "size": 639,
+      "mtime_ns": 1773931560728772000,
+      "sha256": "92f2e4dac4dc0150a1dc4f54cdab94b99b9ab7bd8dedfe569d6d98052f35a059"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/commands.txt",
+      "size": 823,
+      "mtime_ns": 1773931560728772000,
+      "sha256": "cb1edc7342b07b723bb1a98ddcb0cbbf8cd8078a04574f1a1a10c2d86e132da1"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/impact_summary.txt",
+      "size": 67,
+      "mtime_ns": 1773930735141454200,
+      "sha256": "f478e98e2d7d41212881bdd27150a703442926e5e1f1da4a28bd0baae4ad5602"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/repo_manifest.backup.json",
+      "size": 7874,
+      "mtime_ns": 1773925598700808500,
+      "sha256": "758789e6dbcba5aea8f7652a48b7613860249976ab1e767e9f8f2197a92d8e72"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/result.json",
+      "size": 590,
+      "mtime_ns": 1773931560726393600,
+      "sha256": "7356d21fe1886957004a913b775001d414a3586f1907274e03215a9744968e40"
+    },
+    {
+      "path": "dataset/scenario_012_cross_repo_toolchain_impact/scenario.json",
+      "size": 587,
+      "mtime_ns": 1773931560726393600,
+      "sha256": "f2f7d5dfdd11cf7101e6da9d0edd9c83943e6f0f3c13d29ba0d60bddf56e117c"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/certify_raw.txt",
+      "size": 2266,
+      "mtime_ns": 1773930817090143700,
+      "sha256": "3830ccd919b9e23245f9e583f8efdff65ee550dd4f77c716fde1363b3f8d9344"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/change_description.txt",
+      "size": 568,
+      "mtime_ns": 1773931560731092500,
+      "sha256": "43a4c0453099e4ed4df488a5c06bed959622e80f512fea8b48fc93b97b45d098"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/commands.txt",
+      "size": 815,
+      "mtime_ns": 1773931560731092500,
+      "sha256": "2fce2082d0936603d6695d9449667fde99625dd189a91ad6f4b84b73a0babec4"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/malformed_summary.txt",
+      "size": 25,
+      "mtime_ns": 1773930817095146900,
+      "sha256": "7afd6dde4d3a032389078b9fc7da9dcee06ac86a4f403ce1b6246f07ca89f859"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/result.json",
+      "size": 581,
+      "mtime_ns": 1773931560728772000,
+      "sha256": "c87fa3592128f4ddd4bb6ee9c77f4cc3fe48e1455cbf37e2e81b2d416409ff6d"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/run_raw.txt",
+      "size": 1160,
+      "mtime_ns": 1773930763918288900,
+      "sha256": "2186be873102eb2a6dce48fd7e425b389bfc322e5a23605adf3af01d238f5c77"
+    },
+    {
+      "path": "dataset/scenario_013_malformed_config/scenario.json",
+      "size": 529,
+      "mtime_ns": 1773931560728772000,
+      "sha256": "3df53ab5f79946f4a1e3b0c99d1db4b02b0849a7d78ee137c4470c4a10337fdb"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/change_description.txt",
       "size": 606,
-      "mtime_ns": 1773435842118191100,
-      "sha256": "28a24ffd30251f1d662148d1efee783b4de9c59e6627319ce317ea947bbabe1c"
+      "mtime_ns": 1773931560732333500,
+      "sha256": "d2cdeb514bdddbd3fb43ae1f4fddf8e171476677bc5618e43c20eb9058271705"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/commands.txt",
+      "size": 777,
+      "mtime_ns": 1773931560732333500,
+      "sha256": "882904a095a6e63cfa0207f6131f104991f9f7225a53ff0874e02f0869d7786f"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/partial_dependency_summary.txt",
+      "size": 47,
+      "mtime_ns": 1773930857166259100,
+      "sha256": "c74813810b49df0f5000d2ae3aabc85721df734462836fd115acdf0c3747b485"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/result.json",
+      "size": 463,
+      "mtime_ns": 1773931560732333500,
+      "sha256": "9f6829e5baec35998c8fa08911c18334586308bb4cd4bd713488aa6363a0fb10"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/run_raw.txt",
+      "size": 1186,
+      "mtime_ns": 1773930857161258000,
+      "sha256": "798ce8977fe893ac218a3e166fdfdac09ca99823688c3f3d8afa3a4f2ef005be"
+    },
+    {
+      "path": "dataset/scenario_014_partial_dependency/scenario.json",
+      "size": 548,
+      "mtime_ns": 1773931560731092500,
+      "sha256": "539f53a15ca3a2fe37e1308ab41dad9e1036b6cfd2dd147ed8bfb906037ddf33"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/_raw_output.txt",
+      "size": 799,
+      "mtime_ns": 1773930959213421700,
+      "sha256": "8f11c9467c786f4365f65bd81684878556ca671d7ecc9b61d3a987748e509188"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/change_description.txt",
+      "size": 446,
+      "mtime_ns": 1773931560732333500,
+      "sha256": "62f10bb49d702841d73b5a6e7058469f813f7c43491a10c8dcbbc78925e0c825"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/commands.txt",
+      "size": 560,
+      "mtime_ns": 1773931560733504100,
+      "sha256": "de0a75df412f115a480df99895fb54c96e1f78271775f2e106c2d768fa79460b"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/result.json",
+      "size": 347,
+      "mtime_ns": 1773931560732333500,
+      "sha256": "b7366827327d60dd65d22fce5ea5620165f8e4173c93cb6c7e3fa33b5b4ac3da"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/scenario.json",
+      "size": 447,
+      "mtime_ns": 1773931560732333500,
+      "sha256": "893e35255a51356ead0397fab0f0ca2dda41196db9b28b811dd162ef99f8fd1e"
+    },
+    {
+      "path": "dataset/scenario_015_nondeterministic_guard/timestamp_guard_summary.txt",
+      "size": 33,
+      "mtime_ns": 1773930959214422300,
+      "sha256": "647982154630410fb33e4d5cda581e55adde7a0eabfaf93650e7a08a9911e1eb"
+    },
+    {
+      "path": "dataset/test.txt",
+      "size": 6,
+      "mtime_ns": 1773918531850040700,
+      "sha256": "ab97320113e5e735ff9279af0a7132d751bbfebea07258c9e38aabbefe4312b6"
+    },
+    {
+      "path": "DEFERRED_ITEMS.md",
+      "size": 783,
+      "mtime_ns": 1773754821812233500,
+      "sha256": "58254ff2773797e552d55b7c35e6bd29ae95dd8caefa5d8e9787e3115ac90528"
     },
     {
       "path": "devfabeco_history/components/component_regression_stats.json",
-      "size": 24,
-      "mtime_ns": 1773601328944498300,
-      "sha256": "91b16931ce87574ecdb1b2b7d2765a244177ee30858b97ef2c1493382992aca4"
+      "size": 236,
+      "mtime_ns": 1773690281165586000,
+      "sha256": "d11b9dd001ef0945e4b5eb39ad2a1034ca816de63a1ae03a3594ac68fcc370e2"
     },
     {
       "path": "devfabeco_history/regressions/regression_fingerprints.json",
-      "size": 18,
-      "mtime_ns": 1773601328943498000,
-      "sha256": "bc4e79720219f061278c91f7e2782d951eede5e508fc5f833fffa946341c6327"
+      "size": 391,
+      "mtime_ns": 1773690281164585800,
+      "sha256": "f43322db9f1568f596ee69ff38ba1626301c2a7f0999f1e7349909d186be0148"
+    },
+    {
+      "path": "devfabeco_history/regressions/regression_index.json",
+      "size": 468,
+      "mtime_ns": 1773690281164585800,
+      "sha256": "d32ad150128b2e07fa272776e5f5e49a8ca1ea7b91f0c47ce6d101f06f00755a"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000001.json",
+      "size": 324,
+      "mtime_ns": 1773655332958181000,
+      "sha256": "03c58bcf213f62aebee04fe630dbd44f43bcf63a7a525fbf0f76c995b47ea105"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000002.json",
+      "size": 324,
+      "mtime_ns": 1773655340516707200,
+      "sha256": "51022a3dc5bc374e136cc93b2c726f402d8d59542098b90ec400aac33db98242"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000003.json",
+      "size": 324,
+      "mtime_ns": 1773655348913098400,
+      "sha256": "3c12e8f31eae1164c0ab179c0b3e08adfd272fb87407c056840493210b2d9b5f"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000004.json",
+      "size": 324,
+      "mtime_ns": 1773655373154573200,
+      "sha256": "b8f10fd4d86de09c09ff636736330419aaf341588040bdb2b6547f8fa42efe55"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000005.json",
+      "size": 324,
+      "mtime_ns": 1773655450045093000,
+      "sha256": "615b12cd058bddd8aec123c2f83d9e645bab756b564f95bc777976122b68b6a6"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000006.json",
+      "size": 316,
+      "mtime_ns": 1773687734708085000,
+      "sha256": "544e5e1a031afc84937193dcf814710496f8a305aaf819aaebe9b4b3eb51b4cb"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000007.json",
+      "size": 344,
+      "mtime_ns": 1773687735457493800,
+      "sha256": "d055091021d3c0293dc2c6b9cf4bac86b34915fa9f2801cd63d2dddbfea6e387"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000008.json",
+      "size": 329,
+      "mtime_ns": 1773687736656528500,
+      "sha256": "df6cd23b855d6d5b7fdcdab7bcc791620f6d57824f9f95c99b44183fdab8b6c4"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000009.json",
+      "size": 327,
+      "mtime_ns": 1773687737325291300,
+      "sha256": "bb76da610e005dbf752381ce6110dd0db0915019de097ce75c1773e629612200"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000010.json",
+      "size": 316,
+      "mtime_ns": 1773690277163094400,
+      "sha256": "a8ee2c4474c219b238d179f2791672c6fd804453d5c6beff980d547205e08c92"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000011.json",
+      "size": 344,
+      "mtime_ns": 1773690277980211700,
+      "sha256": "bd02502eb1ef698929b4972d911323cff010ee1030a942c88f82657428b9b887"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000012.json",
+      "size": 329,
+      "mtime_ns": 1773690279284679500,
+      "sha256": "1bdc09d73327e4ada9670c6c056ffb7a630465976d97b8e8369b61528896ad3b"
+    },
+    {
+      "path": "devfabeco_history/runs/run_000013.json",
+      "size": 327,
+      "mtime_ns": 1773690281163586300,
+      "sha256": "6099a98a02070435be0a897f7cb7d4d999cd37cf5f7be0dd61060d8bd1ab7c74"
+    },
+    {
+      "path": "devfabeco_history/summary/history_summary.md",
+      "size": 194,
+      "mtime_ns": 1773690281166585500,
+      "sha256": "f60bcab4d6307fd22ba68253e6fe26594243487c3c080f65a54f61fcda378f7f"
     },
     {
       "path": "env_capsule.hash.txt",
       "size": 65,
-      "mtime_ns": 1773629805405047100,
-      "sha256": "f5d8fbb232b9e9c78cf71f946f9f23c3be5c8dbe39f9aea8e48583203dcba3f0"
+      "mtime_ns": 1774256194031250600,
+      "sha256": "06353a2bf5f3c55da1ba2c420a7d446a37296176fa22af328acb56440b01ea76"
     },
     {
       "path": "env_capsule.lock.json",
-      "size": 485,
-      "mtime_ns": 1773629805402160600,
-      "sha256": "c969f377c730f02cfedbc35a71cc247e4917ec9645910c62f7c747a9a2d7269b"
+      "size": 429,
+      "mtime_ns": 1774256194028938300,
+      "sha256": "e3be45b4aa015615ba46d9af38737ecd2047a2a4fee0ee49ac05f8a2b5875cbc"
     },
     {
       "path": "env_capsule.resolved.hash.txt",
       "size": 65,
-      "mtime_ns": 1773629805202532100,
-      "sha256": "f5d8fbb232b9e9c78cf71f946f9f23c3be5c8dbe39f9aea8e48583203dcba3f0"
+      "mtime_ns": 1774256193722586700,
+      "sha256": "06353a2bf5f3c55da1ba2c420a7d446a37296176fa22af328acb56440b01ea76"
     },
     {
       "path": "env_capsule.resolved.json",
-      "size": 485,
-      "mtime_ns": 1773629805188530900,
-      "sha256": "c969f377c730f02cfedbc35a71cc247e4917ec9645910c62f7c747a9a2d7269b"
+      "size": 429,
+      "mtime_ns": 1774256193699386600,
+      "sha256": "e3be45b4aa015615ba46d9af38737ecd2047a2a4fee0ee49ac05f8a2b5875cbc"
     },
     {
       "path": "external_status_sync.json",
@@ -3613,9 +5173,15 @@
     },
     {
       "path": "install_ngksdevfabeco.ps1",
-      "size": 9635,
-      "mtime_ns": 1773434422250612300,
-      "sha256": "d5b2ff55273d57d395cef3067eb67799fe1cea493edbeabd83a9992da8029df2"
+      "size": 20641,
+      "mtime_ns": 1774199961346255400,
+      "sha256": "4bbe93f48981518dd48e51653cb4939301fc33b94a28734f5e462c15af0a0c29"
+    },
+    {
+      "path": "LICENSE.md",
+      "size": 1087,
+      "mtime_ns": 1773740925920448700,
+      "sha256": "18c98650cdbfd6541fdda12b3c32dac9164e1b9d67f82ec4258c0e4c62e07c4a"
     },
     {
       "path": "NGKsBuildCore/artifacts/hello/hello.txt",
@@ -3656,19 +5222,19 @@
     {
       "path": "NGKsBuildCore/ngksbuildcore.egg-info/dependency_links.txt",
       "size": 1,
-      "mtime_ns": 1773511040713870300,
+      "mtime_ns": 1774254218807327800,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
       "path": "NGKsBuildCore/ngksbuildcore.egg-info/SOURCES.txt",
       "size": 568,
-      "mtime_ns": 1773511040730040600,
+      "mtime_ns": 1774254218842643200,
       "sha256": "79579c09bef6e2db47ad9b1724554bc07ef4e878c419003122e3b827ca14e5cf"
     },
     {
       "path": "NGKsBuildCore/ngksbuildcore.egg-info/top_level.txt",
       "size": 14,
-      "mtime_ns": 1773511040713870300,
+      "mtime_ns": 1774254218808325900,
       "sha256": "3a37d964e76a28de9dbfd4db197f0cd49605b635c3f1730ade2c7200409f7f57"
     },
     {
@@ -3727,9 +5293,9 @@
     },
     {
       "path": "NGKsBuildCore/ngksbuildcore/runner.py",
-      "size": 16630,
-      "mtime_ns": 1773200515161638700,
-      "sha256": "025308f9816a22df638a56e7db709ba8756170d2a2e539309674f37199e6cc21"
+      "size": 17238,
+      "mtime_ns": 1773754821811232200,
+      "sha256": "64a1c44ec19b5b6aabd69a111b083c13ae6fe713d93ef338354e0da238e325b7"
     },
     {
       "path": "NGKsBuildCore/ngksbuildcore/scheduler.py",
@@ -3746,8 +5312,8 @@
     {
       "path": "NGKsBuildCore/pyproject.toml",
       "size": 466,
-      "mtime_ns": 1773200515160339500,
-      "sha256": "8ea112003257b4fff088920d5e1609d4fa3d339a0a7ab2d2779360a16d68e673"
+      "mtime_ns": 1774193755719598300,
+      "sha256": "bffb48444faf47e42274e17809e822b75fb94d1ee45872a071038ca36f8b4699"
     },
     {
       "path": "NGKsBuildCore/README.md",
@@ -3776,25 +5342,25 @@
     {
       "path": "ngksdevfabeco.egg-info/dependency_links.txt",
       "size": 1,
-      "mtime_ns": 1773424624887243200,
+      "mtime_ns": 1774204132067399800,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
       "path": "ngksdevfabeco.egg-info/requires.txt",
       "size": 100,
-      "mtime_ns": 1773424624891243900,
-      "sha256": "e8019b258273120d1bda71bdc533ede7f5a2418e6a9c0450424cdd8cd5bf5c00"
+      "mtime_ns": 1774204132067399800,
+      "sha256": "ff5a84868ab670ad0fbe00c8139e3c5eb654564fd5a4864f6337281d11ecf5ec"
     },
     {
       "path": "ngksdevfabeco.egg-info/SOURCES.txt",
-      "size": 251,
-      "mtime_ns": 1773424624961198000,
-      "sha256": "d0596b3e2a25cecd26614f464ff7d5c76500766705ea0cca083e3a1cdda4a88e"
+      "size": 280,
+      "mtime_ns": 1774204132076786400,
+      "sha256": "a25171b3acba3ed12b75ac5d576d29de1db421f423ac10ff2cf867cc7048c1b6"
     },
     {
       "path": "ngksdevfabeco.egg-info/top_level.txt",
       "size": 1,
-      "mtime_ns": 1773424624892241700,
+      "mtime_ns": 1774204132067399800,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
@@ -3907,9 +5473,9 @@
     },
     {
       "path": "NGKsDevFabric/pyproject.toml",
-      "size": 649,
-      "mtime_ns": 1773511847334768800,
-      "sha256": "cac693b377bd1852e94a71054d9df3ab9920eace5a601cd2833b5315a9474d9a"
+      "size": 679,
+      "mtime_ns": 1774199961333923600,
+      "sha256": "729ea7ae5890d520cfeb2c5aaf83285c557b9c4bdf1883806828f459f784dfa9"
     },
     {
       "path": "NGKsDevFabric/README.md",
@@ -3990,6 +5556,24 @@
       "sha256": "369d958f526c41f21f5d2f61e8bd04f41149e69993c141aeb8a174e0d1c11a49"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_bootstrap_generator.py",
+      "size": 16963,
+      "mtime_ns": 1773663101304709300,
+      "sha256": "8b63ce021c186600ebce1a0eb914c295ad7ccda1073283266851f327bbd37b62"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_bootstrap_schema.json",
+      "size": 5658,
+      "mtime_ns": 1773663101316037400,
+      "sha256": "14983639169ab334ed53457d19cb9913083c0610007a0188cc0ce1957c3098ac"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_bootstrap_templates.py",
+      "size": 9037,
+      "mtime_ns": 1773663101304709300,
+      "sha256": "90a720d1c692ecbecc517b76ae7359c0db617c893115c9c05fbc8bb71afd9575"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_compatibility.py",
       "size": 13991,
       "mtime_ns": 1773381450824087100,
@@ -4002,16 +5586,46 @@
       "sha256": "48f51a72bb6f8960e1f09c0bf69536df15fd17878e85f7500472d70a472f84ee"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_enforcement.py",
+      "size": 7375,
+      "mtime_ns": 1774256302970909000,
+      "sha256": "e190d7943217c3cef5f5342b3056c9adde13303ed841a09bcc95c89a3d3fa74f"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_policy_schema.json",
+      "size": 1261,
+      "mtime_ns": 1773689727677944200,
+      "sha256": "260ae93052b2fdb6b9b9b3857bfb258f959dcd16973de460b593b8b853f34dce"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_policy_surface.py",
+      "size": 3571,
+      "mtime_ns": 1773689727677944200,
+      "sha256": "9d0f624b4aa862b2daada744540fae2f9c35666ac1416955198cf8e62639c8a7"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_rollup.py",
       "size": 24608,
       "mtime_ns": 1773421726038846900,
       "sha256": "0e351222f11189dad4e022b6be19eb9f056bc074683c0dd5e265219acde4d06a"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_status.py",
+      "size": 11385,
+      "mtime_ns": 1773672348794939700,
+      "sha256": "5a01d88ce4e4533b3a4bf72927ca91c7061fb5de733d4b1d5665f6a1888228b0"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certification_target.py",
       "size": 19641,
       "mtime_ns": 1773409216103325200,
       "sha256": "3c8a14f8440c1877adfaac7517a534fa32128a2bb09be3e1aaa23101488aa8d1"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certify_baseline.py",
+      "size": 14929,
+      "mtime_ns": 1773899586962391800,
+      "sha256": "5e85949175b05965f0afabe36dc7fac0baa88676d7c74d1408043c0b6523faa2"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/certify_compare.py",
@@ -4177,9 +5791,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/main.py",
-      "size": 151161,
-      "mtime_ns": 1773566904263778700,
-      "sha256": "a5a8ad41657c172723d2f8d28372f0446ecd192b6e4450552c4316578c938682"
+      "size": 211906,
+      "mtime_ns": 1774256302954700300,
+      "sha256": "128bbb83172f8f27cee673c1bddfdf805ae968fa3da566712547fda727f3e412"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/memory_usage_validation.py",
@@ -4254,6 +5868,12 @@
       "sha256": "db1f79721f7a878403019ce599d2cab223fa7403d481a3224e07f719c967a7af"
     },
     {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/project_health.py",
+      "size": 30668,
+      "mtime_ns": 1773733885445180800,
+      "sha256": "82a3af46bbd05b82b786ad2975c9c70f4fca23b2f619bcaf52c9ef1c53e41b9c"
+    },
+    {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/proof_contract.py",
       "size": 11147,
       "mtime_ns": 1772479682738591800,
@@ -4294,6 +5914,12 @@
       "size": 20333,
       "mtime_ns": 1773468912243547300,
       "sha256": "16064cd5430936ec588c2156950b05fe61ed8e6b9c41cbf7c9816d535a8e826d"
+    },
+    {
+      "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/release_gate.py",
+      "size": 5405,
+      "mtime_ns": 1773899586997849300,
+      "sha256": "1377d248b9dc2a7fd044a43b60d72738a8f7e6df1747389fa2e086da5150395a"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/remediation_guidance.py",
@@ -4351,9 +5977,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/runwrap.py",
-      "size": 60838,
-      "mtime_ns": 1773564050334968600,
-      "sha256": "ee017a8f342d1b42b391e72c2e9643fa54d607462173c8ebaa614f7c97a5d10f"
+      "size": 86335,
+      "mtime_ns": 1774199961348321400,
+      "sha256": "2adca52e236a418d92a39dd5b6fbb6b74b33de4f3801d9b7ab10c1d9c4379ccc"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/security_misconfiguration_validation.py",
@@ -4388,13 +6014,13 @@
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_orchestrator.py",
       "size": 17671,
-      "mtime_ns": 1773635256603706700,
+      "mtime_ns": 1773637160459394700,
       "sha256": "a767f7a0d42aa33482e88ea11667862b82c09f8308a55262e2ebb18d1a5a3e84"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_planner.py",
       "size": 22767,
-      "mtime_ns": 1773635247613669900,
+      "mtime_ns": 1773637160459394700,
       "sha256": "b0dd610962c9ef1a9bc260766e33a6ba9352b58d9191391c6d3200afd4d61073"
     },
     {
@@ -4435,9 +6061,9 @@
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/validation_rerun_pipeline.py",
-      "size": 14723,
-      "mtime_ns": 1773599153001275400,
-      "sha256": "381c22cf66e9b73ebcbdff4cfd62edbd4959091199d9b80f6c19985eec4a3946"
+      "size": 15970,
+      "mtime_ns": 1773720865732385400,
+      "sha256": "94d5d9b9fd0c7e49ec2019cb6fddda5c098d8c616dc024e7903037bd8c1382e9"
     },
     {
       "path": "NGKsDevFabric/src/ngksdevfabric/ngk_fabric/workflow_recommendation.py",
@@ -4468,6 +6094,12 @@
       "size": 3692,
       "mtime_ns": 1773381450825086900,
       "sha256": "43496561ff398cff09289c50d9bc561e5ea3d1d9d913eb1e681a029bd17c987a"
+    },
+    {
+      "path": "NGKsDevFabric/tests/test_certify_baseline.py",
+      "size": 29088,
+      "mtime_ns": 1773890844087012500,
+      "sha256": "8f243d322037d816e1006133a76b56f2966c9b0427ccd48d36ae89768e7aa83b"
     },
     {
       "path": "NGKsDevFabric/tests/test_certify_compare.py",
@@ -4606,6 +6238,12 @@
       "size": 11506,
       "mtime_ns": 1773468912259726700,
       "sha256": "b7c4ddd0fb1e6cd337312d495fe9715d3863bca20a3968e3a7002ea2d42681ee"
+    },
+    {
+      "path": "NGKsDevFabric/tests/test_release_gate.py",
+      "size": 18759,
+      "mtime_ns": 1773899586998508900,
+      "sha256": "9b041150dc7f67a211d6a0865e7c16537966e87eb2d4be6c5696b09f37cf3b35"
     },
     {
       "path": "NGKsDevFabric/tests/test_remediation_guidance.py",
@@ -4832,8 +6470,8 @@
     {
       "path": "NGKsEnvCapsule/pyproject.toml",
       "size": 490,
-      "mtime_ns": 1773132508578861400,
-      "sha256": "4393b312e8a23edebb8453659dec4e8473feff50cbddd9d1b4f3140eba0d41ee"
+      "mtime_ns": 1774193755719598300,
+      "sha256": "82692116677c13b7967766f5e0fa5f4fbc802581c8ccccd2c647255938785aa3"
     },
     {
       "path": "NGKsEnvCapsule/README.md",
@@ -4844,31 +6482,31 @@
     {
       "path": "NGKsEnvCapsule/src/ngksenvcapsule.egg-info/dependency_links.txt",
       "size": 1,
-      "mtime_ns": 1773138427906059200,
+      "mtime_ns": 1774191325316516800,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
       "path": "NGKsEnvCapsule/src/ngksenvcapsule.egg-info/entry_points.txt",
       "size": 59,
-      "mtime_ns": 1773138427908207900,
+      "mtime_ns": 1774191325318525700,
       "sha256": "17aea7782b244fe98f7fe8cd586b69e8c0c38ab84d839fa636ccdeeafc467d75"
     },
     {
       "path": "NGKsEnvCapsule/src/ngksenvcapsule.egg-info/requires.txt",
       "size": 19,
-      "mtime_ns": 1773138427909208900,
+      "mtime_ns": 1774191325318525700,
       "sha256": "1bf92ca7d0f5aba8bd4af86d83147377d1a78583407fca2ca2ed6bce03bea29b"
     },
     {
       "path": "NGKsEnvCapsule/src/ngksenvcapsule.egg-info/SOURCES.txt",
       "size": 1211,
-      "mtime_ns": 1773138427942953200,
+      "mtime_ns": 1774191325330489500,
       "sha256": "fd2edf58faf7687200c5bf216a8cf2c6247a4edc44858d87dbc692c70a07ed64"
     },
     {
       "path": "NGKsEnvCapsule/src/ngksenvcapsule.egg-info/top_level.txt",
       "size": 15,
-      "mtime_ns": 1773138427910408900,
+      "mtime_ns": 1774191325318525700,
       "sha256": "62d5bc5304a9e5bd0b03d83f952c9ed1d7717e0b1f34a246da5d47bd8c6f9ba0"
     },
     {
@@ -5044,6 +6682,30 @@
       "size": 73300,
       "mtime_ns": 1773509012563665500,
       "sha256": "4cfd115a753861c6ac48f7ee12de7daba11b185ea9a14101dc20754353647166"
+    },
+    {
+      "path": "NGKsGraph/.ngksgraph_cache/cache_version.txt",
+      "size": 1,
+      "mtime_ns": 1773753501384745100,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+    },
+    {
+      "path": "NGKsGraph/.ngksgraph_cache/profile_debug/plan.json",
+      "size": 954,
+      "mtime_ns": 1773753501384745100,
+      "sha256": "15e19478586be53c7ae22ef5cdf7c2f3f0067c17db93530ba761e3de50d638f9"
+    },
+    {
+      "path": "NGKsGraph/.ngksgraph_cache/profile_debug/plan_key.json",
+      "size": 575,
+      "mtime_ns": 1773753501384745100,
+      "sha256": "7bbda2ba1df32c3eead789870cb766dbbcc41a80ee4883d550c4bedca2fdb002"
+    },
+    {
+      "path": "NGKsGraph/.ngksgraph_cache/profile_debug/scan_fingerprint.json",
+      "size": 133,
+      "mtime_ns": 1773753501384745100,
+      "sha256": "cfa45601fb68630f026ee43101b58ce97d73226c07038250a9a1fe6a06d09152"
     },
     {
       "path": "NGKsGraph/.ngkssys/sessions/b08e4941-9f61-48f7-aed9-7b1b0aacfc9b/baseline.json",
@@ -5802,6 +7464,66 @@
       "sha256": "3b537652f5993b49f1ce0faad890a879223983b55c91a9cdaf7ccbcc2eea7346"
     },
     {
+      "path": "NGKsGraph/build_graph/debug/ngksbuildcore_plan.json",
+      "size": 1240,
+      "mtime_ns": 1773851780304933300,
+      "sha256": "0e750a96c293fe7676acd78af679573a2d6b05c454ef50d65a19ad102a8cc0b9"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/ngksgraph_plan.json",
+      "size": 1719,
+      "mtime_ns": 1773851779271217900,
+      "sha256": "3a2cace168053aaf4034ac4f84e95359b763292c6248779486cd58c8a5165f9c"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/10_target_spec.json",
+      "size": 672,
+      "mtime_ns": 1773851780297975500,
+      "sha256": "bc237e977c374f2ff5723e84c9fe0a40921cf25215a0d90b1c22fea8bb347ab3"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/11_capability_inventory.json",
+      "size": 1799,
+      "mtime_ns": 1773851780298955000,
+      "sha256": "35fd1c3a8881602a1c8d6c8c6dab680fb086ccfc809c229e1f9db4527892912f"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/12_required_vs_available.json",
+      "size": 2443,
+      "mtime_ns": 1773851780299954900,
+      "sha256": "c7defc6c03cf1c8aa28f4bc22a91c9c9d482f570bf0030f1219bf645c97cd5fe"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/13_capability_conflicts.json",
+      "size": 33,
+      "mtime_ns": 1773851780300949600,
+      "sha256": "67e8b6dac74e960fcd75db28d1469adfc6904d371f07efe7d680c9366d435f53"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/14_resolution_report.json",
+      "size": 2604,
+      "mtime_ns": 1773851780300949600,
+      "sha256": "392929fec81111ea51f26232089725fe9931c0fc7b6bf080e714442391ccc22e"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/15_build_plan_resolution_context.json",
+      "size": 335,
+      "mtime_ns": 1773851780301952500,
+      "sha256": "10cfb47492e551052e75f9ab1473b5236180beaf5006bd66c2ce115d041db88d"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/16_fix_recommendations.json",
+      "size": 33,
+      "mtime_ns": 1773851780301952500,
+      "sha256": "67e8b6dac74e960fcd75db28d1469adfc6904d371f07efe7d680c9366d435f53"
+    },
+    {
+      "path": "NGKsGraph/build_graph/debug/resolution/17_resolution_summary.md",
+      "size": 272,
+      "mtime_ns": 1773851780302956000,
+      "sha256": "a0e6ec0e263e42d907c2c66a9910bc20ab050e41f60e4a6fcc86bae453bcc581"
+    },
+    {
       "path": "NGKsGraph/env_capsule.hash.txt",
       "size": 65,
       "mtime_ns": 1773509014915342900,
@@ -5854,6 +7576,60 @@
       "size": 85,
       "mtime_ns": 1773561632406207100,
       "sha256": "993264544d753c457ac57226c45467cedf018188703a2d764eba035eb51525fd"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/ngksbuildcore_plan.json",
+      "size": 1125,
+      "mtime_ns": 1774189643748883400,
+      "sha256": "751cab6c5fc7096d784a44973c9e1b0a76d0c917a93d32fe7d4114ba2e0abd3b"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/10_target_spec.json",
+      "size": 650,
+      "mtime_ns": 1774189643737883400,
+      "sha256": "d125de9c26c99f27ef546b8c26d7589182269fff24ed2e77ca9a0f9961493bda"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/11_capability_inventory.json",
+      "size": 1799,
+      "mtime_ns": 1774189643738882700,
+      "sha256": "35fd1c3a8881602a1c8d6c8c6dab680fb086ccfc809c229e1f9db4527892912f"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/12_required_vs_available.json",
+      "size": 2443,
+      "mtime_ns": 1774189643739882100,
+      "sha256": "c7defc6c03cf1c8aa28f4bc22a91c9c9d482f570bf0030f1219bf645c97cd5fe"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/13_capability_conflicts.json",
+      "size": 33,
+      "mtime_ns": 1774189643740882000,
+      "sha256": "67e8b6dac74e960fcd75db28d1469adfc6904d371f07efe7d680c9366d435f53"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/14_resolution_report.json",
+      "size": 2605,
+      "mtime_ns": 1774189643741880800,
+      "sha256": "e5b4b2647d956c357a4fec06b0aa1ae4146df0e063fa7ba2dfe91cc7a489d4db"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/15_build_plan_resolution_context.json",
+      "size": 336,
+      "mtime_ns": 1774189643742881300,
+      "sha256": "e25ce0ce0f3666b4da8f768303a3b35706fdd3dcea94977832df25e0ec10c50b"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/16_fix_recommendations.json",
+      "size": 33,
+      "mtime_ns": 1774189643743885200,
+      "sha256": "67e8b6dac74e960fcd75db28d1469adfc6904d371f07efe7d680c9366d435f53"
+    },
+    {
+      "path": "NGKsGraph/examples/hello_msvc/build_graph/default/resolution/17_resolution_summary.md",
+      "size": 273,
+      "mtime_ns": 1774189643745882600,
+      "sha256": "b001c517ccdf81eae9a6e5d589fe8aa3cd046e77152bcaa8c1fb4f99d4b18a85"
     },
     {
       "path": "NGKsGraph/examples/hello_msvc/env_capsule.hash.txt",
@@ -5942,32 +7718,32 @@
     {
       "path": "NGKsGraph/ngksgraph.egg-info/dependency_links.txt",
       "size": 1,
-      "mtime_ns": 1773511031444813400,
+      "mtime_ns": 1774254244269691300,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
       "path": "NGKsGraph/ngksgraph.egg-info/entry_points.txt",
       "size": 49,
-      "mtime_ns": 1773511031445812300,
+      "mtime_ns": 1774254244270687200,
       "sha256": "049bf0369bb518e38efbb2b8918d16475e8d1ea9d811c9cb103650712c43ef14"
     },
     {
       "path": "NGKsGraph/ngksgraph.egg-info/SOURCES.txt",
-      "size": 4920,
-      "mtime_ns": 1773511031465052100,
-      "sha256": "b1611dd089f5bac3e96113e4db7f8b67ee4c98a93cbd6aafc3876b1b98cdd8ea"
+      "size": 5127,
+      "mtime_ns": 1774254244518991600,
+      "sha256": "e7dfa5e73c82206f4bbfd8fc0557c8ca1ff8a2847bce11e8087309adf19aff35"
     },
     {
       "path": "NGKsGraph/ngksgraph.egg-info/top_level.txt",
       "size": 10,
-      "mtime_ns": 1773511031446811700,
+      "mtime_ns": 1774254244271691900,
       "sha256": "83f839328d809a6d0c6252f54c631356711245853b0765ba5b4428df0b93b50a"
     },
     {
       "path": "NGKsGraph/ngksgraph.toml",
-      "size": 424,
-      "mtime_ns": 1772198086713298300,
-      "sha256": "9184af867ed8479a1dd82b4478f206345ca3b8a623a90c2baf5439eb7d046461"
+      "size": 387,
+      "mtime_ns": 1773843366644373500,
+      "sha256": "0fe5c67734c176db44823c174a7ab70e13cff5dcbcf46459b52e50e33496a24a"
     },
     {
       "path": "NGKsGraph/ngksgraph/__init__.py",
@@ -6008,7 +7784,7 @@
     {
       "path": "NGKsGraph/ngksgraph/build.py",
       "size": 47344,
-      "mtime_ns": 1773028023399071900,
+      "mtime_ns": 1773836281119380500,
       "sha256": "9c7f648d683e3ee1a71e393aa2c95d22f528ff15c2bf913b7db072d7a13f0ac8"
     },
     {
@@ -6019,9 +7795,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/capability/capability_detector.py",
-      "size": 5487,
-      "mtime_ns": 1773511847342764700,
-      "sha256": "b35153c11e9aea5067091e641642479ed91563a362ba739d7785c00ee7080ae3"
+      "size": 6657,
+      "mtime_ns": 1774235976022240700,
+      "sha256": "5cabe696e9e5dfdc5161b031e4e5f6c078969459fd454eda0c8d93519f0965fa"
     },
     {
       "path": "NGKsGraph/ngksgraph/capability/capability_inventory.py",
@@ -6067,9 +7843,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/cli.py",
-      "size": 64177,
-      "mtime_ns": 1773511847334768800,
-      "sha256": "769528a808ce837a03ffa6b051675f7ef1e3a96e30cdcefdcdb5dfa79d3a7b8a"
+      "size": 136083,
+      "mtime_ns": 1774174757552717000,
+      "sha256": "9f8af3a60c749e27d88354d6b780ab7d9c53982e18fded77a5f0413f299e1ffa"
     },
     {
       "path": "NGKsGraph/ngksgraph/compdb.py",
@@ -6085,9 +7861,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/config.py",
-      "size": 19805,
-      "mtime_ns": 1772794279335634900,
-      "sha256": "834cf68f5780e32e75fc270cee003ded1df553c023f0757627d950939a0b404d"
+      "size": 21516,
+      "mtime_ns": 1773836281119380500,
+      "sha256": "b77949b00e2d027de6d59e1f046bf45d3b2ceb8d4604f1e6e9c470e5ca83b55b"
     },
     {
       "path": "NGKsGraph/ngksgraph/contradiction/__init__.py",
@@ -6235,9 +8011,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/forensics.py",
-      "size": 21927,
-      "mtime_ns": 1772794279337365300,
-      "sha256": "ee6896a19c27108ec546f48eb953bac0a08e41947c1090a95b191b7922bf7ca6"
+      "size": 22751,
+      "mtime_ns": 1773754821812233500,
+      "sha256": "ec43ed78c065b446f8eb43d6f12e7e3eb8450fa2ffbfd73ead2889348bb997a9"
     },
     {
       "path": "NGKsGraph/ngksgraph/graph.py",
@@ -6295,9 +8071,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/msvc.py",
-      "size": 8405,
-      "mtime_ns": 1773029221757861300,
-      "sha256": "a41bb3ed4294502eef4169465d5b2f63569abea4cb6d319195fffa0071adcaba"
+      "size": 9031,
+      "mtime_ns": 1774190794702344500,
+      "sha256": "fba318169dafac48bf52a5cf881831acaaa8673559187058bdb725c122c874d1"
     },
     {
       "path": "NGKsGraph/ngksgraph/plan/__init__.py",
@@ -6397,15 +8173,15 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/proof.py",
-      "size": 4043,
-      "mtime_ns": 1772425473646016800,
-      "sha256": "a11afcd90a496de09ad9ffe8f2042a3bd6e28d4d6a0c77fb64c1b5c883a4bfcd"
+      "size": 6419,
+      "mtime_ns": 1773806225865713700,
+      "sha256": "a64f56f959bbd75afae9b1b6139f4da9bd92319e92e8de7675f508dbaba2e94c"
     },
     {
       "path": "NGKsGraph/ngksgraph/qt.py",
-      "size": 16154,
-      "mtime_ns": 1772178883736189800,
-      "sha256": "183596e09c666f35299576ce84f85960828df1b54e8609d73e9da4e3cc7ed350"
+      "size": 16247,
+      "mtime_ns": 1774202958743260900,
+      "sha256": "6c234a2e0bad62359f86d9309c8a9df90310c9562180ce1df957b78bbb17edb4"
     },
     {
       "path": "NGKsGraph/ngksgraph/repair.py",
@@ -6415,9 +8191,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/repo_classifier.py",
-      "size": 22554,
-      "mtime_ns": 1772991260219711900,
-      "sha256": "c45c8649f09703bf1ded370e76b87eb171a6085d6d89448b0e3c41034d2c0be1"
+      "size": 27892,
+      "mtime_ns": 1774202958732889900,
+      "sha256": "e6a00ae82698ed1453dba9814d24701f99c208bc734e06c5c1f634a8b7ee18a0"
     },
     {
       "path": "NGKsGraph/ngksgraph/resolver/__init__.py",
@@ -6570,6 +8346,12 @@
       "sha256": "a68d03a1915e0905e541bb90bb37aa6e06e6430b82f39b7b76769bcb2dd19a9a"
     },
     {
+      "path": "NGKsGraph/ngksgraph/target_drift_detector.py",
+      "size": 15439,
+      "mtime_ns": 1774154437197470000,
+      "sha256": "74ad22cfe1653510910f9be2a39077796896140554866d5187e17e30e5a47858"
+    },
+    {
       "path": "NGKsGraph/ngksgraph/targetspec/__init__.py",
       "size": 179,
       "mtime_ns": 1773511847338764700,
@@ -6577,9 +8359,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/targetspec/canonical_target_spec.py",
-      "size": 2554,
-      "mtime_ns": 1773511847339767700,
-      "sha256": "a8952767d4c098da8af9d194372584d55b7e930e8f5565ecf9be193bd394528d"
+      "size": 3387,
+      "mtime_ns": 1774202958743260900,
+      "sha256": "61ab282bba8326b92e5af4cbba92d0cfd89730c1c0432bf62982569f9b763fcd"
     },
     {
       "path": "NGKsGraph/ngksgraph/targetspec/target_spec_loader.py",
@@ -6613,9 +8395,9 @@
     },
     {
       "path": "NGKsGraph/ngksgraph/templates/qt_app_ngksgraph.toml",
-      "size": 993,
-      "mtime_ns": 1772991260219711900,
-      "sha256": "79980dbe519ab952f4834877adea35e24804b6e3a32207709829902c8bc83706"
+      "size": 1048,
+      "mtime_ns": 1774202701467092100,
+      "sha256": "b0ea7d8548c52da8ed15adbc39b5457295e01f8cd4572c13ced67c0e9a805638"
     },
     {
       "path": "NGKsGraph/ngksgraph/toolchain.py",
@@ -6636,10 +8418,70 @@
       "sha256": "189f6e9b714afafb147f72aec327a783a9a1c31cf7076d7824f58f86b61c3266"
     },
     {
+      "path": "NGKsGraph/proofs/LATEST_NGKSGRAPH_PROOF_DIR.txt",
+      "size": 87,
+      "mtime_ns": 1773753501627299600,
+      "sha256": "91206a38d6ee9feaeb15747805f63dd961fdd24d66d159cde5185dc0abec1481"
+    },
+    {
+      "path": "NGKsGraph/proofs/LATEST_NGKSGRAPH_PROOF_ZIP.txt",
+      "size": 91,
+      "mtime_ns": 1773753501628312400,
+      "sha256": "d1ad420c964e660e3af38f324f04a80075f103b97fcf0c3b07091c4a5bc4f0cd"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/command_line.txt",
+      "size": 55,
+      "mtime_ns": 1773753501243587100,
+      "sha256": "d5c85039d4d2779cfa9f9af10c18acf8c8d2442c324b6399c61edb2c69f81e08"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/cwd.txt",
+      "size": 60,
+      "mtime_ns": 1773753501256362600,
+      "sha256": "5865ffcac0cb7f1738ecb6476902b02c32d6d7076e86d98589c7ac2a55199bab"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/git_rev_parse_head.txt",
+      "size": 42,
+      "mtime_ns": 1773753501555951900,
+      "sha256": "34dbec9c7cbb6e1fe1ea26de676166346ecafb8301e588bb37ae099baa65a005"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/git_status.txt",
+      "size": 95,
+      "mtime_ns": 1773753501556946800,
+      "sha256": "e4e1450845a32e4d4ad7a0a6a15524b7e426e5760e497f9f01572ac5b397830d"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/python_path.txt",
+      "size": 86,
+      "mtime_ns": 1773753501243587100,
+      "sha256": "1e9ab1799d1c7abdeac67ddc42a942e4cb92c6015379f25567d6a4e67f2904a8"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/RUN_SUMMARY.md",
+      "size": 422,
+      "mtime_ns": 1773753501557946900,
+      "sha256": "dbc2cca62309ff23c0fd6f4d71a1aa2c479b159947698a0cdfd6559f026ebdc4"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/stderr.txt",
+      "size": 0,
+      "mtime_ns": 1773753501264000000,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "NGKsGraph/proofs/latest_ngksgraph_run/stdout.txt",
+      "size": 221,
+      "mtime_ns": 1773753501449626600,
+      "sha256": "718123002366c247dbff00e8f05be84c3521767e2a854acdec0bb36bd1f78d5d"
+    },
+    {
       "path": "NGKsGraph/pyproject.toml",
       "size": 543,
-      "mtime_ns": 1773200515160339500,
-      "sha256": "af17fbd887bfaff361ed54b71829938f306894d139ad3e24be108437aac98aa6"
+      "mtime_ns": 1774193755719598300,
+      "sha256": "ff311bd9168314b0ba1ada5dcb9394461f5a1b1475ec7c369c75bfcaf70df150"
     },
     {
       "path": "NGKsGraph/QUICKSTART.md",
@@ -6673,9 +8515,9 @@
     },
     {
       "path": "NGKsGraph/templates/qt_app_ngksgraph.toml",
-      "size": 960,
-      "mtime_ns": 1772172355868618700,
-      "sha256": "80795e9c59cc2401ef16c7e840ac19d82af00fc3704fb889d4e8d5952c7e1197"
+      "size": 1015,
+      "mtime_ns": 1774202701467092100,
+      "sha256": "04a3a0f860bd946514bfc45a39cf5f0a8f20442be8bb2e8bd9ba384a9031f7ee"
     },
     {
       "path": "NGKsGraph/tests/__init__.py",
@@ -6718,6 +8560,12 @@
       "size": 2458,
       "mtime_ns": 1772994847798986700,
       "sha256": "a71e3254c80280b060ae4ec58e5b5f3efe7d439a9d563d5f797461674b9e620a"
+    },
+    {
+      "path": "NGKsGraph/tests/test_capability_derivation.py",
+      "size": 10097,
+      "mtime_ns": 1774202958744629300,
+      "sha256": "502da9a7a04b7cfa51bb6698ecefda7f34b69400f0d11cca9abb3af52bf9e080"
     },
     {
       "path": "NGKsGraph/tests/test_capsule_deterministic_zip.py",
@@ -6763,9 +8611,15 @@
     },
     {
       "path": "NGKsGraph/tests/test_config.py",
-      "size": 1749,
-      "mtime_ns": 1772088678003837800,
-      "sha256": "b0c6b934d5f5080331758ec90f06bdd0930e2df2fd52e331a4c1a130165ff53b"
+      "size": 3538,
+      "mtime_ns": 1773770392265230300,
+      "sha256": "d4c43010f1de3e7d795648878359b2aec61bfd55717df107881f0f698dd3e973"
+    },
+    {
+      "path": "NGKsGraph/tests/test_config_cli_error_surface.py",
+      "size": 1391,
+      "mtime_ns": 1773770392268230400,
+      "sha256": "6929683a709002c42f6522df860616ec3f1c79bb3ce3c690a3c0dc9a8da2ef0d"
     },
     {
       "path": "NGKsGraph/tests/test_config_multitarget_parse.py",
@@ -6835,9 +8689,9 @@
     },
     {
       "path": "NGKsGraph/tests/test_init_repo_classifier.py",
-      "size": 6011,
-      "mtime_ns": 1772991260219711900,
-      "sha256": "1947e5c96951c6f17de1a07e267d14588dc303265e4f2fa1d080a960eb4a62be"
+      "size": 6926,
+      "mtime_ns": 1774202701480411400,
+      "sha256": "fe67e5b6266c0e97ca0bcd35eb58a7b9c2b1986fd18f94b233897d95eb694467"
     },
     {
       "path": "NGKsGraph/tests/test_msvc_auto_report.py",
@@ -6882,6 +8736,12 @@
       "sha256": "afedf6b1a2cb50cb8af74a0ff67463502aad559a9ca605b8b81d6cd47abf97d0"
     },
     {
+      "path": "NGKsGraph/tests/test_profile_contract.py",
+      "size": 2247,
+      "mtime_ns": 1773836281119380500,
+      "sha256": "eab6b93240a54c7ca9d3a5e5456e1267cecdbc331f103dece7c2be61f2ca6a5e"
+    },
+    {
       "path": "NGKsGraph/tests/test_profiles_cli_gates.py",
       "size": 1199,
       "mtime_ns": 1772135472968031400,
@@ -6898,6 +8758,18 @@
       "size": 3845,
       "mtime_ns": 1772134773846961800,
       "sha256": "bdf74a78f13351375f34fe9cae62b76cd1d713a2454f58c682d76e407489887d"
+    },
+    {
+      "path": "NGKsGraph/tests/test_proof_artifacts.py",
+      "size": 2672,
+      "mtime_ns": 1773806225866709500,
+      "sha256": "c7d47b3456a432a90c16949872ad40219b0e4616732a7a4695064eee81097c63"
+    },
+    {
+      "path": "NGKsGraph/tests/test_proof_root_resolution.py",
+      "size": 1375,
+      "mtime_ns": 1773806225865713700,
+      "sha256": "9a4d5d5242e65a3140b26fc2c6ace6408e2d4588fed515d23e36c1acfe4d9c6a"
     },
     {
       "path": "NGKsGraph/tests/test_qt_capsule_verify.py",
@@ -7068,91 +8940,97 @@
       "sha256": "7424d2d0e4dfa10b9692e238a15948c2e0c971166fefd1641324a18319e0a306"
     },
     {
-      "path": "NGKsLibrary/ngksdocengine/__init__.py",
+      "path": "NGKsGraph_Codebase_Analysis.md",
+      "size": 17236,
+      "mtime_ns": 1774118606253761300,
+      "sha256": "9ab1f210e0ee74d4a08b2b39287593eeca06abe53ac7d63c046cbba6779a9755"
+    },
+    {
+      "path": "ownership/NGKsLibrary/ngksdocengine/__init__.py",
       "size": 20,
       "mtime_ns": 1772478878555188500,
       "sha256": "79cf0b8cd52cf48cd57957b4383e12007473c589118f1e7bdec77f509d1f7946"
     },
     {
-      "path": "NGKsLibrary/ngksdocengine/__main__.py",
+      "path": "ownership/NGKsLibrary/ngksdocengine/__main__.py",
       "size": 139,
       "mtime_ns": 1772737011169256300,
       "sha256": "5f6cfc8aad7f553e632257ebbc63f8ab55e86848f08d80c3f68d1507d01eb1d8"
     },
     {
-      "path": "NGKsLibrary/ngkslibrary.egg-info/dependency_links.txt",
+      "path": "ownership/NGKsLibrary/ngkslibrary.egg-info/dependency_links.txt",
       "size": 1,
-      "mtime_ns": 1773138437958439800,
+      "mtime_ns": 1774191333032994500,
       "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
-      "path": "NGKsLibrary/ngkslibrary.egg-info/entry_points.txt",
+      "path": "ownership/NGKsLibrary/ngkslibrary.egg-info/entry_points.txt",
       "size": 58,
-      "mtime_ns": 1773138437959920500,
+      "mtime_ns": 1774191333033996200,
       "sha256": "1c076fcbecc27a2379bc2815077b2f2951d03074ff17374f305ffe0378bce226"
     },
     {
-      "path": "NGKsLibrary/ngkslibrary.egg-info/SOURCES.txt",
+      "path": "ownership/NGKsLibrary/ngkslibrary.egg-info/SOURCES.txt",
       "size": 427,
-      "mtime_ns": 1773138437982639200,
+      "mtime_ns": 1774191333042004300,
       "sha256": "d5e925534793234e39154183c0617e06eaf23b467801f4e82d913307041675d7"
     },
     {
-      "path": "NGKsLibrary/ngkslibrary.egg-info/top_level.txt",
+      "path": "ownership/NGKsLibrary/ngkslibrary.egg-info/top_level.txt",
       "size": 26,
-      "mtime_ns": 1773138437961352500,
+      "mtime_ns": 1774191333033996200,
       "sha256": "419ad29d9b6807fb4576e5ac37cbad7263bb8467e7ed0940269769e6467b61d3"
     },
     {
-      "path": "NGKsLibrary/pyproject.toml",
+      "path": "ownership/NGKsLibrary/pyproject.toml",
       "size": 540,
-      "mtime_ns": 1773132508578861400,
-      "sha256": "ddc8bf7073cde32def1b201a92efc65e53077495620a62d8213f281a95bb5171"
+      "mtime_ns": 1774193755731257000,
+      "sha256": "d5b7872eb2a573dff58017d16322428fa7106cc89502fb07ebcb8d61fbb086f5"
     },
     {
-      "path": "NGKsLibrary/README.md",
+      "path": "ownership/NGKsLibrary/README.md",
       "size": 565,
       "mtime_ns": 1772478878555188500,
       "sha256": "fa82ee56251c8b826796d9069ca9e2d9bf348681f2df5036ebaca89308edba65"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/__init__.py",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/__init__.py",
       "size": 52,
       "mtime_ns": 1772737011168256200,
       "sha256": "fed0283d1c479515a79ea6101553c9a93ab4efde33a22687831697000444bd42"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/__main__.py",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/__main__.py",
       "size": 3057,
       "mtime_ns": 1772737011169256300,
       "sha256": "5375c449ba814982e0250c128ec4f6945203dedf17724f07a3edb287b3fe0300"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/docengine/__init__.py",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/docengine/__init__.py",
       "size": 123,
       "mtime_ns": 1772737011169256300,
       "sha256": "ce707b0c321469588e1bd9cfb2303108794838f622fb37483ed225c7e6a5a924"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/docengine/proof_context.py",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/docengine/proof_context.py",
       "size": 1292,
       "mtime_ns": 1772737011170254900,
       "sha256": "9bcd5cef5ce74cce665b71dffd966ce4d698800a68d01002fc4a68f6a2b8cba4"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/docengine/proof_contract.json",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/docengine/proof_contract.json",
       "size": 702,
       "mtime_ns": 1772737011170254900,
       "sha256": "8e04b9d4efa8534a9e5501e1c2eb6091ef610eafaa92ec9b5bbb5340361f90fb"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/docengine/proof_contract.md",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/docengine/proof_contract.md",
       "size": 752,
       "mtime_ns": 1772737011169256300,
       "sha256": "9fc9278bc177f2342bcfeda9a33e4a7b3081287974980bb6defa9fca919dd1f6"
     },
     {
-      "path": "NGKsLibrary/src/ngkslibrary/docengine/report.py",
+      "path": "ownership/NGKsLibrary/src/ngkslibrary/docengine/report.py",
       "size": 2797,
       "mtime_ns": 1772737011170254900,
       "sha256": "498d73103c874af7c0c0613f2e140d52ba3dbaf51678d7718567c8f82267e4ce"
@@ -7166,8 +9044,14 @@
     {
       "path": "pyproject.toml",
       "size": 485,
-      "mtime_ns": 1773434422250612300,
-      "sha256": "cbf08478d805e6f8ce3b7ea0258a09a229b9f2fa74305100f95206154786daaf"
+      "mtime_ns": 1774199961333923600,
+      "sha256": "18338eabd91f3b62b7a1ae387c0ab94a66aa6437ae552959bee4279b87e10a91"
+    },
+    {
+      "path": "README.md",
+      "size": 8689,
+      "mtime_ns": 1774251387681696200,
+      "sha256": "5e3fba92a6d1fd8c586737cf059994b43df58ae0fe6e3efe0df4c70a6e91cac8"
     },
     {
       "path": "RELEASE_NOTES_1.2.0.md",
@@ -7188,10 +9072,40 @@
       "sha256": "3e02307559fa13227b77e677b453c36137c8c7debc99351f228f1c2cf4a76ef2"
     },
     {
+      "path": "tools/_write_certify_hardening_proof.ps1",
+      "size": 7466,
+      "mtime_ns": 1773656451679515400,
+      "sha256": "2c21cc152660e6bd43c09091406282f8cf70e722a0feeb5b50d2509b8d313707"
+    },
+    {
+      "path": "tools/_write_certify_hardening_proof2.ps1",
+      "size": 5461,
+      "mtime_ns": 1773656451679515400,
+      "sha256": "ed0262bdc37f6a77531f29ca0e214c59f600ab6b5abcf2db1f234b8b407a75ea"
+    },
+    {
+      "path": "tools/_write_certify_hardening_proof3.ps1",
+      "size": 5015,
+      "mtime_ns": 1773656451679515400,
+      "sha256": "7f341ba312882e41f3d4077651e3d0606376e952cf1b3de747ba764a3a34b557"
+    },
+    {
+      "path": "tools/_write_certify_hardening_proof4.ps1",
+      "size": 7300,
+      "mtime_ns": 1773656451679515400,
+      "sha256": "def8e12d08f21f316f2bd78cdedb38254a1771dd301b45797dac585462d89d20"
+    },
+    {
       "path": "tools/compose_repair_packet.ps1",
       "size": 9045,
-      "mtime_ns": 1773630002929858000,
+      "mtime_ns": 1773637160459394700,
       "sha256": "18cdd946aaff39adab60eebb119b9e00a0e742f7f82ef3f41912d5b4dafc9274"
+    },
+    {
+      "path": "tools/dev/validate_ngksgraph.ps1",
+      "size": 824,
+      "mtime_ns": 1774190794696490100,
+      "sha256": "7925fed3f8048bed3eaeb5c2ab6eeae703e35fc29cba2ae377b4538b00993f25"
     },
     {
       "path": "tools/make_release_bundle.ps1",
@@ -7200,16 +9114,124 @@
       "sha256": "d5bcb49164f9b99a96694982f3add8184bf7c3dc886aad1f0def53db3e1f3b6c"
     },
     {
+      "path": "tools/migrate_legacy_proof.ps1",
+      "size": 8636,
+      "mtime_ns": 1773813174719329800,
+      "sha256": "4e21b5659aa0f587bf9891928775781d75e06bf777adbe7b366cca3f045cc238"
+    },
+    {
       "path": "tools/normalize_final_contract_reports.ps1",
       "size": 1334,
       "mtime_ns": 1773599153003793200,
       "sha256": "ea22934c5d42b21272a7388a0413233b520ea47978edf31b210ce82eb34ff0d3"
     },
     {
+      "path": "tools/operator/run_devfabeco_validation.ps1",
+      "size": 17208,
+      "mtime_ns": 1774256302955697500,
+      "sha256": "ef390d1c2e5c735a796777b28a51d3214d572e0339204413fe579866078140b6"
+    },
+    {
+      "path": "tools/phase53_2_entrypoint_registry.json",
+      "size": 7728,
+      "mtime_ns": 1773977897654365500,
+      "sha256": "6d80df39236f1d9424e01bc3b672e01078c73c0fbb03af1250dd7f0159e3e517"
+    },
+    {
+      "path": "tools/phase53_2_runtime_seal_enforcer.ps1",
+      "size": 6980,
+      "mtime_ns": 1773977975018944500,
+      "sha256": "96f134475406d0f1eee6058f3fbb9e5a0b2a915eda01f0335ebf2ddaeb3e06b4"
+    },
+    {
+      "path": "tools/phase53_3/phase53_3_baseline_runner.ps1",
+      "size": 4699,
+      "mtime_ns": 1773991679068732100,
+      "sha256": "097178c544af4ba47bea1db22ad8b0ef020d549c29545bb9c5713ccad88de032"
+    },
+    {
+      "path": "tools/phase53_4/phase53_4_tamper_runner.ps1",
+      "size": 8689,
+      "mtime_ns": 1774003601604232500,
+      "sha256": "5cf709d92c3049e9afe844fc76e2eb528b64fa5aed1d3240485213211e3357a9"
+    },
+    {
+      "path": "tools/phase53_5/phase53_5_attack_matrix_runner.ps1",
+      "size": 9926,
+      "mtime_ns": 1774019535612314000,
+      "sha256": "734cd05c4d09ba15a6d8d6e93c6d715aae77fd28420367731516ed8ab3ee233c"
+    },
+    {
+      "path": "tools/phase53_6/phase53_6_drift_gate_runner.ps1",
+      "size": 5987,
+      "mtime_ns": 1774009719774656900,
+      "sha256": "a44226447165b9e0a919933f985fb99e22ef7102c4567d3eab59894eac6df302"
+    },
+    {
+      "path": "tools/phase53_7/phase53_7_noise_immunity_runner.ps1",
+      "size": 16994,
+      "mtime_ns": 1774019535612314000,
+      "sha256": "a38917fe06dbbf11045f5a6e35fc9cc74c1d258cadb59837c3cfd1a509d3d2a1"
+    },
+    {
+      "path": "tools/phase53_8/phase53_8_replay_runner.ps1",
+      "size": 10086,
+      "mtime_ns": 1774019535612314000,
+      "sha256": "7302bb2e610cfa11d97bf33d0ab9498bb73e3c7abf644e4c95604117080726ac"
+    },
+    {
+      "path": "tools/phase53_9/phase53_9_cert_bundle_runner.ps1",
+      "size": 10483,
+      "mtime_ns": 1774024865545315900,
+      "sha256": "b06bc32a617024c64b3d941a8891b951a6418271850c6d1184677891e54baea2"
+    },
+    {
+      "path": "tools/phase53_9A/restore_widget_sandbox_clean.ps1",
+      "size": 5150,
+      "mtime_ns": 1774076144597252100,
+      "sha256": "05c68838ca85c504c4cb6bff51a616b0473f9c7522be48bff3e624810061d777"
+    },
+    {
+      "path": "tools/phase53_9C/capture_clean_widget_sandbox_artifact.ps1",
+      "size": 3910,
+      "mtime_ns": 1774105392038076900,
+      "sha256": "c42cac4c733daa592b6735d15b28bde2007241c8678e3bd0d237288e85fa758a"
+    },
+    {
+      "path": "tools/phase53_9C/verify_clean_widget_sandbox_artifact.ps1",
+      "size": 2993,
+      "mtime_ns": 1774105392038076900,
+      "sha256": "00e8a151a86b923bc4a236f27decebccaee7906c085a7a3edbf557567ddb4dd6"
+    },
+    {
       "path": "tools/prepare_pypi_release.ps1",
       "size": 1448,
       "mtime_ns": 1773058790272813700,
       "sha256": "9ead24a6d84b69d49eaff7990b7b2fdc96bcfddba9bacb30b46ac1d7aed881b7"
+    },
+    {
+      "path": "tools/regression/ngksgraph_regression_gate.ps1",
+      "size": 19514,
+      "mtime_ns": 1774183841001250700,
+      "sha256": "073ed8dfcfad6cccb5f3fd854c34425a58f1b355a41cc5256939851e7f2315a3"
+    },
+    {
+      "path": "tools/regression/qt_consumer_regression_gate.ps1",
+      "size": 11757,
+      "mtime_ns": 1774237331331049100,
+      "sha256": "ec4c28204de71d4394de05d1daba049cb27f4d9da2767eccc24dad2069c6e360"
+    },
+    {
+      "path": "tools/regression/run_ngksgraph_regression_gate.ps1",
+      "size": 3237,
+      "mtime_ns": 1774190794696490100,
+      "sha256": "73137a929dc702433ea7d8d4bad10a11e844a0e47cd3527a8ec879052a2946e3"
+    },
+    {
+      "path": "tools/run_command_path_hardening.ps1",
+      "size": 15395,
+      "mtime_ns": 1773656451669619100,
+      "sha256": "5d392f6ca1024da25c84ea5a4af265f18d89df93848ac009e8a01b2a32cb1838"
     },
     {
       "path": "tools/run_control_plane_repair.ps1",

@@ -1,13 +1,13 @@
 {
   "capsule_version": 1,
-  "generated_utc": "2026-03-16T04:29:44Z",
+  "generated_utc": "2026-03-23T09:03:07Z",
   "host": {
     "arch": "x64",
     "os": "windows"
   },
   "runtimes": {
     "python": {
-      "exe": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\.venv\\Scripts\\python.exe",
+      "exe": "C:\\Python313\\python.exe",
       "version": "3.13.5"
     }
   },

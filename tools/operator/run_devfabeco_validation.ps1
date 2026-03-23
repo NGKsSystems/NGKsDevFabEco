@@ -28,6 +28,56 @@ $gateStderr = Join-Path $operatorProof "gate_stderr.txt"
 $resultJsonName = "operator_gate_results.json"
 $resultJsonPath = Join-Path $gateProof $resultJsonName
 
+$certProof = Join-Path $operatorProof "certification_enforcement"
+New-Item -ItemType Directory -Force -Path $certProof | Out-Null
+$certStatusPath = Join-Path $certProof "certification_status.json"
+$certReportPath = Join-Path $certProof "certification_report.txt"
+$certArgList = @("-m", "ngksdevfabric", "certification-enforce", "--project", $ProjectRoot, "--pf", $certProof)
+$certProc = Start-Process -FilePath "python" -ArgumentList $certArgList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $gateStdout -RedirectStandardError $gateStderr
+$certExit = [int]$certProc.ExitCode
+
+if (-not (Test-Path $certStatusPath) -and (Test-Path $gateStdout)) {
+    $certOut = Get-Content -Path $gateStdout -Raw
+    $statusMatch = [regex]::Match($certOut, "certification_status_json=(.+)")
+    if ($statusMatch.Success) {
+        $resolvedStatusPath = $statusMatch.Groups[1].Value.Trim()
+        if (-not [string]::IsNullOrWhiteSpace($resolvedStatusPath) -and (Test-Path $resolvedStatusPath)) {
+            $certStatusPath = $resolvedStatusPath
+        }
+    }
+
+    $reportMatch = [regex]::Match($certOut, "certification_report_txt=(.+)")
+    if ($reportMatch.Success) {
+        $resolvedReportPath = $reportMatch.Groups[1].Value.Trim()
+        if (-not [string]::IsNullOrWhiteSpace($resolvedReportPath) -and (Test-Path $resolvedReportPath)) {
+            $certReportPath = $resolvedReportPath
+        }
+    }
+}
+
+$certificationBlocked = $certExit -ne 0
+$certificationFailureSummary = "none"
+if ($certificationBlocked) {
+    if (Test-Path $certStatusPath) {
+        try {
+            $certData = Get-Content -Path $certStatusPath -Raw | ConvertFrom-Json
+            $blockCodes = @($certData.findings | Where-Object { $_.severity -eq "BLOCK" } | ForEach-Object { [string]$_.code })
+            if (($blockCodes | Measure-Object).Count -gt 0) {
+                $certificationFailureSummary = ($blockCodes | Sort-Object -Unique) -join "; "
+            }
+            else {
+                $certificationFailureSummary = "certification_enforcement_blocked"
+            }
+        }
+        catch {
+            $certificationFailureSummary = "certification_enforcement_parse_error"
+        }
+    }
+    else {
+        $certificationFailureSummary = "certification_enforcement_status_missing"
+    }
+}
+
 $argList = @(
     "-ExecutionPolicy", "Bypass",
     "-File", $gateScript,
@@ -40,8 +90,16 @@ if (-not [string]::IsNullOrWhiteSpace($InjectRegressionCapability)) {
     $argList += @("-InjectRegressionCapability", $InjectRegressionCapability)
 }
 
-$proc = Start-Process -FilePath "powershell" -ArgumentList $argList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $gateStdout -RedirectStandardError $gateStderr
-$gateExit = [int]$proc.ExitCode
+if ($certificationBlocked) {
+    $gateExit = 2
+    Add-Content -Path $gateStdout -Value "[certification-enforcement]"
+    Add-Content -Path $gateStdout -Value "gate=FAIL"
+    Add-Content -Path $gateStdout -Value "reason=$certificationFailureSummary"
+}
+else {
+    $proc = Start-Process -FilePath "powershell" -ArgumentList $argList -NoNewWindow -Wait -PassThru -RedirectStandardOutput $gateStdout -RedirectStandardError $gateStderr
+    $gateExit = [int]$proc.ExitCode
+}
 
 if (Test-Path $gateStderr) {
     $stderrText = Get-Content -Path $gateStderr -Raw
@@ -97,11 +155,19 @@ if ($hasResultJson) {
 }
 else {
     $decision = "FAIL"
-    $reason = "missing result json"
+    if ($certificationBlocked) {
+        $reason = "certification_enforcement_blocked"
+    }
+    else {
+        $reason = "missing result json"
+    }
 }
 
 if (($failedChecks | Measure-Object).Count -gt 0) {
     $failureSummary = ($failedChecks | Sort-Object -Unique) -join "; "
+}
+elseif ($certificationBlocked) {
+    $failureSummary = $certificationFailureSummary
 }
 
 $nextStep = if ($decision -eq 'PASS') {
@@ -124,6 +190,8 @@ reason=$reason
 failure_summary=$failureSummary
 underlying_exit_code=$gateExit
 underlying_result_json=$resultJsonPath
+certification_status_json=$certStatusPath
+certification_report_txt=$certReportPath
 operator_proof=$operatorProof
 gate_proof=$gateProof
 gate_stdout=$gateStdout
@@ -138,6 +206,8 @@ GATE_SCRIPT: $gateScript
 PROOF: $operatorProof
 GATE_PROOF: $gateProof
 RESULT_JSON: $resultJsonPath
+CERTIFICATION_STATUS_JSON: $certStatusPath
+CERTIFICATION_REPORT_TXT: $certReportPath
 FAILURE_SUMMARY: $failureSummary
 NEXT_STEP: $nextStep
 "@.Trim() | Set-Content -Path $operatorStatusTxt
@@ -151,6 +221,8 @@ $statusObj = [ordered]@{
     proof = $operatorProof
     gate_proof = $gateProof
     result_json = $resultJsonPath
+    certification_status_json = $certStatusPath
+    certification_report_txt = $certReportPath
     failure_summary = $failureSummary
     next_step = $nextStep
     underlying_exit_code = $gateExit

@@ -1,0 +1,139 @@
+================================================================================
+FAILURE GUIDE: Troubleshooting When DevFabEco Doesn't PASS
+================================================================================
+
+FIRST: Check the Dashboard
+──────────────────────────
+Open: status\dashboard.html
+
+Look for:
+  - Error summary section
+  - Which gate failed (build, test, certification, etc.)
+  - Link to detailed proof artifacts
+
+COMMON FAILURE SCENARIOS:
+
+1. "Python not found" or "Python version mismatch"
+   ────────────────────────────────────────────
+   Symptom: run.ps1 exits immediately with version error
+   
+   Fix:
+   □ python --version  (should be 3.11+)
+   □ pip --version     (should exist)
+   □ Run check_prereqs.ps1 again
+   □ If Python 3.10 or older: install Python 3.11+
+   □ Restart PowerShell after install
+   
+   Re-run: .\run.ps1
+
+2. "MSVC not found" or compilation errors
+   ──────────────────────────────────────
+   Symptom: Build fails with "cl.exe not found" or "Cannot find msbuild"
+   
+   Fix:
+   □ cl.exe /?  (should show compiler help)
+   □ If not found: Install Visual Studio with "Desktop Development with C++"
+   □ After install, restart PowerShell
+   □ Also verify: "C:\Program Files\...\Microsoft Visual Studio\"
+   
+   Re-run: .\run.ps1
+
+3. "Git status shows uncommitted changes"
+   ──────────────────────────────────────
+   Symptom: Proof shows "git working tree dirty" warning
+   
+   Fix (optional, does not block PASS):
+   □ Commit or stash changes: git add .; git commit -m "..."
+   □ Or: Ignore (warning only, not a FAIL)
+   
+   Re-run: .\run.ps1
+
+4. "Certification gate FAILED" or "regression detected"
+   ─────────────────────────────────────────────────────
+   Symptom: Build succeeded but certification failed
+   
+   This is a REAL failure (not an environment issue).
+   
+   Investigation:
+   □ Open status\dashboard.html → look for comparison results
+   □ Navigate to _proof/<run_id>/ folder (see dashboard for path)
+   □ Read: 10_decision_evaluation.json (why it failed)
+   □ Read: 12_certification_decision.md (human-readable summary)
+   □ Compare against baseline (if provided)
+   
+   Fix:
+   □ If false negative: Adjust baseline or policy (see certification_workflow.md)
+   □ If real regression: Fix the source code issue and re-run
+   
+   Re-run: .\run.ps1
+
+5. "Out of disk space" or "temporary file errors"
+   ──────────────────────────────────────────────
+   Symptom: Random failure, "cannot write to disk", "path too long"
+   
+   Fix:
+   □ Delete old proof folders: _proof/ can grow large
+   □ See docs\PROOF_LIFECYCLE.txt for archival guidance
+   □ Free up 5GB+ for build artifacts
+   
+   Re-run: .\run.ps1
+
+6. "Qt moc/uic/rcc not found"
+   ───────────────────────────
+   Symptom: Qt project fails with "moc not found" or uic/rcc errors
+   
+   Fix:
+   □ Install Qt: https://www.qt.io/download
+   □ Set environment: set QtDir=C:\Qt\6.0\msvc2019_64
+   □ Verify: moc.exe --version (should work from PowerShell)
+   
+   Re-run: .\run.ps1
+
+7. "Proof folder not found" or dashboard doesn't appear
+   ─────────────────────────────────────────────────────
+   Symptom: No status files generated after run
+   
+   Check:
+   □ Did run.ps1 complete? (check console output)
+   □ Is _proof/ directory writable? (check permissions)
+   □ Open dashboard.html manually:
+       status\dashboard.html (if it exists)
+   □ If not: check console output for actual error
+   
+   Re-run: .\run.ps1
+
+GENERAL DEBUG STEPS:
+
+1. Check prerequisites again:
+   .\tools\check_prereqs.ps1
+
+2. Look at detailed proof output:
+   Navigate to _proof/<latest-run>/
+   Read: 00_run_header.txt
+   Read: 99_summary.txt
+
+3. Re-run in verbose mode (if available):
+   .\run.ps1 -Verbose
+
+4. Check for network/proxy issues (if applicable):
+   pip install --upgrade ngksdevfabrio (re-sync packages)
+
+IF STILL STUCK:
+
+1. Capture the exact error from run.ps1 console output
+2. Find the _proof/<run_id>/ folder showing in the output
+3. Review: 99_summary.txt in that folder
+4. Share the summary + error with your DevFabEco maintainer
+
+REMEMBER:
+
+✓ PASS = All gates cleared, safe to ship
+✗ FAIL = Either environment issue OR real code issue
+
+Environment issues: Fix prerequisites, then re-run
+Real issues: Fix code/config, then re-run
+
+The proof folder tells you which one it is!
+
+Next: See README.txt or docs/GATE_SEMANTICS.txt
+================================================================================

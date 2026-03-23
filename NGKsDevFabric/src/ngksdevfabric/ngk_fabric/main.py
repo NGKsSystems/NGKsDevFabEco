@@ -19,6 +19,7 @@ from .certification_rollup import run_subtarget_rollup_comparison, run_subtarget
 from .certification_bootstrap_generator import run_certification_bootstrap
 from .certification_target import run_target_validation_precheck
 from .certification_status import inspect_certification_status
+from .certification_enforcement import run_certification_enforcement
 from .certification_policy_surface import (
     evaluate_replay_validation_status,
     evaluate_structural_certification_state,
@@ -2172,6 +2173,42 @@ def cmd_certification_status(args: argparse.Namespace) -> int:
             _print_project_health_hint(project_root)
 
     return 0 if gate == "PASS" else 1
+
+
+def cmd_certification_enforce(args: argparse.Namespace) -> int:
+    project_root = _resolve_project_root(getattr(args, "project", None))
+    repo_root = DEVFABRIC_ROOT.parent.resolve()
+    json_output = bool(getattr(args, "json_output", False))
+
+    if getattr(args, "pf", None):
+        pf = _canonical_pf(repo_root, Path(str(args.pf)))
+    else:
+        pf = _default_pf(repo_root, "certification_enforce")
+
+    require_contract = str(getattr(args, "require_contract", "on") or "on").lower() != "off"
+    result = run_certification_enforcement(project_root=project_root, pf=pf, require_contract=require_contract)
+
+    if json_output:
+        print(json.dumps(result.to_dict(), indent=2))
+    else:
+        _print_result("[certification-enforcement]")
+        _print_result(f"project_root={result.project_root}")
+        _print_result(f"enforcement_state={result.enforcement_state}")
+        _print_result(f"allow_execution={str(result.allow_execution).lower()}")
+        _print_result(f"target_state={result.target_state}")
+        _print_result(f"structural_state={result.structural_state}")
+        _print_result(f"block_count={result.block_count}")
+        _print_result(f"warning_count={result.warning_count}")
+        _print_result(f"info_count={result.info_count}")
+        _print_result(f"certification_status_json={result.status_json_path}")
+        _print_result(f"certification_report_txt={result.report_txt_path}")
+        if not result.allow_execution:
+            block_codes = [item.code for item in result.findings if item.severity == "BLOCK"]
+            _print_result(f"block_reasons={';'.join(block_codes)}")
+        _print_result(f"GATE={'PASS' if result.allow_execution else 'FAIL'}")
+
+    _register_bundle_safely(pf)
+    return 0 if result.allow_execution else 1
 
 
 def cmd_project_health(args: argparse.Namespace) -> int:
@@ -4448,6 +4485,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional proof folder; if supplied an audit JSON is written there.",
     )
     cert_status_parser.set_defaults(func=cmd_certification_status)
+
+    cert_enforce_parser = sub.add_parser(
+        "certification-enforce",
+        help="Run fail-closed certification enforcement preflight before execution.",
+    )
+    cert_enforce_parser.add_argument("--project", required=False, default=".")
+    cert_enforce_parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        default=False,
+        help="Emit result as JSON.",
+    )
+    cert_enforce_parser.add_argument("--pf", required=False, help="Proof folder output root.")
+    cert_enforce_parser.add_argument("--require-contract", choices=["on", "off"], default="on")
+    cert_enforce_parser.set_defaults(func=cmd_certification_enforce)
 
     ngks_parser = sub.add_parser("ngks")
     ngks_sub = ngks_parser.add_subparsers(dest="ngks_cmd", required=True)

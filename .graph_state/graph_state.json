@@ -1,13 +1,13 @@
 {
   "workspace_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco",
   "graph_state_version": 1,
-  "last_refresh_utc": "2026-03-16T04:28:38.442491+00:00",
+  "last_refresh_utc": "2026-03-23T09:00:11.359064+00:00",
   "last_refresh_status": "success",
   "dirty": false,
   "dirty_reasons": [],
-  "project_fingerprint": "514c7774344d1c50d608654ed195bbd24195667547f9eb897a9e75f3318cf46f",
-  "graph_artifact_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\runs\\_build_probe_20260316_072752\\20_graph_auto_refresh_orchestrator",
+  "project_fingerprint": "d2995a8b4b06473fe16851286085a13a7819906d76897b82bf8f2e92f105fb01",
+  "graph_artifact_root": "C:\\Users\\suppo\\Desktop\\NGKsSystems\\NGKsDevFabEco\\_proof\\runs\\build_20260323_115909\\20_graph_auto_refresh_orchestrator",
   "active_profile": "debug",
   "active_target": "build",
-  "toolchain_fingerprint": "a270f7df7389bd1229af16bad61c36704a3f2d9cb348adaf028e78f9e106d4ea"
+  "toolchain_fingerprint": "f4c933f9ef9c218a454b6df9db862ca767cfa9708c04405bc8f573ed8cf5bd6d"
 }
