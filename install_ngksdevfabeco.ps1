@@ -124,6 +124,15 @@ function Resolve-ComponentVersions {
     param([string]$EcoVersion)
 
     switch ($EcoVersion) {
+        '1.3.4' {
+            return @{
+                devfabric  = '1.3.4'
+                graph      = '0.2.1'
+                buildcore  = '0.2.0'
+                envcapsule = '0.2.0'
+                library    = '0.2.0'
+            }
+        }
         '1.3.3' {
             return @{
                 devfabric  = '1.3.3'
@@ -274,8 +283,8 @@ function Test-NgksStateDrift {
         }
         $name = $parts[0]
         $expected = $parts[1]
-        $matches = Get-ChildItem -Path $SitePackagesPath -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like ($name + '-*.dist-info') }
+        $matches = @(Get-ChildItem -Path $SitePackagesPath -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like ($name + '-*.dist-info') })
         if ($matches.Count -gt 1) {
             Write-Log "drift_detected=duplicate_dist_info package=$name count=$($matches.Count)"
             return $true
@@ -297,7 +306,7 @@ function Repair-NgksState {
         [switch]$UserScope
     )
 
-    Write-Log "repair_action=begin site_packages=$SitePackagesPath user_scope=$([int]$UserScope)"
+        Write-Log "repair_action=begin site_packages=$SitePackagesPath user_scope=$([int]$UserScope.IsPresent)"
     [void](Invoke-PipSoft -PythonExe $PythonExe -PipArgs (@('uninstall', '-y') + $PackageNames))
 
     if (Test-Path $SitePackagesPath) {
