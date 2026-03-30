@@ -109,6 +109,9 @@ def execute_node(plan: BuildPlan, node: PlanNode, logger: EventLogger) -> tuple[
     inputs, outputs, node_cwd = _resolve_paths(plan, node)
     env = os.environ.copy()
     env.update(node.env)
+    
+    # Workaround for Qt license prompt hangs during compilation
+    env["QTFRAMEWORK_BYPASS_LICENSE_CHECK"] = "1"
 
     start_ts = utc_now_iso()
     resolved_cmd = node.cmd

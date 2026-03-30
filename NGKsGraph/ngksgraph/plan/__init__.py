@@ -280,7 +280,7 @@ def create_buildcore_plan(
 
     for target_name in ordered_targets:
         target = graph.targets[target_name]
-        if target.kind == "staticlib":
+        if target.kind in ("staticlib", "lib"):
             cmd = _staticlib_command(target)
             tool_name = "lib"
             output = _buildcore_target_output(target)
@@ -298,13 +298,13 @@ def create_buildcore_plan(
             if dep_node:
                 dep_ids.append(dep_node)
 
-        if target.kind == "staticlib":
+        if target.kind in ("staticlib", "lib"):
             inputs = [_buildcore_obj_rel_path(target, src) for src in sorted(target.sources)]
         else:
             dep_libs = []
             for dep_name in sorted(graph.link_closure(target_name)):
                 dep = graph.targets[dep_name]
-                if dep.kind == "staticlib":
+                if dep.kind in ("staticlib", "lib", "sharedlib"):
                     dep_libs.append(_buildcore_target_output(dep))
             inputs = [_buildcore_obj_rel_path(target, src) for src in sorted(target.sources)] + dep_libs
 

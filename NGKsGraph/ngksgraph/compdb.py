@@ -28,6 +28,7 @@ def build_compile_command(target: Target, src: str) -> str:
         "/nologo",
         "/EHsc",
         f"/std:c++{target.cxx_std}",
+        "/Zc:__cplusplus",
         "/MD",
         "/FS",
         "/showIncludes",
@@ -67,7 +68,7 @@ def build_link_command_for_graph(graph: BuildGraph, target_name: str) -> str:
     dep_libs = []
     for dep_name in graph.link_closure(target_name):
         dep = graph.targets[dep_name]
-        if dep.kind == "staticlib":
+        if dep.kind in ("staticlib", "lib", "sharedlib"):
             dep_libs.append(_quote(normalize_path(Path(dep.lib_dir) / f"{dep.name}.lib")))
 
     out_exe = normalize_path(Path(target.bin_dir) / f"{target.name}.exe")
