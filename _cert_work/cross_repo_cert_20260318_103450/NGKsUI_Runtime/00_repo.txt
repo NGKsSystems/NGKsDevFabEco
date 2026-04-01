@@ -1,3 +1,0 @@
-REPO=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime
-FABRIC_EXE=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime\.venv\Scripts\ngksdevfabric.exe
-GRAPH_EXE=C:\Users\suppo\Desktop\NGKsSystems\NGKsUI Runtime\.venv\Scripts\ngksgraph.exe

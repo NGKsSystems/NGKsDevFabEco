@@ -21,6 +21,7 @@ class QtConfig:
     moc_path: str = ""
     uic_path: str = ""
     rcc_path: str = ""
+    windeployqt_qmldir: str = ""
     include_dirs: list[str] = field(default_factory=list)
     lib_dirs: list[str] = field(default_factory=list)
     libs: list[str] = field(default_factory=list)
@@ -262,10 +263,13 @@ class Config:
             raise ValueError(f"Unknown profile '{profile}'. Available profiles: {known}")
 
         selected = self.profiles[profile]
+        global_cflags = list(self.cflags)
+        global_defines = list(self.defines)
+        global_ldflags = list(self.ldflags)
         for target in self.targets:
-            target.cflags = list(target.cflags) + list(selected.cflags)
-            target.defines = list(target.defines) + list(selected.defines)
-            target.ldflags = list(target.ldflags) + list(selected.ldflags)
+            target.cflags = global_cflags + list(target.cflags) + list(selected.cflags)
+            target.defines = global_defines + list(target.defines) + list(selected.defines)
+            target.ldflags = global_ldflags + list(target.ldflags) + list(selected.ldflags)
             target.normalize()
 
         self.out_dir = normalize_path(Path(self.out_dir) / profile)
@@ -401,6 +405,7 @@ def load_config(path: Path) -> Config:
             moc_path=str(qt_raw.get("moc_path", "")),
             uic_path=str(qt_raw.get("uic_path", "")),
             rcc_path=str(qt_raw.get("rcc_path", "")),
+            windeployqt_qmldir=str(qt_raw.get("windeployqt_qmldir", "")),
             include_dirs=_as_list(qt_raw.get("include_dirs", [])),
             lib_dirs=_as_list(qt_raw.get("lib_dirs", [])),
             libs=_as_list(qt_raw.get("libs", [])),

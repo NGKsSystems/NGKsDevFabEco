@@ -1,2 +1,0 @@
-NGKsGraph 0.1.0 (b58ea54) cache_schema=1 contracts=6G,6H,7,9
-PROOF_ZIP=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\_proof\run_20260318_080016.zip

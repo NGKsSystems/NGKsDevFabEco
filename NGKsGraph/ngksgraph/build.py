@@ -963,10 +963,12 @@ def emit_build_plan(repo_root: Path, configured: dict[str, Any]) -> Path:
 def emit_buildcore_plan(repo_root: Path, configured: dict[str, Any], out_path: Path) -> tuple[Path, list[str]]:
     graph = configured["graph"]
     selected_target = str(configured["selected_target"])
+    profile = str(configured.get("profile", ""))
     payload, warnings = create_buildcore_plan(
         repo_root,
         selected_target=selected_target,
         graph=graph,
+        profile=profile,
     )
     return write_buildcore_plan_json(out_path, payload), warnings
 

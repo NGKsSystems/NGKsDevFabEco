@@ -1959,6 +1959,7 @@ def cmd_planaudit(args: argparse.Namespace) -> int:
         repo_root,
         selected_target=str(configured["selected_target"]),
         graph=configured["graph"],
+        profile=str(configured.get("profile", "")),
     )
     nodes = payload.get("nodes", []) if isinstance(payload, dict) else []
     if not isinstance(nodes, list):

@@ -1,7 +1,0 @@
-?? .cert_pf.txt
-?? .migration_final_pf.txt
-?? .migration_pf.txt
-?? .release_dist_dir.txt
-?? .repair_pf.txt
-?? NGKsGraph/proofs/
-?? _cert_work/

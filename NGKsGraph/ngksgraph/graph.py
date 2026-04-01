@@ -225,6 +225,7 @@ def build_graph_from_project(
                 "msvc_auto": bool(msvc_auto),
                 "qt_enabled": qt_enabled,
                 "qt_windeployqt": windeployqt_path,
+                "qt_windeployqt_qmldir": str(config.qt.windeployqt_qmldir).strip(),
             },
         )
         targets[target.name] = target

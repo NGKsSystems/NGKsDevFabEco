@@ -1,8 +1,0 @@
-AUDIT_DIR: C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\.hardening_cert_20260318_185306
-DATE: 2026-03-18 18:53:29
-PWD: C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco
-GIT_HEAD: b58ea54c6ffc8f695c997b2bddfdaf161f203ae0
-PYTHON: 3.13.5
-NGKSGRAPH: 0.1.0 (b58ea54) cache_schema=1
-NGKSBUILDCORE: 0.1.0
-NGKSDEVFABRIC: dispatch_failure (no standalone --version; requires subcommand)

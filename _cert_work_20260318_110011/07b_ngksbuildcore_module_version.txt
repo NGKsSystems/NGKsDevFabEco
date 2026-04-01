@@ -1,2 +1,0 @@
-0.1.0
-C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\_validation_venv\Lib\site-packages\ngksbuildcore\__init__.py

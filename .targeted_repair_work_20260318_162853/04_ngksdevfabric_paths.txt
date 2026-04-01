@@ -1,2 +1,0 @@
-C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\NGKsDevFabric\src\ngksdevfabric\__init__.py
-C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\NGKsDevFabric\src\ngksdevfabric\ngk_fabric\main.py

@@ -1,8 +1,0 @@
-usage: ngksdevfabric [-h]
-                     {probe,profile,build,doctor,run,certification-status,ngks,eco,term,render-doc,doc-gate,explain,certify,certify-validate,certify-gate,certify-target-check,project-health,bootstrap-certification,predict-risk,plan-validation,run-validation-plan,run-validation-and-certify,run-validation-plugins,deliver-connectors} ...
-ngksdevfabric: error: the following arguments are required: cmd
-root_cause_stage=COMMAND_DISPATCH_FAILURE
-root_cause_code=INVALID_COMMAND_SHAPE
-root_cause_confidence=0.98
-root_cause_artifact=41_failure_stage_classification.json
-dispatch_failure_pf=C:\Users\suppo\Desktop\NGKsSystems\NGKsDevFabEco\_proof\runs\dispatch_failure_20260318_135432

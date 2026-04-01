@@ -237,11 +237,16 @@ def _target_windeployqt(target: Target) -> str:
     return str(target.toolchain.get("qt_windeployqt", "") or "").strip()
 
 
+def _target_windeployqt_qmldir(target: Target) -> str:
+    return str(target.toolchain.get("qt_windeployqt_qmldir", "") or "").strip()
+
+
 def create_buildcore_plan(
     repo_root: Path,
     *,
     selected_target: str,
     graph: BuildGraph,
+    profile: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     closure = set(graph.link_closure(selected_target))
     closure.add(selected_target)
@@ -327,7 +332,15 @@ def create_buildcore_plan(
             if not windeployqt_path:
                 warnings.append(f"QT_WINDEPLOYQT_MISSING: {target_name}")
             else:
-                deploy_cmd = f"{_quote(windeployqt_path)} {_quote(output)}"
+                qmldir = _target_windeployqt_qmldir(target)
+                profile_flag = "--release" if str(profile).lower() == "release" else "--debug" if str(profile).lower() == "debug" else ""
+                flags = ["--compiler-runtime"]
+                if profile_flag:
+                    flags.insert(0, profile_flag)
+                if qmldir:
+                    flags.append(f"--qmldir {_quote(qmldir)}")
+                flags_str = " ".join(flags)
+                deploy_cmd = f"{_quote(windeployqt_path)} {flags_str} {_quote(output)}"
                 deploy_id = _stable_node_id("windeployqt", target_name, "deploy", deploy_cmd)
                 nodes.append(
                     {
@@ -565,6 +578,7 @@ def create_ecosystem_build_plan(
             repo_root,
             selected_target=selected_target,
             graph=graph,
+            profile=profile,
         )
         raw_nodes = buildcore_payload.get("nodes", []) if isinstance(buildcore_payload, dict) else []
         nodes = [node for node in raw_nodes if isinstance(node, dict)]
