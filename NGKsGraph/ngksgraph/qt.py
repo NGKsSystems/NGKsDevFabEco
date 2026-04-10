@@ -365,7 +365,7 @@ def _maybe_generate(
     )
 
 
-def integrate_qt(repo_root: Path, config: Config, source_map: dict[str, list[str]], out_dir: Path) -> QtIntegrationResult:
+def integrate_qt(repo_root: Path, config: Config, source_map: dict[str, list[str]], out_dir: Path, profile: str = "") -> QtIntegrationResult:
     config.normalize()
     if not config.qt.enabled:
         return QtIntegrationResult([], [], [], [], [], {})
@@ -377,7 +377,19 @@ def integrate_qt(repo_root: Path, config: Config, source_map: dict[str, list[str
 
     include_injected = sorted(set(config.qt.include_dirs + [normalize_path(qt_out_dir)]))
     lib_dirs_injected = sorted(set(config.qt.lib_dirs))
-    libs_injected = sorted(set(v[:-4] if v.lower().endswith(".lib") else v for v in config.qt.libs))
+
+    is_debug = profile.lower() == "debug"
+    raw_libs = [v[:-4] if v.lower().endswith(".lib") else v for v in config.qt.libs]
+    if is_debug:
+        # Qt debug DLLs have a 'd' suffix (Qt6Xxxd.dll). Append it so the linker
+        # selects Qt6Xxxd.lib and the runtime resolves Qt6Xxxd.dll, not the release DLL.
+        processed_libs = [
+            name + "d" if (name.startswith("Qt") and not name.endswith("d")) else name
+            for name in raw_libs
+        ]
+    else:
+        processed_libs = raw_libs
+    libs_injected = sorted(set(processed_libs))
 
     for target in config.targets:
         target.include_dirs = sorted(set(target.include_dirs + include_injected))

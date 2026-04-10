@@ -422,13 +422,24 @@ def _validate_configure_contracts(paths: dict[str, Path], graph: BuildGraph, con
     return (len(compdb_violations) == 0, len(graph_violations) == 0, compdb_violations + graph_violations)
 
 
-def _inject_qt_target_overrides(config: Config) -> None:
+def _inject_qt_target_overrides(config: Config, profile: str = "") -> None:
     if not config.qt.enabled:
         return
 
     qt_include_dirs = list(config.qt.include_dirs)
     qt_lib_dirs = list(config.qt.lib_dirs)
-    qt_libs = [str(v)[:-4] if str(v).lower().endswith(".lib") else str(v) for v in config.qt.libs]
+
+    is_debug = profile.lower() == "debug"
+    raw_libs = [str(v)[:-4] if str(v).lower().endswith(".lib") else str(v) for v in config.qt.libs]
+    if is_debug:
+        # Append the MSVC Qt debug suffix ('d') to Qt6 lib names so the linker
+        # picks Qt6Xxxd.lib and the runtime finds Qt6Xxxd.dll, not the release DLL.
+        qt_libs = [
+            name + "d" if (name.startswith("Qt") and not name.endswith("d")) else name
+            for name in raw_libs
+        ]
+    else:
+        qt_libs = raw_libs
 
     for target in config.targets:
         target.include_dirs = sorted(set(target.include_dirs + qt_include_dirs))
@@ -437,7 +448,7 @@ def _inject_qt_target_overrides(config: Config) -> None:
         target.normalize()
 
 
-def _apply_cached_target_overrides(config: Config, plan: dict[str, Any]) -> None:
+def _apply_cached_target_overrides(config: Config, plan: dict[str, Any], profile: str = "") -> None:
     overrides = plan.get("target_overrides", {}) if isinstance(plan.get("target_overrides", {}), dict) else {}
     for target in config.targets:
         body = overrides.get(target.name, {}) if isinstance(overrides.get(target.name, {}), dict) else {}
@@ -455,7 +466,7 @@ def _apply_cached_target_overrides(config: Config, plan: dict[str, Any]) -> None
             target.ldflags = list(body["ldflags"])
         target.normalize()
 
-    _inject_qt_target_overrides(config)
+    _inject_qt_target_overrides(config, profile)
 
 
 def _qt_result_from_plan(plan: dict[str, Any]) -> QtIntegrationResult:
@@ -572,7 +583,7 @@ def inspect_plan_cache(
             "fingerprint_sha": current_fingerprint_sha,
         }
 
-    _apply_cached_target_overrides(config, plan)
+    _apply_cached_target_overrides(config, plan, selected_profile)
     cached_source_map = {k: list(v) for k, v in dict(plan.get("source_map", {})).items()}
     graph = build_graph_from_project(config, source_map=cached_source_map, msvc_auto=False)
     structural_hash = compute_structural_graph_hash(graph)
@@ -661,7 +672,7 @@ def configure_project(
         cached_fingerprint_sha = cache_files["fingerprint_sha"].read_text(encoding="utf-8").strip() if cache_files["fingerprint_sha"].exists() else ""
         if cached_fingerprint_sha == probe_fingerprint_sha:
             config_for_probe = deepcopy(config)
-            _apply_cached_target_overrides(config_for_probe, plan_data)
+            _apply_cached_target_overrides(config_for_probe, plan_data, selected_profile)
             cached_source_map = {k: list(v) for k, v in dict(plan_data.get("source_map", {})).items()}
             graph_for_key = build_graph_from_project(config_for_probe, source_map=cached_source_map, msvc_auto=msvc_auto)
             key_payload = build_plan_key(
@@ -676,9 +687,9 @@ def configure_project(
             cached_key_sha = cache_files["plan_key_sha"].read_text(encoding="utf-8").strip() if cache_files["plan_key_sha"].exists() else ""
 
             if key_sha == cached_key_sha:
-                _apply_cached_target_overrides(config, plan_data)
+                _apply_cached_target_overrides(config, plan_data, selected_profile)
                 qt_started = perf_counter()
-                qt_result = integrate_qt(repo_root, config, cached_source_map, paths["out_dir"])
+                qt_result = integrate_qt(repo_root, config, cached_source_map, paths["out_dir"], selected_profile)
                 durations["qt_detect_ms"] += int((perf_counter() - qt_started) * 1000)
                 artifacts = _generate_artifacts(repo_root, config, cached_source_map, paths, msvc_auto=msvc_auto, qt_result=qt_result)
                 durations["plan_build_ms"] += int(artifacts.get("plan_build_ms", 0))
@@ -789,7 +800,7 @@ def configure_project(
         import logging; logging.warning(f"AMBIGUOUS_OWNERSHIP: {details}")
 
     qt_started = perf_counter()
-    qt_result = integrate_qt(repo_root, config, source_map, paths["out_dir"])
+    qt_result = integrate_qt(repo_root, config, source_map, paths["out_dir"], selected_profile)
     durations["qt_detect_ms"] += int((perf_counter() - qt_started) * 1000)
 
     toolchain_info = {
@@ -923,7 +934,7 @@ def resolve_plan_context(
         details = "; ".join(f"{src} -> {', '.join(owners)}" for src, owners in sorted(ambiguous.items()))
         import logging; logging.warning(f"AMBIGUOUS_OWNERSHIP: {details}")
 
-    qt_result = integrate_qt(repo_root, config, source_map, paths["out_dir"])
+    qt_result = integrate_qt(repo_root, config, source_map, paths["out_dir"], selected_profile)
 
     graph = build_graph_from_project(config, source_map=source_map, msvc_auto=False)
     return {
