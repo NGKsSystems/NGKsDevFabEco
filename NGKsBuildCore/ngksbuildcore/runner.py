@@ -18,6 +18,109 @@ from .scheduler import build_graph, release_children, seed_ready
 from .store import StateStore
 
 
+# ---------------------------------------------------------------------------
+# MSVC environment bootstrap
+# ---------------------------------------------------------------------------
+
+_VSWHERE = Path(
+    r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+)
+_VCVARS_CANDIDATES = [
+    # VS 2026 (18.x)
+    r"C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat",
+    r"C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Auxiliary\Build\vcvars64.bat",
+    r"C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat",
+    # VS 2022 (17.x)
+    r"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat",
+    r"C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvars64.bat",
+    r"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat",
+    r"C:\Program Files\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat",
+]
+
+
+def _find_vcvars64() -> Path | None:
+    """Return the path to vcvars64.bat, using vswhere when available."""
+    # 1. vswhere — authoritative, handles non-default install paths
+    if _VSWHERE.exists():
+        try:
+            result = subprocess.run(
+                [str(_VSWHERE), "-latest", "-property", "installationPath"],
+                capture_output=True, text=True, timeout=10,
+            )
+            install = result.stdout.strip()
+            if install:
+                candidate = Path(install) / r"VC\Auxiliary\Build\vcvars64.bat"
+                if candidate.exists():
+                    return candidate
+        except Exception:
+            pass
+
+    # 2. Well-known paths
+    for path_str in _VCVARS_CANDIDATES:
+        p = Path(path_str)
+        if p.exists():
+            return p
+
+    return None
+
+
+def _load_vcvars_into_env(vcvars: Path) -> bool:
+    """
+    Run vcvars64.bat in a cmd subprocess, capture the resulting environment,
+    and merge all new/changed variables into the current process os.environ.
+    Returns True on success.
+    """
+    try:
+        # cmd.exe /c "vcvars64.bat && set" — captures the env after activation
+        result = subprocess.run(
+            ["cmd.exe", "/c", f'call "{vcvars}" > nul 2>&1 && set'],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode != 0:
+            return False
+        for line in result.stdout.splitlines():
+            if "=" in line:
+                key, _, value = line.partition("=")
+                os.environ[key.strip()] = value.strip()
+        return True
+    except Exception:
+        return False
+
+
+def _ensure_msvc_environment() -> None:
+    """
+    Guarantee cl.exe is on PATH before the DAG executor runs any compile task.
+
+    Resolution order:
+      1. cl.exe already on PATH (vcvars was called externally) — no-op.
+      2. Auto-locate vcvars64.bat via vswhere / known paths and load it into
+         the current process environment.
+      3. If cl.exe still cannot be found, raise RuntimeError with a clear
+         remediation message rather than letting task 1/N fail cryptically.
+    """
+    if shutil.which("cl") or shutil.which("cl.exe"):
+        return  # already configured
+
+    vcvars = _find_vcvars64()
+    if vcvars and _load_vcvars_into_env(vcvars):
+        if shutil.which("cl") or shutil.which("cl.exe"):
+            print(f"[ngksbuildcore] MSVC environment loaded from: {vcvars}", flush=True)
+            return
+
+    # Still not found — fail fast with an actionable message
+    raise RuntimeError(
+        "cl.exe not found on PATH and ngksbuildcore could not auto-load the MSVC "
+        "environment.\n\n"
+        "Remediation options:\n"
+        "  1. Run vcvars64.bat before invoking ngksbuildcore:\n"
+        '     call "C:\\Program Files\\Microsoft Visual Studio\\<ver>\\<edition>\\'
+        'VC\\Auxiliary\\Build\\vcvars64.bat"\n'
+        "  2. Install Visual Studio with the 'Desktop development with C++' workload.\n"
+        "  3. Ensure vswhere.exe is present at:\n"
+        f"     {_VSWHERE}\n"
+    )
+
+
 @dataclass(slots=True)
 class NodeResult:
     node_id: str
@@ -272,6 +375,11 @@ def run_build(
 
     plan = load_plan(plan_file)
     env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
+
+    _ensure_msvc_environment()
+    env = os.environ.copy()  # re-snapshot after potential vcvars load
     if extra_env:
         env.update(extra_env)
 
